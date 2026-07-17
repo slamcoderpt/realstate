@@ -31,7 +31,12 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
+# Default-deny: qualquer .env fica ignorado, para que um .env com segredos reais
+# nunca seja commitado por acidente. As excepcoes abaixo contem apenas as chaves
+# demo publicas do Supabase local / placeholders vazios.
 .env*
+!.env.test
+!.env.example
 
 # vercel
 .vercel
