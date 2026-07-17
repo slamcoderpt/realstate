@@ -55,6 +55,7 @@ create policy "profiles: atualizar o próprio"
 create or replace function public.protect_profile_fields()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   if current_user not in ('service_role', 'postgres', 'supabase_admin') then
@@ -176,6 +177,7 @@ revoke insert on public.audit_log from anon, authenticated;
 create or replace function public.reject_audit_mutation()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   raise exception 'audit_log é append-only: % não permitido', tg_op;
@@ -191,7 +193,20 @@ create trigger audit_log_no_truncate
   before truncate on public.audit_log
   for each statement execute function public.reject_audit_mutation();
 
--- Trigger genérico de auditoria para tabelas sensíveis
+-- Trigger genérico de auditoria para tabelas sensíveis.
+--
+-- Duas limitações evidenciais a ter em conta (a resolver na slice das Server
+-- Actions, antes de o log ser usado como prova com peso legal):
+--
+--  (i)  actor_id = auth.uid(), que é NULL em pedidos com service_role. Como as
+--       ações de staff (mudança de role, aprovação de KYC, edição de settings)
+--       passam por Server Actions com service_role, o log regista O QUE mudou
+--       mas não QUEM. A camada de Server Actions terá de passar o id do ator
+--       explicitamente (via GUC de sessão ou escrita direta de actor_id).
+--  (ii) protect_profile_fields (BEFORE) reverte NEW antes de este trigger
+--       (AFTER) o capturar, pelo que uma tentativa de escalada de um investidor
+--       é registada como um update benigno com os valores já revertidos. O log
+--       é um registo de alterações consumadas, não de tentativas de intrusão.
 create or replace function public.audit_row_change()
 returns trigger
 language plpgsql security definer

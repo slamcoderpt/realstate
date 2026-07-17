@@ -906,6 +906,8 @@ git commit -m "feat: migração de fundações — profiles, settings e audit_lo
 - Create: `src/app/[locale]/(auth)/login/page.tsx`
 - Modify: `src/middleware.ts`, `src/app/[locale]/page.tsx`
 
+**Dívida herdada da Task 6 (registar, resolver na slice das Server Actions da Fatia 1, não nesta task):** o trigger de auditoria usa `actor_id = auth.uid()`, que é NULL em ações com service_role. Como as ações de staff (mudança de role, aprovação de KYC, edição de settings) passarão por Server Actions com service_role, o audit log registaria *o quê* mas não *quem*. Quando o `admin.ts` (service role) for usado para escritas auditáveis, a Server Action terá de propagar o id do ator explicitamente — via GUC de sessão (`set_config('request.jwt.claims', ...)` ou um GUC próprio lido pelo trigger) ou escrevendo `actor_id` diretamente. Para um log com peso legal, ações privilegiadas não-atribuíveis são uma lacuna material.
+
 - [ ] **Step 1: Instalar dependências**
 
 ```bash
