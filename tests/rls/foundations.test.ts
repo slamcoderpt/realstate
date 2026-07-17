@@ -61,10 +61,11 @@ describe('platform_settings', () => {
   });
 
   it('anónimo NÃO lê settings', async () => {
-    const {data} = await anonClient()
+    const {data, error} = await anonClient()
       .from('platform_settings')
       .select('key');
-    expect(data ?? []).toHaveLength(0);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
   });
 
   it('investidor NÃO escreve settings', async () => {
@@ -85,8 +86,9 @@ describe('platform_settings', () => {
 describe('audit_log (append-only)', () => {
   it('investidor NÃO lê o audit log', async () => {
     const client = await signInAs(investorA);
-    const {data} = await client.from('audit_log').select('id');
-    expect(data ?? []).toHaveLength(0);
+    const {data, error} = await client.from('audit_log').select('id');
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
   });
 
   it('UPDATE é rejeitado mesmo com service role', async () => {

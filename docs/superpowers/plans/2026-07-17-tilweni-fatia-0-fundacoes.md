@@ -12,6 +12,12 @@
 
 **Pré-requisitos da máquina:** Node 22+, Docker Desktop a correr (necessário para `supabase start`), Supabase CLI (`npm i -g supabase` ou scoop/choco).
 
+**Armadilhas conhecidas desta máquina (descobertas durante a execução):**
+- **PowerShell escreve UTF-16 LE / UTF-8 com BOM por defeito.** Qualquer ficheiro escrito por PowerShell que outra ferramenta tenha de parsear precisa de `-Encoding utf8` explícito. Um BOM em `supabase/config.toml` faz abortar **todos** os comandos do CLI Supabase (`toml: invalid character at start of key: ï`).
+- **A gama de portas 543xx está ocupada** por outro projeto local. Este stack usa **54421** (ver `supabase/config.toml` e `.env.test`). Nunca hardcodar 54321.
+- **Não usar caminhos `/tmp`** em scripts que misturem Git Bash e Python de Windows — resolvem de forma diferente e falham em silêncio.
+- **Servidores Next órfãos** produzem output credível mas falso: matar o wrapper npm deixa o filho `next-server` a segurar a porta, e o novo servidor cai silenciosamente para 3001. Confirmar sempre o PID dono da porta (`Get-NetTCPConnection -LocalPort 3000,3001,3002`).
+
 ---
 
 ### Task 1: Scaffold Next.js
@@ -535,11 +541,15 @@ describe('platform_settings', () => {
     expect(data).toHaveLength(1);
   });
 
+  // Nota: asserir `error` é essencial. Sem isso, `data ?? []` fica verde quando a
+  // tabela não existe (data é null), pelo que o teste passaria com ou sem RLS.
+  // Quando a RLS bloqueia uma leitura, o PostgREST devolve data: [] e error: null.
   it('anónimo NÃO lê settings', async () => {
-    const {data} = await anonClient()
+    const {data, error} = await anonClient()
       .from('platform_settings')
       .select('key');
-    expect(data ?? []).toHaveLength(0);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
   });
 
   it('investidor NÃO escreve settings', async () => {
@@ -560,8 +570,9 @@ describe('platform_settings', () => {
 describe('audit_log (append-only)', () => {
   it('investidor NÃO lê o audit log', async () => {
     const client = await signInAs(investorA);
-    const {data} = await client.from('audit_log').select('id');
-    expect(data ?? []).toHaveLength(0);
+    const {data, error} = await client.from('audit_log').select('id');
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
   });
 
   it('UPDATE é rejeitado mesmo com service role', async () => {
