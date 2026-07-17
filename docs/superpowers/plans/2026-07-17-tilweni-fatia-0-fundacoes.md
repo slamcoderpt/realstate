@@ -12,6 +12,12 @@
 
 **Pré-requisitos da máquina:** Node 22+, Docker Desktop a correr (necessário para `supabase start`), Supabase CLI (`npm i -g supabase` ou scoop/choco).
 
+**Armadilhas conhecidas desta máquina (descobertas durante a execução):**
+- **PowerShell escreve UTF-16 LE / UTF-8 com BOM por defeito.** Qualquer ficheiro escrito por PowerShell que outra ferramenta tenha de parsear precisa de `-Encoding utf8` explícito. Um BOM em `supabase/config.toml` faz abortar **todos** os comandos do CLI Supabase (`toml: invalid character at start of key: ï`).
+- **A gama de portas 543xx está ocupada** por outro projeto local. Este stack usa **54421** (ver `supabase/config.toml` e `.env.test`). Nunca hardcodar 54321.
+- **Não usar caminhos `/tmp`** em scripts que misturem Git Bash e Python de Windows — resolvem de forma diferente e falham em silêncio.
+- **Servidores Next órfãos** produzem output credível mas falso: matar o wrapper npm deixa o filho `next-server` a segurar a porta, e o novo servidor cai silenciosamente para 3001. Confirmar sempre o PID dono da porta (`Get-NetTCPConnection -LocalPort 3000,3001,3002`).
+
 ---
 
 ### Task 1: Scaffold Next.js
@@ -535,11 +541,15 @@ describe('platform_settings', () => {
     expect(data).toHaveLength(1);
   });
 
+  // Nota: asserir `error` é essencial. Sem isso, `data ?? []` fica verde quando a
+  // tabela não existe (data é null), pelo que o teste passaria com ou sem RLS.
+  // Quando a RLS bloqueia uma leitura, o PostgREST devolve data: [] e error: null.
   it('anónimo NÃO lê settings', async () => {
-    const {data} = await anonClient()
+    const {data, error} = await anonClient()
       .from('platform_settings')
       .select('key');
-    expect(data ?? []).toHaveLength(0);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
   });
 
   it('investidor NÃO escreve settings', async () => {
@@ -560,8 +570,9 @@ describe('platform_settings', () => {
 describe('audit_log (append-only)', () => {
   it('investidor NÃO lê o audit log', async () => {
     const client = await signInAs(investorA);
-    const {data} = await client.from('audit_log').select('id');
-    expect(data ?? []).toHaveLength(0);
+    const {data, error} = await client.from('audit_log').select('id');
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0);
   });
 
   it('UPDATE é rejeitado mesmo com service role', async () => {
@@ -603,22 +614,45 @@ describe('audit_log (append-only)', () => {
 });
 ```
 
-- [ ] **Step 6: Adicionar scripts ao `package.json`**
+- [ ] **Step 6: Criar `tests/messages-parity.test.ts`**
+
+Contexto: a augmentation de tipos da Task 2 (`src/global.d.ts`) tipa as mensagens a partir de `messages/pt.json` apenas — `request.ts` carrega os ficheiros por import dinâmico, que o TypeScript não resolve estaticamente. Consequência verificada: apagar uma chave de `en.json` **não** falha o typecheck; a página devolve 200 e renderiza o literal `Home.title` a um investidor inglês. Este teste fecha esse buraco.
+
+```ts
+import {describe, it, expect} from 'vitest';
+import pt from '../messages/pt.json';
+import en from '../messages/en.json';
+
+function keyPaths(obj: unknown, prefix = ''): string[] {
+  if (typeof obj !== 'object' || obj === null) return [prefix];
+  return Object.entries(obj).flatMap(([k, v]) =>
+    keyPaths(v, prefix ? `${prefix}.${k}` : k)
+  );
+}
+
+describe('paridade de mensagens PT/EN', () => {
+  it('en.json tem exatamente as mesmas chaves que pt.json', () => {
+    expect(keyPaths(en).sort()).toEqual(keyPaths(pt).sort());
+  });
+});
+```
+
+- [ ] **Step 7: Adicionar scripts ao `package.json`**
 
 ```json
 "test": "vitest run",
 "test:watch": "vitest"
 ```
 
-- [ ] **Step 7: Correr os testes e confirmar que FALHAM (o schema ainda não existe)**
+- [ ] **Step 8: Correr os testes e confirmar que os RLS FALHAM (o schema ainda não existe) e que o de paridade PASSA**
 
 ```bash
 npm test
 ```
 
-Expected: FAIL — erros do tipo `relation "public.profiles" does not exist` / falha ao criar utilizadores de teste.
+Expected: `tests/rls/foundations.test.ts` FAIL — erros do tipo `relation "public.profiles" does not exist` / falha ao criar utilizadores de teste. `tests/messages-parity.test.ts` PASS.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add -A
@@ -872,6 +906,8 @@ git commit -m "feat: migração de fundações — profiles, settings e audit_lo
 - Create: `src/app/[locale]/(auth)/login/page.tsx`
 - Modify: `src/middleware.ts`, `src/app/[locale]/page.tsx`
 
+**Dívida herdada da Task 6 (registar, resolver na slice das Server Actions da Fatia 1, não nesta task):** o trigger de auditoria usa `actor_id = auth.uid()`, que é NULL em ações com service_role. Como as ações de staff (mudança de role, aprovação de KYC, edição de settings) passarão por Server Actions com service_role, o audit log registaria *o quê* mas não *quem*. Quando o `admin.ts` (service role) for usado para escritas auditáveis, a Server Action terá de propagar o id do ator explicitamente — via GUC de sessão (`set_config('request.jwt.claims', ...)` ou um GUC próprio lido pelo trigger) ou escrevendo `actor_id` diretamente. Para um log com peso legal, ações privilegiadas não-atribuíveis são uma lacuna material.
+
 - [ ] **Step 1: Instalar dependências**
 
 ```bash
@@ -992,23 +1028,30 @@ export async function updateSession(
 
 - [ ] **Step 6: Atualizar `src/middleware.ts` para compor i18n + sessão**
 
+**Atenção — correção ao matcher (achado da revisão da Task 2).** O matcher da Task 2 exclui `api`, o que é correto para i18n (não queremos `/api/x` redirecionado para `/pt/api/x`) mas **errado para o refresh de sessão do Supabase**: `updateSession` tem de correr também nas rotas `api`, caso contrário os cookies ficam obsoletos e os route handlers veem sessões expiradas. O matcher tem portanto de ser alargado para incluir `api`, e o handler passa a ramificar por path: sessão em tudo, i18n só em não-`api`.
+
 ```ts
 import createMiddleware from 'next-intl/middleware';
-import {type NextRequest} from 'next/server';
+import {NextResponse, type NextRequest} from 'next/server';
 import {routing} from './i18n/routing';
 import {updateSession} from '@/lib/supabase/middleware';
 
 const intlMiddleware = createMiddleware(routing);
 
 export default async function middleware(request: NextRequest) {
-  const response = intlMiddleware(request);
+  const isApi = /^\/api(?:\/|$)/.test(request.nextUrl.pathname);
+  const response = isApi ? NextResponse.next() : intlMiddleware(request);
   return await updateSession(request, response);
 }
 
 export const config = {
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
+  // Inclui /api (necessário para o refresh de sessão); exclui apenas assets
+  // internos do Next e ficheiros estáticos.
+  matcher: ['/((?!_next|_vercel|.*\\..*).*)']
 };
 ```
+
+Nota: `(?!api|...)` fazia match por prefixo, pelo que um hipotético `/apiary` também seria excluído. Ao gatear autenticação, uma exclusão acidental é um bypass — daí o `^\/api(?:\/|$)` explícito no handler.
 
 - [ ] **Step 7: Criar `src/app/[locale]/(auth)/login/page.tsx`**
 

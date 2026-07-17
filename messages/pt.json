@@ -1,0 +1,13 @@
+{
+  "Home": {
+    "title": "TILWENI — Área Privada",
+    "signedInAs": "Sessão iniciada como {email}"
+  },
+  "Login": {
+    "title": "Entrar",
+    "email": "Email",
+    "password": "Palavra-passe",
+    "submit": "Entrar",
+    "error": "Credenciais inválidas"
+  }
+}
