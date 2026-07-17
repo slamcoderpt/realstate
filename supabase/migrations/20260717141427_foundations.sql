@@ -122,6 +122,23 @@ insert into public.platform_settings (key, value, description) values
    'Aviso de risco padronizado, incluído em todas as comunicações a investidores');
 
 -- ---------- audit_log (append-only) ----------
+-- ATENÇÃO a quem alterar esta secção — três factos apurados empiricamente:
+--
+--  (a) RLS NÃO se aplica a TRUNCATE, e um trigger FOR EACH ROW NÃO dispara em
+--      TRUNCATE. Por isso a defesa contra TRUNCATE tem de ser um revoke do grant
+--      + um trigger FOR EACH STATEMENT (audit_log_no_truncate). Sem ambos, o
+--      service_role apagava o log inteiro — e fá-lo-ia com os testes verdes.
+--
+--  (b) As DUAS camadas abaixo são load-bearing e cobrem atacantes diferentes:
+--      os grants travam os roles do PostgREST (anon/authenticated/service_role,
+--      que têm BYPASSRLS mas continuam sujeitos a grants); os triggers travam o
+--      OWNER da tabela (postgres), a quem os grants nunca se aplicam. Remover
+--      qualquer uma por parecer redundante reabre um caminho de escrita.
+--
+--  (c) A imutabilidade NÃO se estende a supabase_admin nem a superusers: quem
+--      tenha esse nível pode dropar os triggers e mutar o log. Garantia forte
+--      contra service_role e owner; não contra acesso total à BD. Peso legal
+--      real exigiria hash-chaining ou envio para fora da BD (fora deste âmbito).
 create table public.audit_log (
   id bigint generated always as identity primary key,
   actor_id uuid,
@@ -145,6 +162,14 @@ create policy "audit: admin e auditor leem"
 -- public incluem-no, RLS não se aplica a TRUNCATE e um trigger FOR EACH ROW
 -- não dispara — sem este revoke, o service_role apagava o log inteiro.
 revoke update, delete, truncate on public.audit_log from anon, authenticated, service_role;
+
+-- INSERT: anon/authenticated nunca escrevem directamente no log — só o trigger
+-- audit_row_change (security definer, corre como owner) o faz legitimamente,
+-- e esse não depende deste grant. Revogar dá uma 2ª camada barata: se um dia
+-- se escrever por engano uma policy de INSERT, o grant continua a barrá-los.
+-- service_role MANTÉM INSERT: escreve directamente via API (ex.: Server Actions,
+-- e os próprios testes que semeiam o log).
+revoke insert on public.audit_log from anon, authenticated;
 
 -- Imutabilidade, camada 2 (cinto-e-suspensórios): o owner da tabela (postgres)
 -- não é travado por grants, logo só os triggers o impedem.

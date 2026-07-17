@@ -1,6 +1,12 @@
 import {describe, it, expect, beforeAll} from 'vitest';
 import {randomUUID} from 'node:crypto';
-import {admin, createTestUser, signInAs, anonClient} from './helpers';
+import {
+  admin,
+  createTestUser,
+  signInAs,
+  anonClient,
+  attemptTruncateAuditLog
+} from './helpers';
 
 const run = randomUUID().slice(0, 8);
 const investorA = `investor-a-${run}@test.local`;
@@ -115,6 +121,35 @@ describe('audit_log (append-only)', () => {
 
     const {error} = await admin.from('audit_log').delete().eq('id', inserted!.id);
     expect(error).not.toBeNull();
+  });
+
+  // TRUNCATE contorna RLS e não dispara triggers FOR EACH ROW. Sem defesa
+  // explícita, o service_role apagava o log inteiro com os restantes testes
+  // verdes. Duas camadas protegem-no e cada teste cobre uma; ver migração.
+  it('TRUNCATE é rejeitado com service role (camada de grants)', async () => {
+    await admin
+      .from('audit_log')
+      .insert({action: 'test-truncate-sr', entity_type: 'test', payload: {}});
+    const err = await attemptTruncateAuditLog('service_role');
+    expect(err).not.toBeNull();
+    const {count} = await admin
+      .from('audit_log')
+      .select('*', {count: 'exact', head: true});
+    expect(count).toBeGreaterThan(0);
+  });
+
+  it('TRUNCATE é rejeitado mesmo como owner postgres (camada do trigger)', async () => {
+    await admin
+      .from('audit_log')
+      .insert({action: 'test-truncate-owner', entity_type: 'test', payload: {}});
+    // Sem set role: corre como postgres, owner da tabela, que ignora grants —
+    // só o trigger audit_log_no_truncate o pode travar.
+    const err = await attemptTruncateAuditLog();
+    expect(err).not.toBeNull();
+    const {count} = await admin
+      .from('audit_log')
+      .select('*', {count: 'exact', head: true});
+    expect(count).toBeGreaterThan(0);
   });
 
   it('alterações a profiles ficam registadas no audit log', async () => {
