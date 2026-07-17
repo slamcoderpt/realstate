@@ -67,13 +67,14 @@ Região alvo dos projetos cloud: **`eu-central-1`** (UE).
   - Plano: **Pro** (backups diários)
   - Auth: signups **Off**, MFA TOTP **On** — ⚠️ **por configurar no dashboard**
   - Migrações aplicadas: `foundations` ✅ (3 tabelas c/ RLS; advisors de segurança: 0)
-- **Web (Vercel)**
+- **Web (Vercel)** — equipa `Carlos' projects` (`team_pt2s1UPA8HMgthir4RkqVnpi`)
+  - Método: **Import Git Repository** de `slamcoderpt/realstate` (CI/CD por push)
   - Ambiente Vercel: **Production**
   - URL de produção: `<POR PREENCHER>`
-- **Secrets** (Vercel → Environment Variables → Production):
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - `SUPABASE_SERVICE_ROLE_KEY` (secret server-side)
+- **Env vars** (Vercel → Settings → Environment Variables → Production; valores **não** aqui):
+  - `NEXT_PUBLIC_SUPABASE_URL` → `https://yhyyivzcugfjwjhazbto.supabase.co`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY` → publishable key do prod (pública)
+  - `SUPABASE_SERVICE_ROLE_KEY` → de Supabase → Settings → API (marcar **Sensitive**)
 
 ---
 
@@ -85,9 +86,10 @@ Região alvo dos projetos cloud: **`eu-central-1`** (UE).
 - [ ] **Auth do prod** (Dashboard → Authentication → Sign In / Up): desativar
       signups públicos; ativar MFA (TOTP). **← próximo passo manual**
 - [ ] **Criar `tilweni-staging`** (adiado; requer outro slot/compute).
-- [ ] **Vercel:** criar projeto ligado ao repo GitHub; configurar env vars por
-      ambiente (Preview → staging, Production → prod). As chaves (anon +
-      service_role) tiram-se de Dashboard → Project → Settings → API.
+- [ ] **Vercel (em curso):** Import Git de `slamcoderpt/realstate` na equipa
+      `Carlos' projects`; env vars Production → prod (Preview → staging quando
+      existir). As chaves (anon + service_role) tiram-se de Supabase →
+      Settings → API. Framework Next.js, Root `./`, defaults de build.
 - [ ] **Deploy de verificação:** abrir o URL → deve redirecionar para `/pt/login`
       e responder com o header de noindex:
       ```bash
