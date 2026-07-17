@@ -1,0 +1,13 @@
+{
+  "Home": {
+    "title": "TILWENI — Private Area",
+    "signedInAs": "Signed in as {email}"
+  },
+  "Login": {
+    "title": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "error": "Invalid credentials"
+  }
+}
