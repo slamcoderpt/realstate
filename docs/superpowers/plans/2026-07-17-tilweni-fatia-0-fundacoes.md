@@ -603,22 +603,45 @@ describe('audit_log (append-only)', () => {
 });
 ```
 
-- [ ] **Step 6: Adicionar scripts ao `package.json`**
+- [ ] **Step 6: Criar `tests/messages-parity.test.ts`**
+
+Contexto: a augmentation de tipos da Task 2 (`src/global.d.ts`) tipa as mensagens a partir de `messages/pt.json` apenas — `request.ts` carrega os ficheiros por import dinâmico, que o TypeScript não resolve estaticamente. Consequência verificada: apagar uma chave de `en.json` **não** falha o typecheck; a página devolve 200 e renderiza o literal `Home.title` a um investidor inglês. Este teste fecha esse buraco.
+
+```ts
+import {describe, it, expect} from 'vitest';
+import pt from '../messages/pt.json';
+import en from '../messages/en.json';
+
+function keyPaths(obj: unknown, prefix = ''): string[] {
+  if (typeof obj !== 'object' || obj === null) return [prefix];
+  return Object.entries(obj).flatMap(([k, v]) =>
+    keyPaths(v, prefix ? `${prefix}.${k}` : k)
+  );
+}
+
+describe('paridade de mensagens PT/EN', () => {
+  it('en.json tem exatamente as mesmas chaves que pt.json', () => {
+    expect(keyPaths(en).sort()).toEqual(keyPaths(pt).sort());
+  });
+});
+```
+
+- [ ] **Step 7: Adicionar scripts ao `package.json`**
 
 ```json
 "test": "vitest run",
 "test:watch": "vitest"
 ```
 
-- [ ] **Step 7: Correr os testes e confirmar que FALHAM (o schema ainda não existe)**
+- [ ] **Step 8: Correr os testes e confirmar que os RLS FALHAM (o schema ainda não existe) e que o de paridade PASSA**
 
 ```bash
 npm test
 ```
 
-Expected: FAIL — erros do tipo `relation "public.profiles" does not exist` / falha ao criar utilizadores de teste.
+Expected: `tests/rls/foundations.test.ts` FAIL — erros do tipo `relation "public.profiles" does not exist` / falha ao criar utilizadores de teste. `tests/messages-parity.test.ts` PASS.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add -A
@@ -992,23 +1015,30 @@ export async function updateSession(
 
 - [ ] **Step 6: Atualizar `src/middleware.ts` para compor i18n + sessão**
 
+**Atenção — correção ao matcher (achado da revisão da Task 2).** O matcher da Task 2 exclui `api`, o que é correto para i18n (não queremos `/api/x` redirecionado para `/pt/api/x`) mas **errado para o refresh de sessão do Supabase**: `updateSession` tem de correr também nas rotas `api`, caso contrário os cookies ficam obsoletos e os route handlers veem sessões expiradas. O matcher tem portanto de ser alargado para incluir `api`, e o handler passa a ramificar por path: sessão em tudo, i18n só em não-`api`.
+
 ```ts
 import createMiddleware from 'next-intl/middleware';
-import {type NextRequest} from 'next/server';
+import {NextResponse, type NextRequest} from 'next/server';
 import {routing} from './i18n/routing';
 import {updateSession} from '@/lib/supabase/middleware';
 
 const intlMiddleware = createMiddleware(routing);
 
 export default async function middleware(request: NextRequest) {
-  const response = intlMiddleware(request);
+  const isApi = /^\/api(?:\/|$)/.test(request.nextUrl.pathname);
+  const response = isApi ? NextResponse.next() : intlMiddleware(request);
   return await updateSession(request, response);
 }
 
 export const config = {
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
+  // Inclui /api (necessário para o refresh de sessão); exclui apenas assets
+  // internos do Next e ficheiros estáticos.
+  matcher: ['/((?!_next|_vercel|.*\\..*).*)']
 };
 ```
+
+Nota: `(?!api|...)` fazia match por prefixo, pelo que um hipotético `/apiary` também seria excluído. Ao gatear autenticação, uma exclusão acidental é um bypass — daí o `^\/api(?:\/|$)` explícito no handler.
 
 - [ ] **Step 7: Criar `src/app/[locale]/(auth)/login/page.tsx`**
 
