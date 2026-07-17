@@ -68,9 +68,12 @@ Região alvo dos projetos cloud: **`eu-central-1`** (UE).
   - Auth: signups **Off**, MFA TOTP **On** — ⚠️ **por configurar no dashboard**
   - Migrações aplicadas: `foundations` ✅ (3 tabelas c/ RLS; advisors de segurança: 0)
 - **Web (Vercel)** — equipa `Carlos' projects` (`team_pt2s1UPA8HMgthir4RkqVnpi`)
-  - Método: **Import Git Repository** de `slamcoderpt/realstate` (CI/CD por push)
+  - Projeto: `realstate` (`prj_oT6swWo8jHlbEZeJxRCIniZvITob`)
+  - Método: **Import Git Repository** de `slamcoderpt/realstate` (CI/CD por push a `main`)
   - Ambiente Vercel: **Production**
-  - URL de produção: `<POR PREENCHER>`
+  - URL de produção: `https://realstate-carlos-projects-c5e230d9.vercel.app`
+  - Verificado ✅: `/` → 307 `/pt/login`; login PT/EN a 200; `X-Robots-Tag: noindex, nofollow`; `/robots.txt` = `Disallow: /`
+  - ⚠️ Deployment Protection foi desligado para validação — **voltar a ligar** até go-live
 - **Env vars** (Vercel → Settings → Environment Variables → Production; valores **não** aqui):
   - `NEXT_PUBLIC_SUPABASE_URL` → `https://yhyyivzcugfjwjhazbto.supabase.co`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` → publishable key do prod (pública)
@@ -86,16 +89,14 @@ Região alvo dos projetos cloud: **`eu-central-1`** (UE).
 - [ ] **Auth do prod** (Dashboard → Authentication → Sign In / Up): desativar
       signups públicos; ativar MFA (TOTP). **← próximo passo manual**
 - [ ] **Criar `tilweni-staging`** (adiado; requer outro slot/compute).
-- [ ] **Vercel (em curso):** Import Git de `slamcoderpt/realstate` na equipa
-      `Carlos' projects`; env vars Production → prod (Preview → staging quando
-      existir). As chaves (anon + service_role) tiram-se de Supabase →
-      Settings → API. Framework Next.js, Root `./`, defaults de build.
-- [ ] **Deploy de verificação:** abrir o URL → deve redirecionar para `/pt/login`
-      e responder com o header de noindex:
-      ```bash
-      curl -sI <url> | grep -i x-robots
-      # esperado: X-Robots-Tag: noindex, nofollow
-      ```
+- [x] **Vercel:** Import Git de `slamcoderpt/realstate` na equipa `Carlos' projects`;
+      env vars Production → prod. Framework Next.js, Root `./`, defaults de build.
+- [x] **Deploy de verificação:** `/` → 307 `/pt/login`; login PT/EN a 200;
+      `X-Robots-Tag: noindex, nofollow`; `/robots.txt` = `Disallow: /`. ✅
+- [ ] **Reativar Deployment Protection** no Vercel (foi desligado p/ validação).
+- [ ] **Repo privado:** `slamcoderpt/realstate` está público — tornar privado se
+      não intencional (plano previa visibilidade privada).
+- [ ] **Env vars Preview → staging** quando `tilweni-staging` existir.
 
 ---
 
