@@ -78,6 +78,17 @@ Região alvo dos projetos cloud: **`eu-central-1`** (UE).
   - `NEXT_PUBLIC_SUPABASE_URL` → `https://yhyyivzcugfjwjhazbto.supabase.co`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` → publishable key do prod (pública)
   - `SUPABASE_SERVICE_ROLE_KEY` → de Supabase → Settings → API (marcar **Sensitive**)
+  - **⏳ Fatia 1 — email (SMTP 365), ainda por configurar:**
+    - `SMTP_HOST` → `smtp.office365.com`
+    - `SMTP_PORT` → `587`
+    - `SMTP_USER` → email da caixa TILWENI
+    - `SMTP_PASS` → password da caixa (marcar **Sensitive**)
+    - `SMTP_FROM` → remetente (se vazio, cai no `SMTP_USER`)
+    - `NEXT_PUBLIC_APP_URL` → domínio de produção (ex.: `https://app.tilweni.pt`);
+      usado para construir os links absolutos dos emails de convite. Se ausente,
+      a app cai no host do pedido (funciona, mas melhor ser explícito).
+  - **Nota:** sem os `SMTP_*`, criar convite continua a funcionar (o convite fica
+    válido); só o **envio do email** falha — o back-office permite reenviar depois.
 
 ---
 
@@ -87,7 +98,8 @@ Região alvo dos projetos cloud: **`eu-central-1`** (UE).
 - [x] **Aplicar a migração `foundations`** ao prod (via MCP `apply_migration`).
       3 tabelas com RLS; advisors de segurança sem problemas.
 - [ ] **Auth do prod** (Dashboard → Authentication → Sign In / Up): desativar
-      signups públicos; ativar MFA (TOTP). **← próximo passo manual**
+      signups públicos; confirmar MFA (TOTP) ativo. **← próximo passo manual**
+      (o registo já é só por convite ao nível da app; desativar signups é a 2ª camada.)
 - [ ] **Criar `tilweni-staging`** (adiado; requer outro slot/compute).
 - [x] **Vercel:** Import Git de `slamcoderpt/realstate` na equipa `Carlos' projects`;
       env vars Production → prod. Framework Next.js, Root `./`, defaults de build.
@@ -97,6 +109,21 @@ Região alvo dos projetos cloud: **`eu-central-1`** (UE).
 - [ ] **Repo privado:** `slamcoderpt/realstate` está público — tornar privado se
       não intencional (plano previa visibilidade privada).
 - [ ] **Env vars Preview → staging** quando `tilweni-staging` existir.
+
+### Fatia 1 — Convites + Registo + MFA
+
+- [x] **Migrações aplicadas a prod** (via MCP `apply_migration`):
+      `convites_email`, `grants_rls_roles`, `harden_definer_grants`.
+- [x] **MFA (TOTP)** implementada e forçada no 1º login (middleware `aal1 → /mfa`);
+      org em plano Pro → disponível em prod.
+- [x] **Advisors de segurança** revistos: 4 WARN de funções `SECURITY DEFINER` de
+      trigger endurecidas; restam 2 (intencionais — `current_user_role` é usada nas RLS).
+- [ ] **SMTP 365 — env vars no Vercel (Production)** — ver secção "Env vars" acima.
+      **← pendente do utilizador** (credenciais da caixa TILWENI). Sem isto o envio
+      de emails de convite/boas-vindas não funciona (o resto funciona).
+- [ ] **`NEXT_PUBLIC_APP_URL`** no Vercel (domínio de produção) — para links dos emails.
+- [ ] **Auth SMTP interno do Supabase** (opcional): apontar os emails do Supabase Auth
+      (ex.: reset de password) ao SMTP 365 no dashboard, para coerência de remetente.
 
 ---
 
