@@ -9,5 +9,25 @@
     "password": "Password",
     "submit": "Sign in",
     "error": "Invalid credentials"
+  },
+  "Convites": {
+    "title": "Invitations",
+    "subtitle": "Invite investors by email. Registration requires an invitation.",
+    "newInvite": "New invitation",
+    "fullName": "Full name",
+    "email": "Email",
+    "send": "Send invitation",
+    "status": "Status",
+    "expiresAt": "Expires",
+    "actions": "Actions",
+    "resend": "Resend",
+    "revoke": "Revoke",
+    "empty": "No invitations yet.",
+    "statusLabel": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    }
   }
 }

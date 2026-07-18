@@ -9,5 +9,25 @@
     "password": "Palavra-passe",
     "submit": "Entrar",
     "error": "Credenciais inválidas"
+  },
+  "Convites": {
+    "title": "Convites",
+    "subtitle": "Convide investidores por email. Só quem tem convite se pode registar.",
+    "newInvite": "Novo convite",
+    "fullName": "Nome completo",
+    "email": "Email",
+    "send": "Enviar convite",
+    "status": "Estado",
+    "expiresAt": "Validade",
+    "actions": "Ações",
+    "resend": "Reenviar",
+    "revoke": "Revogar",
+    "empty": "Ainda não há convites.",
+    "statusLabel": {
+      "pending": "Pendente",
+      "accepted": "Aceite",
+      "expired": "Expirado",
+      "revoked": "Revogado"
+    }
   }
 }
