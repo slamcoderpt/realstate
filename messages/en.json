@@ -48,5 +48,15 @@
       "email_taken": "An account with this email already exists.",
       "error": "Something went wrong. Please try again."
     }
+  },
+  "Mfa": {
+    "title": "Two-step verification",
+    "loading": "Preparing…",
+    "enrollHint": "Scan the QR code with your authenticator app (Google Authenticator, Authy, 1Password) and enter the 6-digit code.",
+    "secretLabel": "Or enter this key manually",
+    "challengeHint": "Enter the 6-digit code from your authenticator app.",
+    "code": "Code",
+    "verify": "Verify",
+    "error": "Invalid code. Please try again."
   }
 }

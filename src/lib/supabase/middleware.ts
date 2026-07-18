@@ -34,13 +34,28 @@ export async function updateSession(
 
   const {pathname} = request.nextUrl;
   const isPublic = PUBLIC_PATHS.some((re) => re.test(pathname));
+  const isMfaPage = /^\/(pt|en)\/mfa$/.test(pathname);
+  const locale = pathname.split('/')[1] === 'en' ? 'en' : 'pt';
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
-    const locale = pathname.split('/')[1] === 'en' ? 'en' : 'pt';
     url.pathname = `/${locale}/login`;
     url.search = '';
     return NextResponse.redirect(url);
+  }
+
+  // MFA obrigatória: um utilizador autenticado com sessão de 1º fator (aal1)
+  // tem de completar o enrolment/challenge TOTP antes de aceder ao resto da app.
+  // A própria página /mfa é a única exceção (senão haveria loop).
+  if (user && !isMfaPage) {
+    const {data: aal} =
+      await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.currentLevel === 'aal1') {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${locale}/mfa`;
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
   }
 
   return response;

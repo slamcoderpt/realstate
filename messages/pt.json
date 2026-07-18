@@ -48,5 +48,15 @@
       "email_taken": "Já existe uma conta com este email.",
       "error": "Ocorreu um erro. Tente novamente."
     }
+  },
+  "Mfa": {
+    "title": "Verificação em dois passos",
+    "loading": "A preparar…",
+    "enrollHint": "Leia o código QR com a sua app de autenticação (Google Authenticator, Authy, 1Password) e introduza o código de 6 dígitos.",
+    "secretLabel": "Ou insira esta chave manualmente",
+    "challengeHint": "Introduza o código de 6 dígitos da sua app de autenticação.",
+    "code": "Código",
+    "verify": "Confirmar",
+    "error": "Código inválido. Tente novamente."
   }
 }
