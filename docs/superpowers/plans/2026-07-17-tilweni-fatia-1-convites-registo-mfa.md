@@ -11,6 +11,16 @@
 **Spec:** `docs/superpowers/specs/2026-07-17-tilweni-fase-a-design.md` (§5.1, §5.9, §6, §7)
 **Depende de:** Fatia 0 (profiles, platform_settings, audit_log, auth, i18n, middleware) — concluída.
 
+**Progresso (validado em CI ✅):**
+- Task 1 — migração `invites` + `email_outbox` (RLS staff-only, audit em invites) — **feita**.
+- Task 2/3 — lib de token (sha256) + testes unitários e testes RLS — **feitos**.
+- **Fix transversal:** migração `20260718000000_grants_rls_roles.sql` — grants explícitos a
+  anon/authenticated/service_role. A RLS precisa de GRANT de tabela; o Cloud aplica-o
+  automaticamente mas o stack local do CI não. Sem isto, tudo dava 42501. (Bug latente da
+  Fatia 0 exposto pela primeira execução real do CI.)
+- **Falta:** Task 4 (email/SMTP), 5 (Server Action + back-office), 6 (aceitar convite),
+  7 (MFA), 8 (build/E2E), 9 (deploy).
+
 **Decisões de design desta fatia (a confirmar com o utilizador antes de implementar):**
 - **Token:** 32 bytes aleatórios (base64url) no link; na BD guarda-se apenas `sha256(token)`. Validação por hash. Um vazamento da BD não permite forjar aceitações.
 - **Processamento da fila (DECIDIDO):** `pg_cron` (grátis, cadência ao minuto) + `pg_net` `http_post` ao Route Handler `/api/cron/email` (protegido por `CRON_SECRET`). O *agendamento* é do Supabase (grátis em todos os planos; Vercel Cron no plano Hobby só corre 1×/dia), o *envio* fica no runtime Node do Next onde o Nodemailer+SMTP funcionam. Requer extensões `pg_cron` e `pg_net` (ativar na migração/dashboard).
