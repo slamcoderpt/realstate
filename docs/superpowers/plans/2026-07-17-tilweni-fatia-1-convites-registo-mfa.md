@@ -18,8 +18,17 @@
   anon/authenticated/service_role. A RLS precisa de GRANT de tabela; o Cloud aplica-o
   automaticamente mas o stack local do CI não. Sem isto, tudo dava 42501. (Bug latente da
   Fatia 0 exposto pela primeira execução real do CI.)
-- **Falta:** Task 4 (email/SMTP), 5 (Server Action + back-office), 6 (aceitar convite),
-  7 (MFA), 8 (build/E2E), 9 (deploy).
+- Task 4 — email **síncrono** (Nodemailer SMTP 365 + templates bilingues + `sendEmail`
+  com registo em `email_outbox`, injeção de deps para testes) — **feita**.
+- **Falta:** Task 5 (Server Action + back-office), 6 (aceitar convite), 7 (MFA),
+  8 (build/E2E), 9 (deploy).
+
+**DECISÃO revista (envio de email):** sem fila/poller. O volume é baixo (<20
+investidores), pelo que o envio é **síncrono** dentro da Server Action (Nodemailer).
+A `email_outbox` mantém-se como **registo** de cada envio e ponto de **reenvio manual**
+no back-office. Isto elimina `pg_cron`/`pg_net`/`CRON_SECRET` e o Route Handler de cron.
+**Parte legal** (textos de risco/iliquidez/termos) adiada: por agora um rodapé curto nos
+emails e uma checkbox única na aceitação; `terms_version` fica registado.
 
 **Decisões de design desta fatia (a confirmar com o utilizador antes de implementar):**
 - **Token:** 32 bytes aleatórios (base64url) no link; na BD guarda-se apenas `sha256(token)`. Validação por hash. Um vazamento da BD não permite forjar aceitações.

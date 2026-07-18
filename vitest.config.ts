@@ -4,7 +4,13 @@ import {fileURLToPath} from 'node:url';
 export default defineConfig({
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // `server-only` lança ao ser importado fora de um RSC; em Node/vitest não
+      // há bundle de cliente, por isso substituímos por um stub vazio para poder
+      // testar módulos server-side (ex.: lib/mail).
+      'server-only': fileURLToPath(
+        new URL('./tests/stubs/server-only.ts', import.meta.url)
+      )
     }
   },
   test: {

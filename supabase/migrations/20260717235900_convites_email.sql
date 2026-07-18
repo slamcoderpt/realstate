@@ -43,9 +43,12 @@ create policy "invites: staff lê"
   using (public.current_user_role() in ('admin', 'project_manager'));
 
 -- ---------- email_outbox ----------
--- Fila de email desacoplada do request: garante que nenhum envio se perde e que
--- fica registado (relevante para o log de convites). Processada por um poller
--- (pg_cron → Route Handler) com backoff exponencial e dead-letter.
+-- Registo de cada email enviado pela aplicação. O envio é SÍNCRONO (feito na
+-- própria Server Action com Nodemailer/SMTP); esta tabela não é uma fila
+-- processada por poller — serve de histórico e de ponto de reenvio manual pelo
+-- back-office em caso de falha. Os campos attempts/last_error registam a última
+-- tentativa; next_attempt_at/max_attempts ficam disponíveis caso se venha a
+-- adicionar reenvio automático no futuro.
 create table public.email_outbox (
   id uuid primary key default gen_random_uuid(),
   to_email text not null,
@@ -62,16 +65,16 @@ create table public.email_outbox (
   sent_at timestamptz
 );
 
--- Índice para o poller: apanha rapidamente o que está pronto a enviar.
+-- Índice para localizar rapidamente entradas por reenviar (falhadas/pendentes).
 create index email_outbox_due_idx
   on public.email_outbox (next_attempt_at)
   where status in ('queued', 'failed');
 
 alter table public.email_outbox enable row level security;
 
--- Leitura: apenas admin (dead-letter/monitorização no back-office). Escrita só
--- via service role. Sem audit trigger de propósito: o poller atualiza estado a
--- cada passagem e inundaria o audit_log — a fila é operacional, não probatória.
+-- Leitura: apenas admin (monitorização/reenvio no back-office). Escrita só via
+-- service role. Sem audit trigger de propósito: o estado do envio é operacional,
+-- não probatório, e inundaria o audit_log.
 create policy "email_outbox: admin lê"
   on public.email_outbox for select
   using (public.current_user_role() = 'admin');
