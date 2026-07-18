@@ -25,9 +25,23 @@
 - Task 6 — página `aceitar-convite` (valida token por hash, cria conta, regista IP +
   `terms_version`, invalida token, idempotente) + email de boas-vindas — **feita**.
 - Task 7 — MFA TOTP: middleware força `aal1 → /mfa`; página enrola (QR) ou desafia →
-  `aal2`. Teste de integração do fluxo com otplib (em vez de E2E Playwright) — **feita**.
-- **Falta:** Task 8 (E2E Playwright — opcional, ver nota), 9 (deploy: SMTP creds + plano
-  Pro para MFA + env vars + aplicar migração a staging/prod).
+  `aal2`. Teste de integração do fluxo com otplib — **feita**.
+- Task 8 — E2E Playwright: fluxo completo convite→registo→login→MFA→área privada num
+  browser real (Chromium), a correr no CI. **Feita e verde.**
+- Task 9 (deploy) — **parcial**: migrações `convites_email` + `grants_rls_roles` +
+  `harden_definer_grants` **aplicadas a prod** (via MCP); org confirmada em plano **Pro**
+  (MFA disponível). **Falta (requer utilizador):** credenciais SMTP 365 + env vars no
+  Vercel (`SMTP_*`, `NEXT_PUBLIC_APP_URL`).
+
+**Advisors de segurança (prod):** as 4 WARN de `audit_row_change`/`handle_new_user`
+(funções de trigger invocáveis via RPC) foram endurecidas (`revoke execute`). Restam 2 WARN
+de `current_user_role`, **intencionais**: é chamada nas políticas RLS, logo tem de ser
+executável por anon/authenticated (só devolve o role do próprio chamador).
+
+**Nota de drift repo↔prod:** o prod foi bootstrapado via MCP `apply_migration`, que atribui
+versões próprias (ex.: foundations é `20260717231137` em prod vs `20260717141427` no repo).
+As versões divergem dos nomes de ficheiro; um futuro `supabase db push` veria as migrações
+como "por aplicar". O schema está correto — é só o registo de versões que difere.
 
 **Notas de decisão (Tasks 5-7):**
 - **Ator no audit_log:** para convites, `invited_by` é a fonte autoritativa de QUEM (e vai
