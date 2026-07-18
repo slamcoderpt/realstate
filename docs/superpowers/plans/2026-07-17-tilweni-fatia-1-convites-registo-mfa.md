@@ -20,8 +20,23 @@
   Fatia 0 exposto pela primeira execução real do CI.)
 - Task 4 — email **síncrono** (Nodemailer SMTP 365 + templates bilingues + `sendEmail`
   com registo em `email_outbox`, injeção de deps para testes) — **feita**.
-- **Falta:** Task 5 (Server Action + back-office), 6 (aceitar convite), 7 (MFA),
-  8 (build/E2E), 9 (deploy).
+- Task 5 — Server Actions `createInvite`/`revoke`/`resend` + back-office `/convites` +
+  guard de staff; `invited_by` captura o ator (entra no payload do audit_log) — **feita**.
+- Task 6 — página `aceitar-convite` (valida token por hash, cria conta, regista IP +
+  `terms_version`, invalida token, idempotente) + email de boas-vindas — **feita**.
+- Task 7 — MFA TOTP: middleware força `aal1 → /mfa`; página enrola (QR) ou desafia →
+  `aal2`. Teste de integração do fluxo com otplib (em vez de E2E Playwright) — **feita**.
+- **Falta:** Task 8 (E2E Playwright — opcional, ver nota), 9 (deploy: SMTP creds + plano
+  Pro para MFA + env vars + aplicar migração a staging/prod).
+
+**Notas de decisão (Tasks 5-7):**
+- **Ator no audit_log:** para convites, `invited_by` é a fonte autoritativa de QUEM (e vai
+  no payload auditado). O fix geral de `actor_id` (para role-change/KYC via service_role)
+  fica para um passo dedicado — o PostgREST corre cada chamada em transação própria, pelo
+  que propagar o GUC exigiria RPC-com-escrita ou ligação pg direta; não se justifica agora.
+- **MFA:** o teste de integração cobre o mecanismo central (enroll→verify→aal2) sem a infra
+  de Playwright. Um E2E de browser completo pode entrar depois se se quiser cobrir a UI.
+- **Legal adiado:** checkbox única de termos; `terms_version` registado.
 
 **DECISÃO revista (envio de email):** sem fila/poller. O volume é baixo (<20
 investidores), pelo que o envio é **síncrono** dentro da Server Action (Nodemailer).
