@@ -9,5 +9,54 @@
     "password": "Password",
     "submit": "Sign in",
     "error": "Invalid credentials"
+  },
+  "Convites": {
+    "title": "Invitations",
+    "subtitle": "Invite investors by email. Registration requires an invitation.",
+    "newInvite": "New invitation",
+    "fullName": "Full name",
+    "email": "Email",
+    "send": "Send invitation",
+    "status": "Status",
+    "expiresAt": "Expires",
+    "actions": "Actions",
+    "resend": "Resend",
+    "revoke": "Revoke",
+    "empty": "No invitations yet.",
+    "statusLabel": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    }
+  },
+  "Aceitar": {
+    "title": "Create your account",
+    "subtitle": "Set your password to complete registration.",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "passwordHint": "At least 8 characters.",
+    "acceptTerms": "I accept the terms, and acknowledge the risk and illiquidity of the investment.",
+    "submit": "Create account",
+    "invalidTitle": "Invalid invitation",
+    "invalidBody": "This invitation does not exist, has already been used, or has expired. Please contact TILWENI for a new invitation.",
+    "errors": {
+      "terms": "You must accept the terms to continue.",
+      "weak_password": "The password must be at least 8 characters.",
+      "invalid": "This invitation is no longer valid.",
+      "email_taken": "An account with this email already exists.",
+      "error": "Something went wrong. Please try again."
+    }
+  },
+  "Mfa": {
+    "title": "Two-step verification",
+    "loading": "Preparing…",
+    "enrollHint": "Scan the QR code with your authenticator app (Google Authenticator, Authy, 1Password) and enter the 6-digit code.",
+    "secretLabel": "Or enter this key manually",
+    "challengeHint": "Enter the 6-digit code from your authenticator app.",
+    "code": "Code",
+    "verify": "Verify",
+    "error": "Invalid code. Please try again."
   }
 }

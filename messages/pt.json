@@ -9,5 +9,54 @@
     "password": "Palavra-passe",
     "submit": "Entrar",
     "error": "Credenciais inválidas"
+  },
+  "Convites": {
+    "title": "Convites",
+    "subtitle": "Convide investidores por email. Só quem tem convite se pode registar.",
+    "newInvite": "Novo convite",
+    "fullName": "Nome completo",
+    "email": "Email",
+    "send": "Enviar convite",
+    "status": "Estado",
+    "expiresAt": "Validade",
+    "actions": "Ações",
+    "resend": "Reenviar",
+    "revoke": "Revogar",
+    "empty": "Ainda não há convites.",
+    "statusLabel": {
+      "pending": "Pendente",
+      "accepted": "Aceite",
+      "expired": "Expirado",
+      "revoked": "Revogado"
+    }
+  },
+  "Aceitar": {
+    "title": "Criar a sua conta",
+    "subtitle": "Defina a sua palavra-passe para concluir o registo.",
+    "name": "Nome",
+    "email": "Email",
+    "password": "Palavra-passe",
+    "passwordHint": "Mínimo de 8 caracteres.",
+    "acceptTerms": "Aceito os termos, e reconheço os riscos e a iliquidez do investimento.",
+    "submit": "Criar conta",
+    "invalidTitle": "Convite inválido",
+    "invalidBody": "Este convite não existe, já foi usado ou expirou. Contacte a TILWENI para receber um novo convite.",
+    "errors": {
+      "terms": "Tem de aceitar os termos para continuar.",
+      "weak_password": "A palavra-passe deve ter pelo menos 8 caracteres.",
+      "invalid": "Este convite já não é válido.",
+      "email_taken": "Já existe uma conta com este email.",
+      "error": "Ocorreu um erro. Tente novamente."
+    }
+  },
+  "Mfa": {
+    "title": "Verificação em dois passos",
+    "loading": "A preparar…",
+    "enrollHint": "Leia o código QR com a sua app de autenticação (Google Authenticator, Authy, 1Password) e introduza o código de 6 dígitos.",
+    "secretLabel": "Ou insira esta chave manualmente",
+    "challengeHint": "Introduza o código de 6 dígitos da sua app de autenticação.",
+    "code": "Código",
+    "verify": "Confirmar",
+    "error": "Código inválido. Tente novamente."
   }
 }
