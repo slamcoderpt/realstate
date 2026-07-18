@@ -33,8 +33,20 @@ test('convite → registo → login → MFA → área privada', async ({page}) =
   });
   expect(seedError).toBeNull();
 
+  // DIAGNÓSTICO: confirmar que o seed está na BD que o servidor lê.
+  const {data: seedCheck, error: seedReadError} = await admin
+    .from('invites')
+    .select('token_hash, status, expires_at')
+    .eq('token_hash', tokenHash)
+    .single();
+  console.log('SEED_URL', url);
+  console.log('SEED_CHECK', JSON.stringify(seedCheck), 'err', JSON.stringify(seedReadError));
+
   // 1) Aceitar convite: definir password + aceitar termos.
   await page.goto(`/pt/aceitar-convite/${token}`);
+  await page.waitForLoadState('networkidle');
+  console.log('ACCEPT_URL', page.url());
+  console.log('ACCEPT_BODY', await page.locator('body').innerText());
   await expect(page.getByRole('heading', {name: 'Criar a sua conta'})).toBeVisible();
   await page.getByLabel('Palavra-passe').fill(PASSWORD);
   await page.getByRole('checkbox').check();
