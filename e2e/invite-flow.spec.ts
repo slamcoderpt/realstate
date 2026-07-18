@@ -46,9 +46,12 @@ test('convite → registo → login → MFA → área privada', async ({page}) =
   await page.getByLabel('Palavra-passe').fill(PASSWORD);
   await page.getByRole('button', {name: 'Entrar'}).click();
 
-  // 3) Middleware força enrolment MFA (aal1 → /mfa).
+  // 3) Middleware força enrolment MFA (aal1 → /mfa). O enrolment (QR + secret)
+  // resolve de forma assíncrona depois de montar a página.
   await page.waitForURL('**/pt/mfa**');
-  const secret = (await page.locator('code').innerText()).trim();
+  const secretLoc = page.locator('code');
+  await expect(secretLoc).toBeVisible();
+  const secret = (await secretLoc.innerText()).trim();
   expect(secret.length).toBeGreaterThan(0);
 
   // 4) Gerar o código TOTP e confirmar → sobe a aal2.
