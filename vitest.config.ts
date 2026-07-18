@@ -14,6 +14,8 @@ export default defineConfig({
     }
   },
   test: {
+    // Só os testes vitest em tests/. Os E2E (e2e/*.spec.ts) correm no Playwright.
+    include: ['tests/**/*.test.ts'],
     setupFiles: ['./tests/setup.ts'],
     testTimeout: 15000,
     fileParallelism: false
