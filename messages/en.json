@@ -29,5 +29,24 @@
       "expired": "Expired",
       "revoked": "Revoked"
     }
+  },
+  "Aceitar": {
+    "title": "Create your account",
+    "subtitle": "Set your password to complete registration.",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "passwordHint": "At least 8 characters.",
+    "acceptTerms": "I accept the terms, and acknowledge the risk and illiquidity of the investment.",
+    "submit": "Create account",
+    "invalidTitle": "Invalid invitation",
+    "invalidBody": "This invitation does not exist, has already been used, or has expired. Please contact TILWENI for a new invitation.",
+    "errors": {
+      "terms": "You must accept the terms to continue.",
+      "weak_password": "The password must be at least 8 characters.",
+      "invalid": "This invitation is no longer valid.",
+      "email_taken": "An account with this email already exists.",
+      "error": "Something went wrong. Please try again."
+    }
   }
 }

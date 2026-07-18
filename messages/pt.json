@@ -29,5 +29,24 @@
       "expired": "Expirado",
       "revoked": "Revogado"
     }
+  },
+  "Aceitar": {
+    "title": "Criar a sua conta",
+    "subtitle": "Defina a sua palavra-passe para concluir o registo.",
+    "name": "Nome",
+    "email": "Email",
+    "password": "Palavra-passe",
+    "passwordHint": "Mínimo de 8 caracteres.",
+    "acceptTerms": "Aceito os termos, e reconheço os riscos e a iliquidez do investimento.",
+    "submit": "Criar conta",
+    "invalidTitle": "Convite inválido",
+    "invalidBody": "Este convite não existe, já foi usado ou expirou. Contacte a TILWENI para receber um novo convite.",
+    "errors": {
+      "terms": "Tem de aceitar os termos para continuar.",
+      "weak_password": "A palavra-passe deve ter pelo menos 8 caracteres.",
+      "invalid": "Este convite já não é válido.",
+      "email_taken": "Já existe uma conta com este email.",
+      "error": "Ocorreu um erro. Tente novamente."
+    }
   }
 }
