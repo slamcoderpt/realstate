@@ -1,0 +1,219 @@
+import {describe, it, expect, beforeAll} from 'vitest';
+import {randomUUID} from 'node:crypto';
+import {admin, createTestUser} from '../rls/helpers';
+import {
+  submitKyc,
+  approveKyc,
+  rejectKyc,
+  listPendingKyc
+} from '@/lib/kyc/service';
+
+// Transporte de email falso: não envia SMTP real. db não é passado, pelo que o
+// serviço usa o admin client contra a BD local (email_outbox é gravado).
+const noopMail = {transport: {sendMail: async () => ({})}};
+
+function fakeFile(name: string): File {
+  return new File([new Uint8Array([1, 2, 3, 4])], name, {
+    type: 'application/pdf'
+  });
+}
+
+// Um investidor fresco por cenário: o índice único parcial impede duas
+// submissões 'submitted' em aberto para o mesmo utilizador.
+async function freshInvestor(): Promise<string> {
+  const run = randomUUID().slice(0, 8);
+  return (await createTestUser(`kyc-svc-${run}@test.local`)).id;
+}
+
+let reviewerId: string;
+
+beforeAll(async () => {
+  const run = randomUUID().slice(0, 8);
+  reviewerId = (await createTestUser(`kyc-rev-${run}@test.local`, 'admin')).id;
+});
+
+describe('submitKyc', () => {
+  it('cria submissão + documentos, sobe ficheiros e marca perfil submitted', async () => {
+    const investorId = await freshInvestor();
+    const res = await submitKyc(
+      {
+        userId: investorId,
+        citizenType: 'pt',
+        nif: '123456789',
+        fullName: 'Investidor Teste',
+        consentVersion: 'v1',
+        submittedIp: '203.0.113.1',
+        locale: 'pt',
+        documents: [{docType: 'cartao_cidadao', file: fakeFile('cc.pdf')}]
+      },
+      noopMail
+    );
+    expect(res.submissionId).toBeTruthy();
+
+    const {data: sub} = await admin
+      .from('kyc_submissions')
+      .select('status, nif')
+      .eq('id', res.submissionId)
+      .single();
+    expect(sub!.status).toBe('submitted');
+
+    const {data: docs} = await admin
+      .from('kyc_documents')
+      .select('storage_path')
+      .eq('submission_id', res.submissionId);
+    expect(docs!.length).toBe(1);
+
+    const path = docs![0].storage_path;
+    const {data: file} = await admin.storage.from('kyc').download(path);
+    expect(file).toBeTruthy();
+
+    const {data: profile} = await admin
+      .from('profiles')
+      .select('kyc_status')
+      .eq('id', investorId)
+      .single();
+    expect(profile!.kyc_status).toBe('submitted');
+  });
+
+  it('rejeita NIF inválido', async () => {
+    const investorId = await freshInvestor();
+    await expect(
+      submitKyc(
+        {
+          userId: investorId,
+          citizenType: 'pt',
+          nif: '111111111',
+          fullName: 'X',
+          consentVersion: 'v1',
+          locale: 'pt',
+          documents: [{docType: 'cartao_cidadao', file: fakeFile('cc.pdf')}]
+        },
+        noopMail
+      )
+    ).rejects.toThrow(/nif/i);
+  });
+
+  it('rejeita documento em falta', async () => {
+    const investorId = await freshInvestor();
+    await expect(
+      submitKyc(
+        {
+          userId: investorId,
+          citizenType: 'foreign',
+          nif: '123456789',
+          fullName: 'Estrangeiro',
+          consentVersion: 'v1',
+          locale: 'pt',
+          documents: [{docType: 'id', file: fakeFile('id.pdf')}] // falta comprovativo_morada
+        },
+        noopMail
+      )
+    ).rejects.toThrow(/comprovativo_morada|falta/i);
+  });
+});
+
+describe('approve/reject', () => {
+  it('approveKyc marca aprovado e o perfil approved', async () => {
+    const investorId = await freshInvestor();
+    const {submissionId} = await submitKyc(
+      {
+        userId: investorId,
+        citizenType: 'pt',
+        nif: '123456789',
+        fullName: 'Investidor Teste',
+        consentVersion: 'v1',
+        locale: 'pt',
+        documents: [{docType: 'cartao_cidadao', file: fakeFile('cc.pdf')}]
+      },
+      noopMail
+    );
+    await approveKyc({submissionId, reviewerId, locale: 'pt'}, noopMail);
+    const {data: sub} = await admin
+      .from('kyc_submissions')
+      .select('status, reviewed_by')
+      .eq('id', submissionId)
+      .single();
+    expect(sub!.status).toBe('approved');
+    expect(sub!.reviewed_by).toBe(reviewerId);
+    const {data: profile} = await admin
+      .from('profiles')
+      .select('kyc_status')
+      .eq('id', investorId)
+      .single();
+    expect(profile!.kyc_status).toBe('approved');
+  });
+
+  it('rejectKyc exige motivo e marca o perfil rejected', async () => {
+    const investorId = await freshInvestor();
+    const {submissionId} = await submitKyc(
+      {
+        userId: investorId,
+        citizenType: 'pt',
+        nif: '123456789',
+        fullName: 'Investidor Teste',
+        consentVersion: 'v1',
+        locale: 'pt',
+        documents: [{docType: 'cartao_cidadao', file: fakeFile('cc.pdf')}]
+      },
+      noopMail
+    );
+    await rejectKyc(
+      {submissionId, reviewerId, note: 'Documento ilegível', locale: 'pt'},
+      noopMail
+    );
+    const {data: sub} = await admin
+      .from('kyc_submissions')
+      .select('status, review_note')
+      .eq('id', submissionId)
+      .single();
+    expect(sub!.status).toBe('rejected');
+    expect(sub!.review_note).toBe('Documento ilegível');
+    const {data: profile} = await admin
+      .from('profiles')
+      .select('kyc_status')
+      .eq('id', investorId)
+      .single();
+    expect(profile!.kyc_status).toBe('rejected');
+  });
+
+  it('rejectKyc sem motivo lança', async () => {
+    const investorId = await freshInvestor();
+    const {submissionId} = await submitKyc(
+      {
+        userId: investorId,
+        citizenType: 'pt',
+        nif: '123456789',
+        fullName: 'Investidor Teste',
+        consentVersion: 'v1',
+        locale: 'pt',
+        documents: [{docType: 'cartao_cidadao', file: fakeFile('cc.pdf')}]
+      },
+      noopMail
+    );
+    await expect(
+      rejectKyc({submissionId, reviewerId, note: '  ', locale: 'pt'}, noopMail)
+    ).rejects.toThrow(/motivo/i);
+  });
+});
+
+describe('listPendingKyc', () => {
+  it('devolve submissões submitted', async () => {
+    const investorId = await freshInvestor();
+    await submitKyc(
+      {
+        userId: investorId,
+        citizenType: 'pt',
+        nif: '123456789',
+        fullName: 'Pendente',
+        consentVersion: 'v1',
+        locale: 'pt',
+        documents: [{docType: 'cartao_cidadao', file: fakeFile('cc.pdf')}]
+      },
+      noopMail
+    );
+    const rows = await listPendingKyc();
+    expect(Array.isArray(rows)).toBe(true);
+    expect(rows.every((r) => r.status === 'submitted')).toBe(true);
+    expect(rows.some((r) => r.user_id === investorId)).toBe(true);
+  });
+});
