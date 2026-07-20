@@ -163,5 +163,38 @@
     "orcamento_empreiteiro": "Contractor budget",
     "apolice_seguro": "Insurance policy",
     "outro": "Other"
+  },
+  "Subscription": {
+    "manifestTitle": "Express interest",
+    "amount": "Amount to invest (€)",
+    "minNotice": "Minimum amount: {min}.",
+    "consent": "I declare I have been informed and understand that this investment has no guaranteed capital, may result in the total or partial loss of the amount invested, is illiquid, and that the returns shown are estimates and not a guarantee of return.",
+    "consentRequired": "You must accept the declaration to continue.",
+    "submit": "Express interest",
+    "submitError": "Could not register. Check the details and try again.",
+    "belowMin": "The amount is below the required minimum.",
+    "already": "You already have an active subscription for this project.",
+    "myPosition": "My position",
+    "status_interesse": "Interest expressed",
+    "status_contrato_assinado": "Contract signed",
+    "status_fundos_confirmados": "Funds confirmed",
+    "status_cancelada": "Cancelled",
+    "positionAmount": "Amount: {amount}",
+    "contractPending": "Awaiting contract preparation by TILWENI.",
+    "cancel": "Cancel interest"
+  },
+  "SubscriptionAdmin": {
+    "title": "Subscriptions",
+    "empty": "No subscriptions for this project.",
+    "investor": "Investor",
+    "amount": "Amount",
+    "status": "Status",
+    "advance": "Advance to {state}",
+    "cancel": "Cancel",
+    "uploadContract": "Upload contract (PDF)",
+    "contract": "Contract",
+    "confirmRef": "Transfer reference",
+    "confirmFunds": "Confirm funds",
+    "maxReached": "Project investor limit reached."
   }
 }

@@ -163,5 +163,38 @@
     "orcamento_empreiteiro": "Orçamento do empreiteiro",
     "apolice_seguro": "Apólice de seguro",
     "outro": "Outro"
+  },
+  "Subscription": {
+    "manifestTitle": "Manifestar interesse",
+    "amount": "Montante a investir (€)",
+    "minNotice": "Montante mínimo: {min}.",
+    "consent": "Declaro ter sido informado e compreender que este investimento não tem capital garantido, pode resultar na perda total ou parcial do montante investido, é ilíquido, e que as rentabilidades apresentadas são estimativas e não constituem garantia de retorno.",
+    "consentRequired": "É necessário aceitar a declaração para continuar.",
+    "submit": "Manifestar interesse",
+    "submitError": "Não foi possível registar. Verifique os dados e tente novamente.",
+    "belowMin": "O montante é inferior ao mínimo exigido.",
+    "already": "Já tem uma subscrição ativa neste projeto.",
+    "myPosition": "A minha posição",
+    "status_interesse": "Interesse manifestado",
+    "status_contrato_assinado": "Contrato assinado",
+    "status_fundos_confirmados": "Fundos confirmados",
+    "status_cancelada": "Cancelada",
+    "positionAmount": "Montante: {amount}",
+    "contractPending": "Aguarda preparação do contrato pela TILWENI.",
+    "cancel": "Cancelar interesse"
+  },
+  "SubscriptionAdmin": {
+    "title": "Subscrições",
+    "empty": "Sem subscrições neste projeto.",
+    "investor": "Investidor",
+    "amount": "Montante",
+    "status": "Estado",
+    "advance": "Avançar para {state}",
+    "cancel": "Cancelar",
+    "uploadContract": "Carregar contrato (PDF)",
+    "contract": "Contrato",
+    "confirmRef": "Referência da transferência",
+    "confirmFunds": "Confirmar fundos",
+    "maxReached": "Limite de investidores do projeto atingido."
   }
 }
