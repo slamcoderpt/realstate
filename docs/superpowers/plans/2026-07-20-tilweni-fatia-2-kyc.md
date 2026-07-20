@@ -385,6 +385,13 @@ create table public.kyc_submissions (
 create index kyc_submissions_user_idx on public.kyc_submissions (user_id);
 create index kyc_submissions_status_idx on public.kyc_submissions (status);
 
+-- Um utilizador só pode ter UMA submissão em aberto (submitted) de cada vez.
+-- Guarda contra duplo-submit concorrente (race cross-tabela que o check em TS
+-- não garante; o service role bypassa RLS mas não índices únicos). Histórico
+-- preservado: 'rejected'/'approved' não são cobertas, logo resubmeter é permitido.
+create unique index kyc_submissions_one_open_per_user
+  on public.kyc_submissions (user_id) where status = 'submitted';
+
 alter table public.kyc_submissions enable row level security;
 
 -- Investidor lê as SUAS submissões.
@@ -408,7 +415,8 @@ create table public.kyc_documents (
   original_filename text not null,
   mime_type text not null,
   size_bytes integer not null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint kyc_size_positive check (size_bytes > 0)
 );
 
 create index kyc_documents_submission_idx on public.kyc_documents (submission_id);
@@ -491,6 +499,8 @@ git commit -m "feat(kyc): migração — submissions/documents com RLS+audit, bu
 
 **Files:**
 - Create: `src/lib/kyc/storage.ts`, `src/lib/kyc/service.ts`, `tests/integration/kyc.test.ts`
+
+> ⚠️ **Importante (índice único `kyc_submissions_one_open_per_user`):** a migração da Task 3 impede duas submissões `submitted` em aberto para o mesmo utilizador. Portanto, no teste abaixo, **cada `submitKyc` que fique em aberto tem de usar um investidor DIFERENTE** — ou aprovar/rejeitar a submissão anterior antes de submeter de novo com o mesmo utilizador. O exemplo abaixo cria um investidor fresco por cenário via `createTestUser`. Não reutilizar `investorId` em dois `submitKyc` seguidos sem decidir o primeiro.
 
 - [ ] **Step 1: Escrever o teste de integração `tests/integration/kyc.test.ts`**
 
