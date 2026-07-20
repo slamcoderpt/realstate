@@ -119,6 +119,7 @@
     "noPosition": "You have not subscribed to this project yet.",
     "subscriptionTitle": "Subscription",
     "subscribedOf": "{pct}% of the amount subscribed",
+    "investorsCount": "{n} investors subscribed {amount}",
     "riskNotice": "Investing involves the risk of total loss of capital, is illiquid and carries no guarantee of return. Figures shown are estimates."
   },
   "ProjectAdmin": {

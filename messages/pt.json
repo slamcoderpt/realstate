@@ -119,6 +119,7 @@
     "noPosition": "Ainda não subscreveu este projeto.",
     "subscriptionTitle": "Subscrição",
     "subscribedOf": "{pct}% do montante subscrito",
+    "investorsCount": "{n} investidores subscreveram {amount}",
     "riskNotice": "O investimento envolve risco de perda total do capital, é ilíquido e não beneficia de garantia de retorno. As rentabilidades apresentadas são estimativas."
   },
   "ProjectAdmin": {
