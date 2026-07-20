@@ -27,14 +27,18 @@ export async function GET(
     return NextResponse.json({error: 'not_found'}, {status: 404});
   }
 
-  // Auditar a consulta ANTES de emitir a URL (registo de acesso a documento).
-  await db.from('audit_log').insert({
+  // Auditar a consulta ANTES de emitir a URL. Fail-closed: se o registo não
+  // for gravado, NÃO se emite a URL — um documento nunca é servido sem rasto.
+  const {error: auditError} = await db.from('audit_log').insert({
     actor_id: staffId,
     action: 'view_document',
     entity_type: 'kyc_documents',
     entity_id: id,
     payload: {submission_id: doc.submission_id}
   });
+  if (auditError) {
+    return NextResponse.json({error: 'audit_failed'}, {status: 500});
+  }
 
   const url = await signedKycUrl(doc.storage_path, 60, db);
   return NextResponse.redirect(url);
