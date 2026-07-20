@@ -39,6 +39,7 @@ export default async function GestaoProjetosPage({
   const {locale} = await params;
   const loc: Locale = locale === 'en' ? 'en' : 'pt';
   const t = await getTranslations('ProjectAdmin');
+  const ts = await getTranslations('ProjectStatus');
   const projects = await listAllProjects();
 
   return (
@@ -146,7 +147,9 @@ export default async function GestaoProjetosPage({
               </TableCell>
               <TableCell>{p.location}</TableCell>
               <TableCell>
-                <Badge variant="secondary">{p.status}</Badge>
+                <Badge variant="secondary">
+                  {ts(p.status as 'preparacao')}
+                </Badge>
               </TableCell>
               <TableCell className="text-right">
                 {eur(Number(p.total_amount))}

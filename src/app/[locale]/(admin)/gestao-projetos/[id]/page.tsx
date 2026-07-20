@@ -71,6 +71,8 @@ export default async function EditarProjetoPage({
   const {locale, id} = await params;
   const loc: Locale = locale === 'en' ? 'en' : 'pt';
   const t = await getTranslations('ProjectAdmin');
+  const ts = await getTranslations('ProjectStatus');
+  const td = await getTranslations('ProjectDocType');
   const detail = await getProjectDetail(id, {staff: true});
   if (!detail) notFound();
 
@@ -88,7 +90,7 @@ export default async function EditarProjetoPage({
     <main className="mx-auto max-w-5xl space-y-8 p-6">
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
-        <Badge variant="secondary">{project.status}</Badge>
+        <Badge variant="secondary">{ts(project.status as 'preparacao')}</Badge>
       </div>
 
       <Card>
@@ -263,11 +265,13 @@ export default async function EditarProjetoPage({
               key={s}
               action={transitionProjectAction.bind(null, loc, id, s)}
             >
-              <Button type="submit">{s}</Button>
+              <Button type="submit">{ts(s as 'preparacao')}</Button>
             </form>
           ))}
           {nextStates(project.status).length === 0 && (
-            <p className="text-sm text-neutral-500">{project.status}</p>
+            <p className="text-sm text-neutral-500">
+              {ts(project.status as 'preparacao')}
+            </p>
           )}
         </div>
       </section>
@@ -305,7 +309,9 @@ export default async function EditarProjetoPage({
           {documents.map((doc) => (
             <li key={doc.id}>
               <span className="font-medium">{doc.original_filename}</span>{' '}
-              <Badge variant="outline">{doc.doc_type}</Badge>
+              <Badge variant="outline">
+                {td(doc.doc_type as 'caderneta_predial')}
+              </Badge>
             </li>
           ))}
         </ul>

@@ -148,5 +148,20 @@
     "uploadDoc": "Upload document",
     "transition": "Change status",
     "empty": "No projects. Create the first one."
+  },
+  "ProjectStatus": {
+    "preparacao": "In preparation",
+    "subscricao": "Open for subscription",
+    "subscrito": "Subscribed",
+    "em_curso": "In progress",
+    "concluido": "Completed",
+    "liquidado": "Liquidated"
+  },
+  "ProjectDocType": {
+    "caderneta_predial": "Property register",
+    "licenca": "Licence",
+    "orcamento_empreiteiro": "Contractor budget",
+    "apolice_seguro": "Insurance policy",
+    "outro": "Other"
   }
 }

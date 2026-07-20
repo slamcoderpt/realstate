@@ -15,16 +15,6 @@ function eur(v: number): string {
   }).format(v);
 }
 
-// TODO i18n: rótulos definitivos de doc_type são adicionados na tarefa final de
-// i18n; por agora um mapa PT inline.
-const DOC_TYPE_LABEL: Record<string, string> = {
-  caderneta_predial: 'Caderneta predial',
-  licenca: 'Licença',
-  orcamento_empreiteiro: 'Orçamento do empreiteiro',
-  apolice_seguro: 'Apólice de seguro',
-  outro: 'Outro'
-};
-
 function StatTile({label, value}: {label: string; value: string}) {
   return (
     <div className="rounded-lg border border-neutral-200 p-4">
@@ -43,6 +33,8 @@ export default async function ProjectDetailPage({
   const loc: Locale = locale === 'en' ? 'en' : 'pt';
   setRequestLocale(loc);
   const t = await getTranslations('ProjectDetail');
+  const ts = await getTranslations('ProjectStatus');
+  const td = await getTranslations('ProjectDocType');
 
   const session = await getSession();
   const staff = session ? isStaff(session.role) : false;
@@ -71,8 +63,8 @@ export default async function ProjectDetailPage({
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">{project.name}</h1>
         <p className="text-sm text-neutral-500">{project.location}</p>
-        <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs font-mono text-neutral-600">
-          {project.status}
+        <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+          {ts(project.status as 'preparacao')}
         </span>
         {project.description && (
           <p className="pt-2 text-sm leading-relaxed text-neutral-700">
@@ -141,7 +133,7 @@ export default async function ProjectDetailPage({
                 rel="noreferrer"
                 className="text-neutral-800 underline underline-offset-2 hover:text-neutral-950"
               >
-                {DOC_TYPE_LABEL[doc.doc_type] ?? doc.doc_type}
+                {td(doc.doc_type as 'caderneta_predial')}
               </a>
             </li>
           ))}

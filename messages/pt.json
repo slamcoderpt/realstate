@@ -148,5 +148,20 @@
     "uploadDoc": "Carregar documento",
     "transition": "Mudar estado",
     "empty": "Sem projetos. Crie o primeiro."
+  },
+  "ProjectStatus": {
+    "preparacao": "Em preparação",
+    "subscricao": "Em subscrição",
+    "subscrito": "Subscrito",
+    "em_curso": "Em curso",
+    "concluido": "Concluído",
+    "liquidado": "Liquidado"
+  },
+  "ProjectDocType": {
+    "caderneta_predial": "Caderneta predial",
+    "licenca": "Licença",
+    "orcamento_empreiteiro": "Orçamento do empreiteiro",
+    "apolice_seguro": "Apólice de seguro",
+    "outro": "Outro"
   }
 }
