@@ -37,6 +37,13 @@ create table public.kyc_submissions (
 create index kyc_submissions_user_idx on public.kyc_submissions (user_id);
 create index kyc_submissions_status_idx on public.kyc_submissions (status);
 
+-- Um utilizador só pode ter UMA submissão em aberto (submitted) de cada vez.
+-- Guarda contra duplo-submit concorrente que o check em TypeScript não garante
+-- (race cross-tabela). O histórico é preservado: submissões 'rejected'/'approved'
+-- não são cobertas pelo índice, pelo que uma resubmissão após rejeição é permitida.
+create unique index kyc_submissions_one_open_per_user
+  on public.kyc_submissions (user_id) where status = 'submitted';
+
 alter table public.kyc_submissions enable row level security;
 
 -- Investidor lê as SUAS submissões.
@@ -60,7 +67,8 @@ create table public.kyc_documents (
   original_filename text not null,
   mime_type text not null,
   size_bytes integer not null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint kyc_size_positive check (size_bytes > 0)
 );
 
 create index kyc_documents_submission_idx on public.kyc_documents (submission_id);
@@ -83,6 +91,12 @@ create policy "kyc_documents: staff lê"
   using (public.current_user_role() in ('admin', 'project_manager'));
 
 -- ---------- Auditoria (reutiliza audit_row_change da Fatia 0) ----------
+-- Nota de privacidade (consciente): audit_row_change() grava o snapshot completo
+-- da linha no audit_log, incluindo nif/full_name/submitted_ip. É intencional
+-- (valor probatório do registo), mas o audit_log é append-only e não cascata na
+-- eliminação do utilizador — o que pode complicar um pedido de eliminação (RGPD).
+-- Sujeito ao parecer da Fase 0: se este exigir minimização, criar um trigger de
+-- auditoria específico do KYC que exclua nif/full_name do payload.
 create trigger kyc_submissions_audit
   after insert or update or delete on public.kyc_submissions
   for each row execute function public.audit_row_change();
@@ -96,6 +110,9 @@ create trigger kyc_documents_audit
 -- authenticated ficam sem acesso. Todo o I/O (upload e leitura) é feito
 -- server-side com service role, que bypassa RLS de storage. A visualização
 -- passa por um Route Handler que audita a consulta antes de emitir URL assinada.
+-- Nota: os OBJETOS no bucket kyc não têm cascata com a eliminação da linha/utilizador
+-- (Postgres não gere ficheiros de Storage). Um futuro fluxo de eliminação de conta
+-- terá de apagar explicitamente os objetos do bucket (RGPD). TODO nessa fatia.
 insert into storage.buckets (id, name, public)
 values ('kyc', 'kyc', false)
 on conflict (id) do nothing;
