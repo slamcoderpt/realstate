@@ -1,9 +1,13 @@
 import {getTranslations, setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
 import {getProjectDetail} from '@/lib/projects/service';
+import {getMySubscription} from '@/lib/subscriptions/service';
 import {getSession, isStaff} from '@/lib/auth/staff';
 import {createAdminClient} from '@/lib/supabase/admin';
 import type {Locale} from '@/lib/mail/templates';
+import {ManifestForm} from './ManifestForm';
+import {cancelSubscriptionAction} from './actions';
+import {Button} from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,14 +39,18 @@ export default async function ProjectDetailPage({
   const t = await getTranslations('ProjectDetail');
   const ts = await getTranslations('ProjectStatus');
   const td = await getTranslations('ProjectDocType');
+  const tsub = await getTranslations('Subscription');
 
   const session = await getSession();
   const staff = session ? isStaff(session.role) : false;
 
-  const detail = await getProjectDetail(id, {staff});
+  const detail = await getProjectDetail(id, {staff, viewerId: session?.userId});
   if (!detail) notFound();
 
   const {project, budgetLines, photos, documents, indicators} = detail;
+
+  const mine =
+    session && !staff ? await getMySubscription(session.userId, id) : null;
 
   // Flag de progresso de subscrição.
   const db = createAdminClient();
@@ -52,6 +60,16 @@ export default async function ProjectDetailPage({
     .eq('key', 'show_subscription_progress')
     .single();
   const showProgress = flag?.value === true;
+
+  const {data: minSetting} = await db
+    .from('platform_settings')
+    .select('value')
+    .eq('key', 'min_subscription_amount')
+    .single();
+  const minAmount =
+    typeof minSetting?.value === 'number'
+      ? minSetting.value
+      : Number(minSetting?.value ?? 5000);
 
   const pct =
     project.total_amount > 0
@@ -167,9 +185,35 @@ export default async function ProjectDetailPage({
         </section>
       )}
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">{t('myPosition')}</h2>
-        <p className="text-sm text-neutral-500">{t('noPosition')}</p>
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">{tsub('myPosition')}</h2>
+        {mine ? (
+          <div className="space-y-2 text-sm">
+            <p className="font-mono">{tsub('positionAmount', {amount: eur(mine.amount)})}</p>
+            <p>
+              <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+                {tsub(`status_${mine.status}` as 'status_interesse')}
+              </span>
+            </p>
+            {mine.status === 'interesse' && (
+              <>
+                <p className="text-xs text-neutral-500">{tsub('contractPending')}</p>
+                <form action={cancelSubscriptionAction.bind(null, loc, id, mine.id)}>
+                  <Button type="submit" variant="outline" size="sm">
+                    {tsub('cancel')}
+                  </Button>
+                </form>
+              </>
+            )}
+          </div>
+        ) : !staff && project.status === 'subscricao' ? (
+          <div className="max-w-md space-y-2">
+            <h3 className="text-sm font-medium">{tsub('manifestTitle')}</h3>
+            <ManifestForm locale={loc} projectId={id} min={minAmount} />
+          </div>
+        ) : (
+          <p className="text-sm text-neutral-500">{t('noPosition')}</p>
+        )}
       </section>
 
       <p className="border-t border-neutral-200 pt-6 text-xs leading-relaxed text-neutral-400">

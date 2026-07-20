@@ -220,7 +220,7 @@ export async function listAllProjects(
 
 export async function getProjectDetail(
   id: string,
-  opts: {staff: boolean},
+  opts: {staff: boolean; viewerId?: string},
   db: SupabaseClient = createAdminClient()
 ): Promise<ProjectDetail | null> {
   const {data: project} = await db
@@ -231,7 +231,20 @@ export async function getProjectDetail(
   if (!project) return null;
   // Investidor só acede a projetos em subscricao (a RLS já protege as leituras
   // de investidor; aqui, chamado com service role, aplicamos a mesma regra).
-  if (!opts.staff && project.status !== 'subscricao') return null;
+  if (!opts.staff && project.status !== 'subscricao') {
+    // Um investidor com subscrição ativa vê a ficha mesmo fora de 'subscricao'.
+    let hasSub = false;
+    if (opts.viewerId) {
+      const {count} = await db
+        .from('subscriptions')
+        .select('id', {count: 'exact', head: true})
+        .eq('project_id', id)
+        .eq('user_id', opts.viewerId)
+        .neq('status', 'cancelada');
+      hasSub = (count ?? 0) > 0;
+    }
+    if (!hasSub) return null;
+  }
 
   const {data: rawBudgetLines} = await db
     .from('project_budget_lines')
