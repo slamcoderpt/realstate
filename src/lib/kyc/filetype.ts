@@ -5,6 +5,12 @@
  *
  * Puro e sem dependências: para 3 tipos, a verificação manual das assinaturas
  * é mais simples e com menos superfície de supply-chain do que uma lib.
+ *
+ * ATENÇÃO — manter em sincronia com `platform_settings.kyc_allowed_mime`: se
+ * essa allow-list ganhar um tipo novo (ex.: image/gif), é preciso acrescentar
+ * aqui a respetiva assinatura, senão o submitKyc rejeita 100% desses ficheiros
+ * (o sniff não reconhece → "tipo de ficheiro não permitido"). Falha fechada,
+ * mas seria uma armadilha funcional se os dois divergirem.
  */
 
 function startsWith(bytes: Uint8Array, sig: number[]): boolean {
