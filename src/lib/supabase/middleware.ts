@@ -35,41 +35,62 @@ export async function updateSession(
   const {pathname} = request.nextUrl;
   const isPublic = PUBLIC_PATHS.some((re) => re.test(pathname));
   const isMfaPage = /^\/(pt|en)\/mfa$/.test(pathname);
+  const isKycPage = /^\/(pt|en)\/kyc$/.test(pathname);
   const isApi = /^\/api(?:\/|$)/.test(pathname);
   const locale = pathname.split('/')[1] === 'en' ? 'en' : 'pt';
 
+  // Redirect que preserva os cookies encenados (NEXT_LOCALE + refresh Supabase).
+  function redirectTo(page: string) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${locale}/${page}`;
+    url.search = '';
+    return withStagedCookies(response, NextResponse.redirect(url));
+  }
+
   if (!user && !isPublic) {
-    // Um cliente `fetch()` não deve ser levado a seguir um redirect HTML de
-    // login: rotas /api sem sessão respondem 401 JSON.
+    // Um cliente `fetch()` não deve seguir um redirect HTML de login: /api
+    // sem sessão responde 401 JSON.
     if (isApi) {
       return withStagedCookies(
         response,
         NextResponse.json({error: 'unauthorized'}, {status: 401})
       );
     }
-    const url = request.nextUrl.clone();
-    url.pathname = `/${locale}/login`;
-    url.search = '';
-    return withStagedCookies(response, NextResponse.redirect(url));
+    return redirectTo('login');
   }
 
-  // MFA obrigatória: um utilizador autenticado com sessão de 1º fator (aal1)
-  // tem de completar o enrolment/challenge TOTP antes de aceder ao resto da app.
-  // A própria página /mfa é a única exceção (senão haveria loop).
-  if (user && !isMfaPage) {
+  if (user) {
     const {data: aal} =
       await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (aal?.currentLevel === 'aal1') {
+    const needsMfa = aal?.currentLevel === 'aal1';
+
+    // MFA obrigatória: aal1 tem de completar o enrolment/challenge TOTP antes de
+    // aceder ao resto da app. A própria /mfa é a exceção (senão haveria loop).
+    if (needsMfa && !isMfaPage) {
       if (isApi) {
         return withStagedCookies(
           response,
           NextResponse.json({error: 'mfa_required'}, {status: 401})
         );
       }
-      const url = request.nextUrl.clone();
-      url.pathname = `/${locale}/mfa`;
-      url.search = '';
-      return withStagedCookies(response, NextResponse.redirect(url));
+      return redirectTo('mfa');
+    }
+
+    // Gating de KYC: um investidor JÁ em aal2 (MFA resolvida) que ainda não
+    // tenha KYC aprovado é encaminhado para /kyc. Staff/auditor isentos. A
+    // própria /kyc é a exceção (senão haveria loop). Não se aplica a aal1 (o
+    // bloco acima trata disso primeiro) nem a /api (clientes fetch).
+    if (!needsMfa && !isKycPage && !isApi) {
+      const {data: profile} = await supabase
+        .from('profiles')
+        .select('role, kyc_status')
+        .eq('id', user.id)
+        .single();
+      const isInvestor = (profile?.role ?? 'investor') === 'investor';
+      const approved = profile?.kyc_status === 'approved';
+      if (isInvestor && !approved) {
+        return redirectTo('kyc');
+      }
     }
   }
 

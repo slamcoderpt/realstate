@@ -7,7 +7,7 @@ import {config} from 'dotenv';
 // Garante as chaves locais também no worker do Playwright.
 config({path: '.env.test'});
 
-// E2E do fluxo completo: convite → registo → login → enrolment MFA → home.
+// E2E do fluxo completo: convite → registo → login → enrolment MFA → gating KYC.
 // Semeia-se o convite diretamente na BD (service role) com um token conhecido,
 // para controlar o link sem depender do email.
 
@@ -59,7 +59,9 @@ test('convite → registo → login → MFA → área privada', async ({page}) =
   await page.getByLabel('Código').fill(authenticator.generate(secret));
   await page.getByRole('button', {name: 'Confirmar'}).click();
 
-  // 5) Chega à área privada, com sessão iniciada.
-  await page.waitForURL((u) => /\/pt(\/?$|\?)/.test(u.pathname + u.search));
-  await expect(page.getByText(email)).toBeVisible();
+  // 5) Com o KYC por completar, o middleware encaminha o investidor para /pt/kyc.
+  await page.waitForURL('**/pt/kyc**');
+  await expect(
+    page.getByText('Verificação de identidade', {exact: true})
+  ).toBeVisible();
 });
