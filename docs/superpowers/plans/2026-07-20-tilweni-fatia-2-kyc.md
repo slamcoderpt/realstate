@@ -42,7 +42,7 @@ src/app/[locale]/(auth)/kyc/
   page.tsx                             # Task 6: página do investidor (form)
   KycForm.tsx                          # Task 6: form client (citizen_type, NIF, uploads, consentimento)
   actions.ts                           # Task 6: submitKycAction (guard sessão) + upload via service role
-src/app/[locale]/(admin)/kyc/
+src/app/[locale]/(admin)/kyc-revisao/    # NÃO /kyc: colidiria com (auth)/kyc (route groups não mudam o URL)
   page.tsx                             # Task 8: fila de revisão (staff)
   actions.ts                           # Task 8: approveKycAction/rejectKycAction (requireStaff)
 src/app/api/kyc/document/[id]/route.ts # Task 8: Route Handler — audita consulta, emite URL assinada
@@ -1506,14 +1506,18 @@ export async function GET(
     return NextResponse.json({error: 'not_found'}, {status: 404});
   }
 
-  // Auditar a consulta ANTES de emitir a URL (registo de acesso a documento).
-  await db.from('audit_log').insert({
+  // Auditar a consulta ANTES de emitir a URL. Fail-closed: se o registo não for
+  // gravado, NÃO se emite a URL — um documento nunca é servido sem rasto.
+  const {error: auditError} = await db.from('audit_log').insert({
     actor_id: staffId,
     action: 'view_document',
     entity_type: 'kyc_documents',
     entity_id: id,
     payload: {submission_id: doc.submission_id}
   });
+  if (auditError) {
+    return NextResponse.json({error: 'audit_failed'}, {status: 500});
+  }
 
   const url = await signedKycUrl(doc.storage_path, 60, db);
   return NextResponse.redirect(url);
