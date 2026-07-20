@@ -195,6 +195,7 @@
     "contract": "Contract",
     "confirmRef": "Transfer reference",
     "confirmFunds": "Confirm funds",
-    "maxReached": "Project investor limit reached."
+    "maxReached": "Project investor limit reached.",
+    "actions": "Actions"
   }
 }

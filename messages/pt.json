@@ -195,6 +195,7 @@
     "contract": "Contrato",
     "confirmRef": "Referência da transferência",
     "confirmFunds": "Confirmar fundos",
-    "maxReached": "Limite de investidores do projeto atingido."
+    "maxReached": "Limite de investidores do projeto atingido.",
+    "actions": "Ações"
   }
 }

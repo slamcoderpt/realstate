@@ -74,7 +74,7 @@ export default async function SubscricoesPage({
               <TableHead className="text-right">{ta('amount')}</TableHead>
               <TableHead>{ta('status')}</TableHead>
               <TableHead>{ta('contract')}</TableHead>
-              <TableHead>{ta('advance', {state: ''})}</TableHead>
+              <TableHead>{ta('actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
