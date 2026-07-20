@@ -149,6 +149,41 @@ describe('transitionSubscription + agregados', () => {
       await admin.from('platform_settings').update({value: null}).eq('key', 'max_investors_per_project');
     }
   });
+
+  it('confirmações concorrentes do último lugar: só max passa (atómico)', async () => {
+    const projectId = await makeProject();
+    await admin.from('platform_settings').update({value: 1}).eq('key', 'max_investors_per_project');
+    try {
+      // 3 subscrições prontas a confirmar, mas o limite é 1.
+      const ids: string[] = [];
+      for (let i = 0; i < 3; i++) {
+        const u = await freshInvestor();
+        const {id} = await manifestInterest({userId: u, projectId, amount: 20000, consentVersion: 'v1'}, noopMail);
+        await transitionSubscription({id, to: 'contrato_assinado', reviewerId: staffId, locale: 'pt'}, noopMail);
+        ids.push(id);
+      }
+
+      // Confirmar TODAS concorrentemente: com max=1, só uma pode passar. A função
+      // DB serializa por projeto (advisory lock) — sem ela, várias contam 0 antes
+      // de qualquer update e o projeto excederia o limite.
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          transitionSubscription({id, to: 'fundos_confirmados', reviewerId: staffId, locale: 'pt'}, noopMail)
+        )
+      );
+      const fulfilled = results.filter((r) => r.status === 'fulfilled').length;
+      expect(fulfilled).toBe(1);
+
+      const {data: proj} = await admin
+        .from('projects')
+        .select('investor_count')
+        .eq('id', projectId)
+        .single();
+      expect(proj!.investor_count).toBe(1); // nunca max+1
+    } finally {
+      await admin.from('platform_settings').update({value: null}).eq('key', 'max_investors_per_project');
+    }
+  });
 });
 
 describe('cancelSubscription', () => {

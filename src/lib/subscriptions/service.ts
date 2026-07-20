@@ -139,36 +139,39 @@ export async function transitionSubscription(
   }
 
   if (input.to === 'fundos_confirmados') {
-    const max = await settingNumber(db, 'max_investors_per_project');
-    if (max !== null) {
-      const {count} = await db
-        .from('subscriptions')
-        .select('user_id', {count: 'exact', head: true})
-        .eq('project_id', cur.project_id)
-        .eq('status', 'fundos_confirmados');
-      if ((count ?? 0) + 1 > max) {
-        throw new Error(`limite de investidores atingido (max ${max})`);
-      }
+    // Confirmação atómica: a função DB serializa as confirmações do mesmo
+    // projeto (advisory lock) e verifica o limite dentro da transação, evitando
+    // a race do count-then-update. Ela própria valida o estado e o limite e
+    // lança em caso de conflito.
+    const {error} = await db.rpc('confirm_subscription_funds', {
+      p_id: input.id,
+      p_reviewer: input.reviewerId,
+      p_ref: input.confirmedRef ?? null
+    });
+    if (error) throw new Error(error.message);
+  } else {
+    const patch: Record<string, unknown> = {
+      status: input.to,
+      reviewed_by: input.reviewerId,
+      updated_at: new Date().toISOString()
+    };
+    if (input.to === 'contrato_assinado') {
+      patch.signed_at = new Date().toISOString();
+    }
+    // Guarda de estado: só transita se ainda estiver no estado que lemos. Se 0
+    // linhas forem afetadas, outra operação mudou o estado — conflito (não é
+    // sucesso silencioso, evita continuar como se tivesse transitado).
+    const {data: updated, error} = await db
+      .from('subscriptions')
+      .update(patch)
+      .eq('id', input.id)
+      .eq('status', cur.status)
+      .select('id');
+    if (error) throw new Error(`transição falhou: ${error.message}`);
+    if (!updated || updated.length === 0) {
+      throw new Error('conflito: a subscrição mudou de estado entretanto');
     }
   }
-
-  const patch: Record<string, unknown> = {
-    status: input.to,
-    reviewed_by: input.reviewerId,
-    updated_at: new Date().toISOString()
-  };
-  if (input.to === 'contrato_assinado') patch.signed_at = new Date().toISOString();
-  if (input.to === 'fundos_confirmados') {
-    patch.confirmed_at = new Date().toISOString();
-    patch.confirmed_ref = input.confirmedRef ?? null;
-  }
-
-  const {error} = await db
-    .from('subscriptions')
-    .update(patch)
-    .eq('id', input.id)
-    .eq('status', cur.status);
-  if (error) throw new Error(`transição falhou: ${error.message}`);
 
   await recomputeProjectAggregates(db, cur.project_id);
 
