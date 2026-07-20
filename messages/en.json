@@ -58,5 +58,34 @@
     "code": "Code",
     "verify": "Verify",
     "error": "Invalid code. Please try again."
+  },
+  "Kyc": {
+    "title": "Identity verification",
+    "intro": "To access the projects, we need to verify your identity.",
+    "citizenType": "Citizen type",
+    "citizenPt": "Portuguese citizen",
+    "citizenForeign": "Foreign citizen",
+    "fullName": "Full name",
+    "nif": "Tax number (NIF)",
+    "docCc": "Citizen Card (front and back)",
+    "docId": "Identity document",
+    "docAddress": "Proof of address",
+    "consent": "I authorise the processing of my documents for identity verification (KYC) purposes, under the privacy policy.",
+    "consentRequired": "You must give consent to continue.",
+    "submit": "Submit",
+    "submitError": "Could not submit. Check the details and try again.",
+    "pending": "Your documents are under review. We will notify you once verification is complete.",
+    "approved": "Your identity has been verified.",
+    "rejectedRetry": "Your previous verification was not accepted. Please resubmit your documents."
+  },
+  "KycAdmin": {
+    "title": "Pending identity verifications",
+    "empty": "No pending verifications.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "rejectReason": "Rejection reason",
+    "doc_cartao_cidadao": "Citizen Card",
+    "doc_id": "Identity document",
+    "doc_comprovativo_morada": "Proof of address"
   }
 }

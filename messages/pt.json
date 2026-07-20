@@ -58,5 +58,34 @@
     "code": "Código",
     "verify": "Confirmar",
     "error": "Código inválido. Tente novamente."
+  },
+  "Kyc": {
+    "title": "Verificação de identidade",
+    "intro": "Para aceder aos projetos, precisamos de verificar a sua identidade.",
+    "citizenType": "Tipo de cidadão",
+    "citizenPt": "Cidadão português",
+    "citizenForeign": "Cidadão estrangeiro",
+    "fullName": "Nome completo",
+    "nif": "NIF",
+    "docCc": "Cartão de Cidadão (frente e verso)",
+    "docId": "Documento de identificação",
+    "docAddress": "Comprovativo de morada",
+    "consent": "Autorizo o tratamento dos meus documentos para efeitos de verificação de identidade (KYC), nos termos da política de privacidade.",
+    "consentRequired": "É necessário dar o consentimento para continuar.",
+    "submit": "Submeter",
+    "submitError": "Não foi possível submeter. Verifique os dados e tente novamente.",
+    "pending": "Os seus documentos estão em análise. Notificamos assim que a verificação estiver concluída.",
+    "approved": "A sua identidade está verificada.",
+    "rejectedRetry": "A verificação anterior não foi aceite. Por favor volte a submeter os documentos."
+  },
+  "KycAdmin": {
+    "title": "Verificações de identidade pendentes",
+    "empty": "Sem verificações pendentes.",
+    "approve": "Aprovar",
+    "reject": "Rejeitar",
+    "rejectReason": "Motivo da rejeição",
+    "doc_cartao_cidadao": "Cartão de Cidadão",
+    "doc_id": "Documento de identificação",
+    "doc_comprovativo_morada": "Comprovativo de morada"
   }
 }
