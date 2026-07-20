@@ -19,20 +19,30 @@ export default function LoginPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // O atributo `disabled` só se aplica após re-render; guarda contra um
+    // duplo-submit rápido que dispararia o pedido duas vezes.
+    if (loading) return;
     setLoading(true);
     setError(false);
-    const supabase = createClient();
-    const {error: signInError} = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    setLoading(false);
-    if (signInError) {
+    try {
+      const supabase = createClient();
+      const {error: signInError} = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (signInError) {
+        setError(true);
+        return;
+      }
+      router.push('/');
+      router.refresh();
+    } catch {
+      // signInWithPassword pode lançar (ex.: falha de rede) em vez de resolver
+      // com {error}. Sem isto, `loading` ficaria preso a true para sempre.
       setError(true);
-      return;
+    } finally {
+      setLoading(false);
     }
-    router.push('/');
-    router.refresh();
   }
 
   return (
