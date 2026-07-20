@@ -73,6 +73,7 @@ export default async function EditarProjetoPage({
   const t = await getTranslations('ProjectAdmin');
   const ts = await getTranslations('ProjectStatus');
   const td = await getTranslations('ProjectDocType');
+  const tsa = await getTranslations('SubscriptionAdmin');
   const detail = await getProjectDetail(id, {staff: true});
   if (!detail) notFound();
 
@@ -91,6 +92,12 @@ export default async function EditarProjetoPage({
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
         <Badge variant="secondary">{ts(project.status as 'preparacao')}</Badge>
+        <a
+          href={`/${locale}/gestao-projetos/${id}/subscricoes`}
+          className="text-sm text-blue-700 underline"
+        >
+          {tsa('title')}
+        </a>
       </div>
 
       <Card>
