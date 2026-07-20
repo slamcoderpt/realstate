@@ -30,6 +30,20 @@ export async function GET(
     project?.status === 'subscricao' || isStaff(session.role);
   if (!visible) return NextResponse.json({error: 'forbidden'}, {status: 403});
 
+  // O catálogo é gated por KYC aprovado. A middleware salta o gate de KYC nas
+  // rotas /api, por isso reforçamos aqui: quem não é staff tem de ter KYC
+  // aprovado. ANTES do audit — não registamos um acesso que vamos negar.
+  if (!isStaff(session.role)) {
+    const {data: profile} = await db
+      .from('profiles')
+      .select('kyc_status')
+      .eq('id', session.userId)
+      .single();
+    if (profile?.kyc_status !== 'approved') {
+      return NextResponse.json({error: 'kyc_required'}, {status: 403});
+    }
+  }
+
   // Auditar a consulta ANTES de emitir a URL. Fail-closed.
   const {error: auditError} = await db.from('audit_log').insert({
     actor_id: session.userId,

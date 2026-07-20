@@ -327,7 +327,7 @@ export default async function EditarProjetoPage({
           >
             {DOC_TYPES.map((dt) => (
               <option key={dt} value={dt}>
-                {dt}
+                {td(dt as 'caderneta_predial')}
               </option>
             ))}
           </select>

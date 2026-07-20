@@ -96,6 +96,12 @@ export default async function ProjectDetailPage({
         />
         <StatTile label={t('roi')} value={`${indicators.roiPct.toFixed(1)}%`} />
         <StatTile label={t('margin')} value={eur(indicators.grossMargin)} />
+        <StatTile
+          label={t('acquisition')}
+          value={eur(project.acquisition_cost)}
+        />
+        <StatTile label={t('works')} value={eur(project.works_budget)} />
+        <StatTile label={t('arv')} value={eur(project.arv)} />
       </section>
 
       <section className="space-y-3">
