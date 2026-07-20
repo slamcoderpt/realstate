@@ -8,12 +8,11 @@ const investorB = `kyc-b-${run}@test.local`;
 const staff = `kyc-staff-${run}@test.local`;
 
 let idA: string;
-let idB: string;
 let subA: string;
 
 beforeAll(async () => {
   idA = (await createTestUser(investorA)).id;
-  idB = (await createTestUser(investorB)).id;
+  await createTestUser(investorB);
   await createTestUser(staff, 'admin');
 
   // Submissão do investidor A, criada com service role (como fará a Server Action).
