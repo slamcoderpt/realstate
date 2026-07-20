@@ -159,6 +159,65 @@ describe('submitKyc', () => {
     );
     expect(ok.submissionId).toBeTruthy();
   });
+
+  it('rejeita MIME fora da allow-list e não tranca a resubmissão', async () => {
+    const investorId = await freshInvestor();
+    const badFile = new File([new Uint8Array([1, 2, 3])], 'x.exe', {
+      type: 'application/octet-stream'
+    });
+    await expect(
+      submitKyc(
+        {
+          userId: investorId,
+          citizenType: 'pt',
+          nif: '123456789',
+          fullName: 'X',
+          consentVersion: 'v1',
+          locale: 'pt',
+          documents: [{docType: 'cartao_cidadao', file: badFile}]
+        },
+        noopMail
+      )
+    ).rejects.toThrow(/tipo de ficheiro/i);
+
+    // Validação é anterior ao insert → nada a limpar; resubmissão válida passa.
+    const ok = await submitKyc(
+      {
+        userId: investorId,
+        citizenType: 'pt',
+        nif: '123456789',
+        fullName: 'X',
+        consentVersion: 'v1',
+        locale: 'pt',
+        documents: [{docType: 'cartao_cidadao', file: fakeFile('cc.pdf')}]
+      },
+      noopMail
+    );
+    expect(ok.submissionId).toBeTruthy();
+  });
+
+  it('rejeita ficheiro acima do tamanho máximo', async () => {
+    const investorId = await freshInvestor();
+    // 9 MB > limite de 8 MB (kyc_max_file_mb). Buffer a zeros: barato de alocar,
+    // mas File.size reflete os bytes reais — exercita mesmo o ramo do tamanho.
+    const bigFile = new File([new Uint8Array(9 * 1024 * 1024)], 'grande.pdf', {
+      type: 'application/pdf'
+    });
+    await expect(
+      submitKyc(
+        {
+          userId: investorId,
+          citizenType: 'pt',
+          nif: '123456789',
+          fullName: 'X',
+          consentVersion: 'v1',
+          locale: 'pt',
+          documents: [{docType: 'cartao_cidadao', file: bigFile}]
+        },
+        noopMail
+      )
+    ).rejects.toThrow(/demasiado grande/i);
+  });
 });
 
 describe('approve/reject', () => {

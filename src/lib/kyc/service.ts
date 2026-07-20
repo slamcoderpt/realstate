@@ -55,6 +55,32 @@ export async function submitKyc(
     }
   }
 
+  // Política de ficheiros (server-side; o accept do cliente é contornável).
+  // Validado ANTES de qualquer insert/upload — um ficheiro inválido não deixa
+  // estado parcial nem submissão em aberto.
+  const {data: settings} = await db
+    .from('platform_settings')
+    .select('key, value')
+    .in('key', ['kyc_max_file_mb', 'kyc_allowed_mime']);
+  const maxMb = Number(
+    settings?.find((s) => s.key === 'kyc_max_file_mb')?.value ?? 8
+  );
+  const allowedMime = (settings?.find((s) => s.key === 'kyc_allowed_mime')
+    ?.value as string[] | undefined) ?? [
+    'application/pdf',
+    'image/jpeg',
+    'image/png'
+  ];
+  const maxBytes = maxMb * 1024 * 1024;
+  for (const doc of input.documents) {
+    if (!allowedMime.includes(doc.file.type)) {
+      throw new Error(`tipo de ficheiro não permitido: ${doc.file.type}`);
+    }
+    if (doc.file.size > maxBytes) {
+      throw new Error(`ficheiro demasiado grande: ${doc.docType}`);
+    }
+  }
+
   const {data: sub, error} = await db
     .from('kyc_submissions')
     .insert({

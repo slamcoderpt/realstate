@@ -19,6 +19,9 @@ export async function submitKycAction(
   if (!session) return {ok: false, error: 'sessão inválida'};
 
   const citizenType = formData.get('citizen_type') as CitizenType;
+  if (citizenType !== 'pt' && citizenType !== 'foreign') {
+    return {ok: false, error: 'invalid_citizen_type'};
+  }
   const nif = String(formData.get('nif') ?? '');
   const fullName = String(formData.get('full_name') ?? '');
   const consent = formData.get('consent') === 'on';
