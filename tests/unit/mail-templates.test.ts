@@ -51,3 +51,26 @@ describe('templates de email', () => {
     expect(html).toContain('&lt;script&gt;');
   });
 });
+
+describe('templates KYC', () => {
+  it('kyc_submitted rende em pt e en', () => {
+    const pt = renderTemplate('kyc_submitted', 'pt', {fullName: 'Ana'});
+    expect(pt.subject).toMatch(/KYC|verifica/i);
+    expect(pt.html).toContain('Ana');
+    const en = renderTemplate('kyc_submitted', 'en', {fullName: 'Ana'});
+    expect(en.html).toContain('Ana');
+  });
+
+  it('kyc_approved rende', () => {
+    const r = renderTemplate('kyc_approved', 'pt', {fullName: 'Ana'});
+    expect(r.html).toContain('Ana');
+  });
+
+  it('kyc_rejected inclui o motivo', () => {
+    const r = renderTemplate('kyc_rejected', 'pt', {
+      fullName: 'Ana',
+      reason: 'Documento ilegível'
+    });
+    expect(r.html).toContain('Documento ilegível');
+  });
+});

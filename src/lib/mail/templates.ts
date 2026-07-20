@@ -9,7 +9,12 @@
 
 export type Locale = 'pt' | 'en';
 
-export type TemplateName = 'invite' | 'welcome';
+export type TemplateName =
+  | 'invite'
+  | 'welcome'
+  | 'kyc_submitted'
+  | 'kyc_approved'
+  | 'kyc_rejected';
 
 export type InvitePayload = {
   fullName: string;
@@ -24,9 +29,16 @@ export type WelcomePayload = {
   loginUrl: string;
 };
 
+export type KycSubmittedPayload = {fullName: string};
+export type KycApprovedPayload = {fullName: string};
+export type KycRejectedPayload = {fullName: string; reason: string};
+
 export type TemplatePayloadMap = {
   invite: InvitePayload;
   welcome: WelcomePayload;
+  kyc_submitted: KycSubmittedPayload;
+  kyc_approved: KycApprovedPayload;
+  kyc_rejected: KycRejectedPayload;
 };
 
 export type RenderedEmail = {subject: string; html: string};
@@ -123,6 +135,73 @@ function renderWelcome(locale: Locale, p: WelcomePayload): RenderedEmail {
   };
 }
 
+function renderKycSubmitted(locale: Locale, p: KycSubmittedPayload): RenderedEmail {
+  if (locale === 'en') {
+    return {
+      subject: 'TILWENI — Identity verification received',
+      html: layout(
+        'en',
+        `<p style="font-size:15px;line-height:1.6">Hello ${esc(p.fullName)},</p>` +
+          `<p style="font-size:15px;line-height:1.6">We have received your identity verification documents. We will notify you by email as soon as the review is complete.</p>`
+      )
+    };
+  }
+  return {
+    subject: 'TILWENI — Verificação de identidade recebida',
+    html: layout(
+      'pt',
+      `<p style="font-size:15px;line-height:1.6">Olá ${esc(p.fullName)},</p>` +
+        `<p style="font-size:15px;line-height:1.6">Recebemos os seus documentos de verificação de identidade (KYC). Iremos notificá-lo por email assim que a análise estiver concluída.</p>`
+    )
+  };
+}
+
+function renderKycApproved(locale: Locale, p: KycApprovedPayload): RenderedEmail {
+  if (locale === 'en') {
+    return {
+      subject: 'TILWENI — Identity verification approved',
+      html: layout(
+        'en',
+        `<p style="font-size:15px;line-height:1.6">Hello ${esc(p.fullName)},</p>` +
+          `<p style="font-size:15px;line-height:1.6">Your identity verification has been approved. You now have access to the TILWENI private investor area.</p>`
+      )
+    };
+  }
+  return {
+    subject: 'TILWENI — Verificação de identidade aprovada',
+    html: layout(
+      'pt',
+      `<p style="font-size:15px;line-height:1.6">Olá ${esc(p.fullName)},</p>` +
+        `<p style="font-size:15px;line-height:1.6">A sua verificação de identidade foi aprovada. Já tem acesso à área privada de investidores da TILWENI.</p>`
+    )
+  };
+}
+
+function renderKycRejected(locale: Locale, p: KycRejectedPayload): RenderedEmail {
+  if (locale === 'en') {
+    return {
+      subject: 'TILWENI — Identity verification — action needed',
+      html: layout(
+        'en',
+        `<p style="font-size:15px;line-height:1.6">Hello ${esc(p.fullName)},</p>` +
+          `<p style="font-size:15px;line-height:1.6">We could not complete your identity verification for the following reason:</p>` +
+          `<p style="font-size:15px;line-height:1.6;font-weight:bold">${esc(p.reason)}</p>` +
+          `<p style="font-size:15px;line-height:1.6">Please resubmit the corrected documents so we can continue the review.</p>`
+      )
+    };
+  }
+  return {
+    subject: 'TILWENI — Verificação de identidade — ação necessária',
+    html: layout(
+      'pt',
+      `<p style="font-size:15px;line-height:1.6">Olá ${esc(p.fullName)},</p>` +
+        `<p style="font-size:15px;line-height:1.6">Não foi possível concluir a sua verificação de identidade pelo seguinte motivo:</p>` +
+        `<p style="font-size:15px;line-height:1.6;font-weight:bold">${esc(p.reason)}</p>` +
+        `<p style="font-size:15px;line-height:1.6">Por favor, submeta novamente os documentos corrigidos para prosseguirmos com a análise.</p>`
+    )
+  };
+}
+
 /** Renderiza um template pelo nome, com o payload correspondente. */
 export function renderTemplate<T extends TemplateName>(
   template: T,
@@ -134,6 +213,12 @@ export function renderTemplate<T extends TemplateName>(
       return renderInvite(locale, payload as InvitePayload);
     case 'welcome':
       return renderWelcome(locale, payload as WelcomePayload);
+    case 'kyc_submitted':
+      return renderKycSubmitted(locale, payload as KycSubmittedPayload);
+    case 'kyc_approved':
+      return renderKycApproved(locale, payload as KycApprovedPayload);
+    case 'kyc_rejected':
+      return renderKycRejected(locale, payload as KycRejectedPayload);
     default:
       throw new Error(`template desconhecido: ${template}`);
   }
