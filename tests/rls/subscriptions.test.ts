@@ -8,13 +8,12 @@ const invB = `sub-b-${run}@test.local`;
 const staff = `sub-staff-${run}@test.local`;
 
 let idA: string;
-let idB: string;
 let projectId: string;
 let subAId: string;
 
 beforeAll(async () => {
   idA = (await createTestUser(invA)).id;
-  idB = (await createTestUser(invB)).id;
+  await createTestUser(invB);
   await createTestUser(staff, 'admin');
 
   const {data: p, error: pe} = await admin
