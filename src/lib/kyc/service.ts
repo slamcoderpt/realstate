@@ -4,6 +4,7 @@ import {createAdminClient} from '@/lib/supabase/admin';
 import {sendEmail, type SendEmailDeps} from '@/lib/mail/outbox';
 import type {Locale} from '@/lib/mail/templates';
 import {isValidNif, normalizeNif} from './nif';
+import {detectMime} from './filetype';
 import {kycObjectPath, uploadKycFile} from './storage';
 
 /**
@@ -73,11 +74,20 @@ export async function submitKyc(
   ];
   const maxBytes = maxMb * 1024 * 1024;
   for (const doc of input.documents) {
+    if (doc.file.size > maxBytes) {
+      throw new Error(`ficheiro demasiado grande: ${doc.docType}`);
+    }
+    // 1) Tipo declarado tem de ser permitido (rejeição rápida e barata).
     if (!allowedMime.includes(doc.file.type)) {
       throw new Error(`tipo de ficheiro não permitido: ${doc.file.type}`);
     }
-    if (doc.file.size > maxBytes) {
-      throw new Error(`ficheiro demasiado grande: ${doc.docType}`);
+    // 2) Conteúdo REAL (magic-bytes) tem de corresponder a um tipo permitido.
+    //    Impede que um ficheiro (ex.: .exe) seja aceite só por vir rotulado com
+    //    um Content-Type falso — o accept do cliente e o file.type são forjáveis.
+    const head = new Uint8Array(await doc.file.slice(0, 8).arrayBuffer());
+    const realMime = detectMime(head);
+    if (!realMime || !allowedMime.includes(realMime)) {
+      throw new Error(`tipo de ficheiro não permitido: ${doc.file.type}`);
     }
   }
 

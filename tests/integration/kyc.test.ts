@@ -13,9 +13,12 @@ import {
 const noopMail = {transport: {sendMail: async () => ({})}};
 
 function fakeFile(name: string): File {
-  return new File([new Uint8Array([1, 2, 3, 4])], name, {
-    type: 'application/pdf'
-  });
+  // Assinatura de PDF válida (%PDF-1.4) para passar o sniffing de conteúdo do
+  // submitKyc — o file.type sozinho já não basta.
+  const pdfBytes = new Uint8Array([
+    0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34
+  ]);
+  return new File([pdfBytes], name, {type: 'application/pdf'});
 }
 
 // Um investidor fresco por cenário: o índice único parcial impede duas
@@ -181,6 +184,43 @@ describe('submitKyc', () => {
     ).rejects.toThrow(/tipo de ficheiro/i);
 
     // Validação é anterior ao insert → nada a limpar; resubmissão válida passa.
+    const ok = await submitKyc(
+      {
+        userId: investorId,
+        citizenType: 'pt',
+        nif: '123456789',
+        fullName: 'X',
+        consentVersion: 'v1',
+        locale: 'pt',
+        documents: [{docType: 'cartao_cidadao', file: fakeFile('cc.pdf')}]
+      },
+      noopMail
+    );
+    expect(ok.submissionId).toBeTruthy();
+  });
+
+  it('rejeita ficheiro rotulado como PDF mas com conteúdo não-PDF (spoofing)', async () => {
+    const investorId = await freshInvestor();
+    // Content-Type declarado permitido, mas os bytes não são de um PDF/JPEG/PNG.
+    const spoofed = new File([new Uint8Array([0x4d, 0x5a, 0x90, 0x00])], 'cc.pdf', {
+      type: 'application/pdf'
+    });
+    await expect(
+      submitKyc(
+        {
+          userId: investorId,
+          citizenType: 'pt',
+          nif: '123456789',
+          fullName: 'X',
+          consentVersion: 'v1',
+          locale: 'pt',
+          documents: [{docType: 'cartao_cidadao', file: spoofed}]
+        },
+        noopMail
+      )
+    ).rejects.toThrow(/tipo de ficheiro/i);
+
+    // Nada foi inserido (validação antes do insert) → resubmissão válida passa.
     const ok = await submitKyc(
       {
         userId: investorId,
