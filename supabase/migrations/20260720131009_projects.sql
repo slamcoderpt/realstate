@@ -10,8 +10,7 @@
 -- Nota RLS/anon: o catálogo é visível a todo o investidor convidado+KYC, i.e.
 -- a uma sessão AUTENTICADA — nunca a anon. As políticas de visibilidade por
 -- estado são `to authenticated`; o role staff é filtrado por current_user_role()
--- (null para anon → falso). anon recebe grant só para a RLS devolver 0 linhas
--- em vez de 42501 (mesma convenção de grants_rls_roles.sql).
+-- (null para anon → falso). A RLS é a ÚNICA barreira efetiva (ver nota nos grants).
 -- ============================================================
 
 create type public.project_status as enum (
@@ -152,26 +151,19 @@ create trigger project_documents_audit
   after insert or update or delete on public.project_documents
   for each row execute function public.audit_row_change();
 
--- ---------- Grants explícitos (convenção: cada tabela nova traz os seus) ----------
--- Ver grants_rls_roles.sql: a RLS filtra LINHAS mas o Postgres exige também um
--- GRANT ao nível da tabela. service_role (Server Actions/testes) tem DML total e
--- bypassa RLS. authenticated tem SELECT (a RLS restringe as linhas). anon tem
--- SELECT só para a RLS devolver 0 linhas (nunca 42501); as políticas de estado
--- são `to authenticated`, pelo que anon nunca vê catálogo.
+-- ---------- Grants (convenção do repo; ver 20260718000000_grants_rls_roles.sql) ----------
+-- NOTA importante: o Supabase concede DML COMPLETO a anon/authenticated (e
+-- service_role) via ALTER DEFAULT PRIVILEGES na criação da tabela. Não há aqui um
+-- `grant select` a anon/authenticated porque seria um no-op — não restringe nada.
+-- A RLS é a ÚNICA barreira efetiva: não existem políticas de escrita → toda a
+-- escrita por anon/authenticated é NEGADA pela RLS, e a leitura é `to authenticated`
+-- (anon não vê o catálogo). Quem escreve é o service_role, via Server Actions, que
+-- bypassa a RLS. O grant explícito abaixo garante o DML do service_role também num
+-- stack local fresco onde o auto-grant possa não ter corrido.
 grant select, insert, update, delete on public.projects             to service_role;
 grant select, insert, update, delete on public.project_budget_lines to service_role;
 grant select, insert, update, delete on public.project_photos       to service_role;
 grant select, insert, update, delete on public.project_documents    to service_role;
-
-grant select on public.projects             to authenticated;
-grant select on public.project_budget_lines to authenticated;
-grant select on public.project_photos       to authenticated;
-grant select on public.project_documents    to authenticated;
-
-grant select on public.projects             to anon;
-grant select on public.project_budget_lines to anon;
-grant select on public.project_photos       to anon;
-grant select on public.project_documents    to anon;
 
 -- ---------- Storage: buckets privados ----------
 -- Fotos e documentos servidos server-side com URLs assinadas. Documentos passam
