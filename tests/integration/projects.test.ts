@@ -1,21 +1,11 @@
-import {describe, it, expect, beforeAll} from 'vitest';
-import {randomUUID} from 'node:crypto';
-import {admin, createTestUser} from '../rls/helpers';
+import {describe, it, expect} from 'vitest';
 import {
   createProject,
-  updateProject,
   transitionProject,
   addBudgetLine,
   listCatalogue,
   getProjectDetail
 } from '@/lib/projects/service';
-
-const run = randomUUID().slice(0, 8);
-let staffId: string;
-
-beforeAll(async () => {
-  staffId = (await createTestUser(`proj-svc-${run}@test.local`, 'admin')).id;
-});
 
 describe('createProject / updateProject', () => {
   it('cria um projeto em preparacao e calcula indicadores no detalhe', async () => {
@@ -85,8 +75,6 @@ describe('addBudgetLine', () => {
     await addBudgetLine(id, {name: 'Demolições', phase: 'Preparação', budgetAmount: 3200});
     const detail = await getProjectDetail(id, {staff: true});
     expect(detail!.budgetLines).toHaveLength(1);
-    // Este stack devolve `numeric` como número JS (não string). Normalizamos
-    // com Number(...) para verificar o valor sem fixar o formato de serialização.
-    expect(Number(detail!.budgetLines[0].budget_amount)).toBe(3200);
+    expect(detail!.budgetLines[0].budget_amount).toBe(3200);
   });
 });

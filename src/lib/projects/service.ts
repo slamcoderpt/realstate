@@ -28,13 +28,13 @@ export type ProjectRow = {
   location: string;
   description: string;
   status: ProjectStatus;
-  acquisition_cost: string;
-  works_budget: string;
-  arv: string;
-  total_amount: string;
-  subscribed_amount: string;
+  acquisition_cost: number;
+  works_budget: number;
+  arv: number;
+  total_amount: number;
+  subscribed_amount: number;
   investor_count: number;
-  estimated_irr: string;
+  estimated_irr: number;
   term_months: number;
   cover_path: string | null;
   published_at: string | null;
@@ -44,7 +44,7 @@ export type BudgetLineRow = {
   id: string;
   name: string;
   phase: string;
-  budget_amount: string;
+  budget_amount: number;
   sort_order: number;
 };
 
@@ -63,8 +63,33 @@ export type ProjectDetail = {
   indicators: Indicators;
 };
 
-function num(v: string | number): number {
-  return typeof v === 'number' ? v : Number(v);
+// PostgREST serializa `numeric` de forma diferente conforme a versão/config
+// (string vs número JS). Normalizamos SEMPRE para número no serviço, para que o
+// comportamento seja idêntico no stack local e na cloud (versões distintas de
+// Supabase). `Number(...)` é no-op sobre um número e faz parse de uma string.
+function toProjectRow(raw: Record<string, unknown>): ProjectRow {
+  return {
+    ...(raw as ProjectRow),
+    acquisition_cost: Number(raw.acquisition_cost),
+    works_budget: Number(raw.works_budget),
+    arv: Number(raw.arv),
+    total_amount: Number(raw.total_amount),
+    subscribed_amount: Number(raw.subscribed_amount),
+    estimated_irr: Number(raw.estimated_irr)
+  };
+}
+
+function toBudgetLineRow(raw: Record<string, unknown>): BudgetLineRow {
+  return {...(raw as BudgetLineRow), budget_amount: Number(raw.budget_amount)};
+}
+
+function toCatalogueRow(raw: Record<string, unknown>): CatalogueRow {
+  return {
+    ...(raw as CatalogueRow),
+    total_amount: Number(raw.total_amount),
+    subscribed_amount: Number(raw.subscribed_amount),
+    estimated_irr: Number(raw.estimated_irr)
+  };
 }
 
 export async function createProject(
@@ -160,10 +185,10 @@ export type CatalogueRow = {
   name: string;
   location: string;
   status: ProjectStatus;
-  total_amount: string;
-  subscribed_amount: string;
+  total_amount: number;
+  subscribed_amount: number;
   investor_count: number;
-  estimated_irr: string;
+  estimated_irr: number;
   term_months: number;
   cover_path: string | null;
 };
@@ -179,7 +204,7 @@ export async function listCatalogue(
     .eq('status', 'subscricao')
     .order('published_at', {ascending: false});
   if (error) throw new Error(`listar catálogo falhou: ${error.message}`);
-  return (data ?? []) as CatalogueRow[];
+  return (data ?? []).map((r) => toCatalogueRow(r as Record<string, unknown>));
 }
 
 export async function listAllProjects(
@@ -190,7 +215,7 @@ export async function listAllProjects(
     .select('*')
     .order('created_at', {ascending: false});
   if (error) throw new Error(`listar projetos falhou: ${error.message}`);
-  return (data ?? []) as ProjectRow[];
+  return (data ?? []).map((r) => toProjectRow(r as Record<string, unknown>));
 }
 
 export async function getProjectDetail(
@@ -208,7 +233,7 @@ export async function getProjectDetail(
   // de investidor; aqui, chamado com service role, aplicamos a mesma regra).
   if (!opts.staff && project.status !== 'subscricao') return null;
 
-  const {data: budgetLines} = await db
+  const {data: rawBudgetLines} = await db
     .from('project_budget_lines')
     .select('id, name, phase, budget_amount, sort_order')
     .eq('project_id', id)
@@ -223,15 +248,20 @@ export async function getProjectDetail(
     .select('id, doc_type, original_filename')
     .eq('project_id', id);
 
+  const projectRow = toProjectRow(project as Record<string, unknown>);
+  const budgetLines = (rawBudgetLines ?? []).map((b) =>
+    toBudgetLineRow(b as Record<string, unknown>)
+  );
+
   const indicators = computeIndicators({
-    acquisitionCost: num(project.acquisition_cost),
-    worksBudget: num(project.works_budget),
-    arv: num(project.arv)
+    acquisitionCost: projectRow.acquisition_cost,
+    worksBudget: projectRow.works_budget,
+    arv: projectRow.arv
   });
 
   return {
-    project: project as ProjectRow,
-    budgetLines: (budgetLines ?? []) as BudgetLineRow[],
+    project: projectRow,
+    budgetLines,
     photos: (photos ?? []) as PhotoRow[],
     documents: (documents ?? []) as DocRow[],
     indicators
