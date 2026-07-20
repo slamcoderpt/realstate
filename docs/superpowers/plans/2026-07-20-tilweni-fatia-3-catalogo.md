@@ -1159,7 +1159,7 @@ export async function getProjectDetail(
 - [ ] **Step 5: Correr o teste de integração — PASSA**
 
 Run: `npm test -- tests/integration/projects.test.ts`
-Expected: PASS. (Nota: `numeric` do Postgres volta como string, ex.: `'3200.00'` — os testes assertam a string; se preferires número, converte no serviço, mas mantém consistência com o teste.)
+Expected: PASS. **Nota de portabilidade (importante):** o PostgREST serializa `numeric` de forma inconsistente entre versões (string vs número JS) — o stack local devolve **número**. Por isso o serviço **normaliza** todos os campos numéricos para `number` com `Number(...)` (no-op num número, parse numa string) antes de devolver, e os tipos das Row declaram `number`. Assim o slice é portável para o Supabase cloud independentemente da serialização. As páginas (Tasks 7/8) recebem `number` e formatam com `Intl.NumberFormat`/`.toLocaleString`.
 
 - [ ] **Step 6: Suite + typecheck + lint**
 
