@@ -73,28 +73,42 @@ export async function submitKyc(
     throw new Error(`criar submissão KYC falhou: ${error?.message ?? 'sem linha'}`);
   }
 
-  for (const doc of input.documents) {
-    const path = kycObjectPath(
-      input.userId,
-      sub.id,
-      doc.docType,
-      doc.file.name
-    );
-    await uploadKycFile(path, doc.file, db);
-    const {error: docError} = await db.from('kyc_documents').insert({
-      submission_id: sub.id,
-      doc_type: doc.docType,
-      storage_path: path,
-      original_filename: doc.file.name,
-      mime_type: doc.file.type,
-      size_bytes: doc.file.size
-    });
-    if (docError) {
-      throw new Error(`registar documento KYC falhou: ${docError.message}`);
+  try {
+    for (const doc of input.documents) {
+      const path = kycObjectPath(
+        input.userId,
+        sub.id,
+        doc.docType,
+        doc.file.name
+      );
+      await uploadKycFile(path, doc.file, db);
+      const {error: docError} = await db.from('kyc_documents').insert({
+        submission_id: sub.id,
+        doc_type: doc.docType,
+        storage_path: path,
+        original_filename: doc.file.name,
+        mime_type: doc.file.type,
+        size_bytes: doc.file.size
+      });
+      if (docError) {
+        throw new Error(`registar documento KYC falhou: ${docError.message}`);
+      }
     }
+  } catch (err) {
+    // Limpa a submissão em aberto para não trancar a resubmissão (o índice único
+    // parcial bloquearia uma nova). Os ficheiros já subidos ficam órfãos —
+    // aceite a esta escala; a limpeza de Storage fica para o fluxo de eliminação.
+    await db.from('kyc_submissions').delete().eq('id', sub.id);
+    throw err;
   }
 
-  await db.from('profiles').update({kyc_status: 'submitted'}).eq('id', input.userId);
+  const {error: profileError} = await db
+    .from('profiles')
+    .update({kyc_status: 'submitted'})
+    .eq('id', input.userId);
+  if (profileError) {
+    throw new Error(`atualizar perfil KYC falhou: ${profileError.message}`);
+  }
 
   await sendEmail(
     {
@@ -122,7 +136,13 @@ export async function approveKyc(
 ): Promise<void> {
   const db = deps.db ?? createAdminClient();
   const sub = await setDecision(db, input, 'approved', null);
-  await db.from('profiles').update({kyc_status: 'approved'}).eq('id', sub.user_id);
+  const {error: profileError} = await db
+    .from('profiles')
+    .update({kyc_status: 'approved'})
+    .eq('id', sub.user_id);
+  if (profileError) {
+    throw new Error(`atualizar perfil KYC falhou: ${profileError.message}`);
+  }
   await sendEmail(
     {
       toEmail: await userEmail(db, sub.user_id),
@@ -143,7 +163,13 @@ export async function rejectKyc(
   const note = input.note.trim();
   if (!note) throw new Error('rejeição exige motivo');
   const sub = await setDecision(db, input, 'rejected', note);
-  await db.from('profiles').update({kyc_status: 'rejected'}).eq('id', sub.user_id);
+  const {error: profileError} = await db
+    .from('profiles')
+    .update({kyc_status: 'rejected'})
+    .eq('id', sub.user_id);
+  if (profileError) {
+    throw new Error(`atualizar perfil KYC falhou: ${profileError.message}`);
+  }
   await sendEmail(
     {
       toEmail: await userEmail(db, sub.user_id),
@@ -210,5 +236,7 @@ async function setDecision(
 
 async function userEmail(db: SupabaseClient, userId: string): Promise<string> {
   const {data} = await db.auth.admin.getUserById(userId);
-  return data.user?.email ?? '';
+  const email = data.user?.email;
+  if (!email) throw new Error(`utilizador ${userId} sem email`);
+  return email;
 }

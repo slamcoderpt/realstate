@@ -110,6 +110,55 @@ describe('submitKyc', () => {
       )
     ).rejects.toThrow(/comprovativo_morada|falta/i);
   });
+
+  it('limpa a submissão se o upload falhar (não tranca a resubmissão)', async () => {
+    const investorId = await freshInvestor();
+    const failingStorage = {
+      from: () => ({
+        upload: async () => ({
+          data: null,
+          error: {message: 'storage indisponível'}
+        }),
+        createSignedUrl: async () => ({data: null, error: {message: 'x'}})
+      })
+    };
+    const stub = new Proxy(admin, {
+      get(target, prop) {
+        if (prop === 'storage') return failingStorage;
+        return (target as never)[prop];
+      }
+    }) as unknown as import('@supabase/supabase-js').SupabaseClient;
+
+    await expect(
+      submitKyc(
+        {
+          userId: investorId,
+          citizenType: 'pt',
+          nif: '123456789',
+          fullName: 'X',
+          consentVersion: 'v1',
+          locale: 'pt',
+          documents: [{docType: 'cartao_cidadao', file: fakeFile('cc.pdf')}]
+        },
+        {db: stub, transport: {sendMail: async () => ({})}}
+      )
+    ).rejects.toThrow();
+
+    // Não deve restar submissão em aberto → resubmissão válida passa.
+    const ok = await submitKyc(
+      {
+        userId: investorId,
+        citizenType: 'pt',
+        nif: '123456789',
+        fullName: 'X',
+        consentVersion: 'v1',
+        locale: 'pt',
+        documents: [{docType: 'cartao_cidadao', file: fakeFile('cc2.pdf')}]
+      },
+      noopMail
+    );
+    expect(ok.submissionId).toBeTruthy();
+  });
 });
 
 describe('approve/reject', () => {
