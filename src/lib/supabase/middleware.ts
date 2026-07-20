@@ -35,13 +35,22 @@ export async function updateSession(
   const {pathname} = request.nextUrl;
   const isPublic = PUBLIC_PATHS.some((re) => re.test(pathname));
   const isMfaPage = /^\/(pt|en)\/mfa$/.test(pathname);
+  const isApi = /^\/api(?:\/|$)/.test(pathname);
   const locale = pathname.split('/')[1] === 'en' ? 'en' : 'pt';
 
   if (!user && !isPublic) {
+    // Um cliente `fetch()` não deve ser levado a seguir um redirect HTML de
+    // login: rotas /api sem sessão respondem 401 JSON.
+    if (isApi) {
+      return withStagedCookies(
+        response,
+        NextResponse.json({error: 'unauthorized'}, {status: 401})
+      );
+    }
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/login`;
     url.search = '';
-    return NextResponse.redirect(url);
+    return withStagedCookies(response, NextResponse.redirect(url));
   }
 
   // MFA obrigatória: um utilizador autenticado com sessão de 1º fator (aal1)
@@ -51,12 +60,28 @@ export async function updateSession(
     const {data: aal} =
       await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (aal?.currentLevel === 'aal1') {
+      if (isApi) {
+        return withStagedCookies(
+          response,
+          NextResponse.json({error: 'mfa_required'}, {status: 401})
+        );
+      }
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/mfa`;
       url.search = '';
-      return NextResponse.redirect(url);
+      return withStagedCookies(response, NextResponse.redirect(url));
     }
   }
 
   return response;
+}
+
+// Preserva os cookies já encenados em `staged` (pelo intlMiddleware, ex.:
+// NEXT_LOCALE, e pelo refresh do Supabase, ex.: limpeza/rotação de token) ao
+// devolver uma resposta nova. Uma NextResponse.redirect/json criada de raiz
+// descarta silenciosamente esses cookies — o footgun clássico do Supabase SSR,
+// aqui presente tanto no redirect de login como no de /mfa.
+function withStagedCookies(staged: NextResponse, out: NextResponse) {
+  staged.cookies.getAll().forEach((cookie) => out.cookies.set(cookie));
+  return out;
 }
