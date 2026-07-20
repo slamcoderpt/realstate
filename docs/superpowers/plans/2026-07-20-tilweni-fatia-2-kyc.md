@@ -79,7 +79,7 @@ describe('isValidNif', () => {
   it('aceita NIFs válidos (checksum correto)', () => {
     // NIFs com dígito de controlo válido
     expect(isValidNif('123456789')).toBe(true);
-    expect(isValidNif('287024054')).toBe(true); // primeiro dígito 2 (singular)
+    expect(isValidNif('287024059')).toBe(true); // primeiro dígito 2 (singular)
     expect(isValidNif('501442600')).toBe(true); // 5 (pessoa coletiva)
   });
 
