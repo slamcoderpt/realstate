@@ -74,3 +74,20 @@ describe('templates KYC', () => {
     expect(r.html).toContain('Documento ilegível');
   });
 });
+
+describe('templates subscrição', () => {
+  it('subscription_interest rende', () => {
+    const r = renderTemplate('subscription_interest', 'pt', {
+      projectName: 'Campelos',
+      investorName: 'Ana',
+      amount: '20 000 €'
+    });
+    expect(r.html).toContain('Campelos');
+    expect(r.html).toContain('Ana');
+  });
+
+  it('subscription_confirmed rende', () => {
+    const r = renderTemplate('subscription_confirmed', 'pt', {amount: '20 000 €'});
+    expect(r.html).toContain('20 000');
+  });
+});

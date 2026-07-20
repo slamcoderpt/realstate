@@ -14,7 +14,9 @@ export type TemplateName =
   | 'welcome'
   | 'kyc_submitted'
   | 'kyc_approved'
-  | 'kyc_rejected';
+  | 'kyc_rejected'
+  | 'subscription_interest'
+  | 'subscription_confirmed';
 
 export type InvitePayload = {
   fullName: string;
@@ -33,12 +35,21 @@ export type KycSubmittedPayload = {fullName: string};
 export type KycApprovedPayload = {fullName: string};
 export type KycRejectedPayload = {fullName: string; reason: string};
 
+export type SubscriptionInterestPayload = {
+  projectName: string;
+  investorName: string;
+  amount: string;
+};
+export type SubscriptionConfirmedPayload = {amount: string};
+
 export type TemplatePayloadMap = {
   invite: InvitePayload;
   welcome: WelcomePayload;
   kyc_submitted: KycSubmittedPayload;
   kyc_approved: KycApprovedPayload;
   kyc_rejected: KycRejectedPayload;
+  subscription_interest: SubscriptionInterestPayload;
+  subscription_confirmed: SubscriptionConfirmedPayload;
 };
 
 export type RenderedEmail = {subject: string; html: string};
@@ -202,6 +213,62 @@ function renderKycRejected(locale: Locale, p: KycRejectedPayload): RenderedEmail
   };
 }
 
+function renderSubscriptionInterest(
+  locale: Locale,
+  p: SubscriptionInterestPayload
+): RenderedEmail {
+  if (locale === 'en') {
+    return {
+      subject: 'TILWENI — New expression of interest',
+      html: layout(
+        'en',
+        `<p style="font-size:15px;line-height:1.6">Hello,</p>` +
+          `<p style="font-size:15px;line-height:1.6">${esc(
+            p.investorName
+          )} expressed interest of ${esc(p.amount)} in the project ${esc(p.projectName)}.</p>`
+      )
+    };
+  }
+  return {
+    subject: 'TILWENI — Nova manifestação de interesse',
+    html: layout(
+      'pt',
+      `<p style="font-size:15px;line-height:1.6">Olá,</p>` +
+        `<p style="font-size:15px;line-height:1.6">${esc(
+          p.investorName
+        )} manifestou interesse de ${esc(p.amount)} no projeto ${esc(p.projectName)}.</p>`
+    )
+  };
+}
+
+function renderSubscriptionConfirmed(
+  locale: Locale,
+  p: SubscriptionConfirmedPayload
+): RenderedEmail {
+  if (locale === 'en') {
+    return {
+      subject: 'TILWENI — Funds confirmed',
+      html: layout(
+        'en',
+        `<p style="font-size:15px;line-height:1.6">Hello,</p>` +
+          `<p style="font-size:15px;line-height:1.6">We have confirmed receipt of your investment of ${esc(
+            p.amount
+          )}. Thank you.</p>`
+      )
+    };
+  }
+  return {
+    subject: 'TILWENI — Fundos confirmados',
+    html: layout(
+      'pt',
+      `<p style="font-size:15px;line-height:1.6">Olá,</p>` +
+        `<p style="font-size:15px;line-height:1.6">Confirmámos a receção do seu investimento de ${esc(
+          p.amount
+        )}. Obrigado.</p>`
+    )
+  };
+}
+
 /** Renderiza um template pelo nome, com o payload correspondente. */
 export function renderTemplate<T extends TemplateName>(
   template: T,
@@ -219,6 +286,10 @@ export function renderTemplate<T extends TemplateName>(
       return renderKycApproved(locale, payload as KycApprovedPayload);
     case 'kyc_rejected':
       return renderKycRejected(locale, payload as KycRejectedPayload);
+    case 'subscription_interest':
+      return renderSubscriptionInterest(locale, payload as SubscriptionInterestPayload);
+    case 'subscription_confirmed':
+      return renderSubscriptionConfirmed(locale, payload as SubscriptionConfirmedPayload);
     default:
       throw new Error(`template desconhecido: ${template}`);
   }
