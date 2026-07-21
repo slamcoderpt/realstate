@@ -2,6 +2,7 @@
 
 import {headers} from 'next/headers';
 import {getSession} from '@/lib/auth/staff';
+import {clientIpFromHeaders} from '@/lib/auth/request';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {submitKyc, type CitizenType, type KycDocType} from '@/lib/kyc/service';
 import type {Locale} from '@/lib/mail/templates';
@@ -41,8 +42,7 @@ export async function submitKycAction(
   const consentVersion =
     typeof setting?.value === 'string' ? setting.value : 'v1';
 
-  const ip =
-    (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined;
+  const ip = clientIpFromHeaders(await headers()) ?? undefined;
 
   try {
     await submitKyc({

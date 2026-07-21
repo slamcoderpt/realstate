@@ -3,6 +3,7 @@
 import {headers} from 'next/headers';
 import {revalidatePath} from 'next/cache';
 import {getSession} from '@/lib/auth/staff';
+import {clientIpFromHeaders} from '@/lib/auth/request';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {manifestInterest, cancelSubscription} from '@/lib/subscriptions/service';
 
@@ -31,8 +32,7 @@ export async function manifestInterestAction(
   const consentVersion =
     typeof setting?.value === 'string' ? setting.value : 'v1';
 
-  const ip =
-    (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined;
+  const ip = clientIpFromHeaders(await headers()) ?? undefined;
 
   try {
     await manifestInterest({

@@ -3,6 +3,7 @@
 import {headers} from 'next/headers';
 import {redirect} from '@/i18n/navigation';
 import {acceptInvite, MIN_PASSWORD_LENGTH} from '@/lib/invites/accept';
+import {clientIpFromHeaders} from '@/lib/auth/request';
 import type {Locale} from '@/lib/mail/templates';
 
 export type AcceptError =
@@ -12,12 +13,6 @@ export type AcceptError =
   | 'email_taken'
   | 'error';
 export type AcceptState = {error: AcceptError | null};
-
-function firstIp(forwardedFor: string | null): string | null {
-  if (!forwardedFor) return null;
-  const ip = forwardedFor.split(',')[0]?.trim();
-  return ip || null;
-}
 
 async function appUrl(): Promise<string> {
   if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
@@ -39,12 +34,11 @@ export async function acceptInviteAction(
   if (!acceptedTerms) return {error: 'terms'};
   if (password.length < MIN_PASSWORD_LENGTH) return {error: 'weak_password'};
 
-  const h = await headers();
   const result = await acceptInvite({
     token,
     password,
     locale,
-    acceptedIp: firstIp(h.get('x-forwarded-for')) ?? h.get('x-real-ip'),
+    acceptedIp: clientIpFromHeaders(await headers()),
     appUrl: await appUrl()
   });
 

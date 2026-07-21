@@ -1,10 +1,11 @@
 import {NextResponse} from 'next/server';
 import {getSession, isStaff} from '@/lib/auth/staff';
+import {clientIp} from '@/lib/auth/request';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {signedProjectUrl, DOCS_BUCKET} from '@/lib/projects/storage';
 
 export async function GET(
-  _req: Request,
+  req: Request,
   {params}: {params: Promise<{id: string}>}
 ) {
   const session = await getSession();
@@ -50,7 +51,8 @@ export async function GET(
     action: 'view_document',
     entity_type: 'project_documents',
     entity_id: id,
-    payload: {project_id: doc.project_id}
+    payload: {project_id: doc.project_id},
+    ip: clientIp(req)
   });
   if (auditError) {
     return NextResponse.json({error: 'audit_failed'}, {status: 500});
