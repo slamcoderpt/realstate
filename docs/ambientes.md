@@ -125,6 +125,35 @@ Região alvo dos projetos cloud: **`eu-central-1`** (UE).
 - [ ] **Auth SMTP interno do Supabase** (opcional): apontar os emails do Supabase Auth
       (ex.: reset de password) ao SMTP 365 no dashboard, para coerência de remetente.
 
+### Fatias 2–5 — KYC, Catálogo, Subscrição, Obra + Extratos
+
+- [ ] **Migrações por aplicar a prod** (só `foundations`, `convites_email`,
+      `grants_rls_roles` e `harden_definer_grants` lá estão). Falta tudo desde a
+      Fatia 2 — aplicar por ordem de timestamp, incluindo
+      `20260721083458_restore_explicit_grants.sql` (ver nota abaixo).
+- [ ] **Buckets privados** criados pelas migrações (`kyc-docs`, `project-photos`,
+      `project-docs`, `contracts`, `work-media`, `statements`) — confirmar em prod
+      que ficam **privados** e com os limites de tamanho/MIME.
+
+#### Grants explícitos (armadilha conhecida)
+
+A imagem `supabase/postgres:15.8.1.085` deixou de trazer default privileges que
+concediam DML no schema `public` a `anon`/`authenticated`/`service_role`. Cada
+tabela nova **tem de declarar os seus próprios grants** — foi por isso que as
+Fatias 2–4 partiram numa stack recriada e a migração
+`20260721083458_restore_explicit_grants.sql` teve de as repor. Ao criar tabelas
+novas, seguir a convenção de `20260718000000_grants_rls_roles.sql`.
+
+#### `storage.remove()` não funciona na stack local
+
+O `storage.objects` local tem um trigger `protect_delete()` que exige o GUC
+`storage.allow_delete_query='true'`, e a imagem `storage-api:v1.14.5` desta stack
+nunca o define — qualquer `remove()` devolve *"new row violates row-level
+security policy"*, para todos os roles. É **desvio de versões local**, não um
+defeito da app (numa stack alinhada a API define o GUC). Afeta a limpeza de
+ficheiros órfãos em `src/lib/statements/service.ts`. **Confirmar em staging/prod**
+que a remoção funciona antes de assumir que a limpeza é efetiva.
+
 ---
 
 ## Notas
