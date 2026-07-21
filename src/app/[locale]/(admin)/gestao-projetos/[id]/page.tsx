@@ -75,6 +75,7 @@ export default async function EditarProjetoPage({
   const td = await getTranslations('ProjectDocType');
   const tsa = await getTranslations('SubscriptionAdmin');
   const twa = await getTranslations('WorksAdmin');
+  const tea = await getTranslations('StatementsAdmin');
   const detail = await getProjectDetail(id, {staff: true});
   if (!detail) notFound();
 
@@ -104,6 +105,12 @@ export default async function EditarProjetoPage({
           className="text-sm text-blue-700 underline"
         >
           {twa('title')}
+        </a>
+        <a
+          href={`/${locale}/gestao-projetos/${id}/extratos`}
+          className="text-sm text-blue-700 underline"
+        >
+          {tea('title')}
         </a>
       </div>
 
