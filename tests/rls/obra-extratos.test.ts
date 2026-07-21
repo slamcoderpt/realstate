@@ -1,6 +1,11 @@
 import {describe, it, expect, beforeAll} from 'vitest';
 import {randomUUID} from 'node:crypto';
-import {admin, createTestUser, signInAs, anonClient} from './helpers';
+import {
+  admin,
+  createTestUser,
+  signInAs,
+  expectAnonCannotRead
+} from './helpers';
 
 const run = randomUUID().slice(0, 8);
 const funder = `obra-funder-${run}@test.local`;
@@ -242,13 +247,9 @@ describe('extratos: só quem tem fundos confirmados', () => {
   });
 
   it('anónimo não vê nada', async () => {
-    const anon = anonClient();
-    const {data: a} = await anon.from('account_statements').select('id');
-    const {data: b} = await anon.from('work_updates').select('id');
-    const {data: m} = await anon.from('work_update_media').select('id');
-    expect(a ?? []).toHaveLength(0);
-    expect(b ?? []).toHaveLength(0);
-    expect(m ?? []).toHaveLength(0);
+    await expectAnonCannotRead('account_statements');
+    await expectAnonCannotRead('work_updates');
+    await expectAnonCannotRead('work_update_media');
   });
 });
 

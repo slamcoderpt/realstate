@@ -1,3 +1,4 @@
+import {expect} from 'vitest';
 import {createClient, type SupabaseClient} from '@supabase/supabase-js';
 import {Client} from 'pg';
 
@@ -49,6 +50,31 @@ export function anonClient(): SupabaseClient {
   return createClient(url, anonKey, {
     auth: {persistSession: false, autoRefreshToken: false}
   });
+}
+
+/**
+ * Um anónimo não pode ler `table`. Aceita as DUAS negações válidas:
+ * `42501 permission denied` (sem grant — a postura preferida, nega antes da
+ * RLS) ou 0 linhas (o grant existe mas nenhuma política se aplica).
+ *
+ * O controlo positivo é o que impede a asserção de ser oca: confirma primeiro,
+ * com service role, que a tabela existe e TEM linhas. Sem ele, "0 linhas"
+ * passaria numa tabela vazia — ou inexistente, que é como o repo já foi
+ * mordido antes (`42P01` devolve `data: null`, e `null ?? []` tem length 0).
+ */
+export async function expectAnonCannotRead(table: string): Promise<void> {
+  const {count, error: adminError} = await admin
+    .from(table)
+    .select('*', {count: 'exact', head: true});
+  expect(adminError).toBeNull();
+  expect(count ?? 0).toBeGreaterThan(0);
+
+  const {data, error} = await anonClient().from(table).select('*');
+  if (error) {
+    expect(error.code).toBe('42501');
+    return;
+  }
+  expect(data ?? []).toHaveLength(0);
 }
 
 export async function createTestUser(

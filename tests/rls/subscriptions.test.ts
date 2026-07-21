@@ -1,6 +1,11 @@
 import {describe, it, expect, beforeAll} from 'vitest';
 import {randomUUID} from 'node:crypto';
-import {admin, createTestUser, signInAs, anonClient} from './helpers';
+import {
+  admin,
+  createTestUser,
+  signInAs,
+  expectAnonCannotRead
+} from './helpers';
 
 const run = randomUUID().slice(0, 8);
 const invA = `sub-a-${run}@test.local`;
@@ -90,8 +95,7 @@ describe('subscriptions RLS', () => {
   });
 
   it('anónimo não vê subscrições', async () => {
-    const {data} = await anonClient().from('subscriptions').select('id');
-    expect(data ?? []).toHaveLength(0);
+    await expectAnonCannotRead('subscriptions');
   });
 });
 
