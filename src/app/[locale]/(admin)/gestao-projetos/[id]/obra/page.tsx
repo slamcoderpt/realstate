@@ -1,11 +1,18 @@
 import {getTranslations} from 'next-intl/server';
-import {listMilestones, type MilestoneStatus} from '@/lib/works/service';
+import {
+  listMilestones,
+  listWorkUpdates,
+  listUpdateMedia,
+  type MilestoneStatus
+} from '@/lib/works/service';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {
   addMilestoneAction,
   updateMilestoneAction,
-  setActualAmountAction
+  setActualAmountAction,
+  publishUpdateAction
 } from './actions';
+import {MediaUploader} from './MediaUploader';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
@@ -51,6 +58,12 @@ export default async function GestaoObraPage({
   const tp = await getTranslations('ProjectAdmin');
 
   const milestones = await listMilestones(id);
+  const updates = await listWorkUpdates(id);
+  const media = await listUpdateMedia(updates.map((u) => u.id));
+  const mediaCount = new Map<string, number>();
+  for (const m of media) {
+    mediaCount.set(m.work_update_id, (mediaCount.get(m.work_update_id) ?? 0) + 1);
+  }
 
   const db = createAdminClient();
   const {data: lines} = await db
@@ -147,6 +160,71 @@ export default async function GestaoObraPage({
           </div>
           <Button type="submit">{ta('addMilestone')}</Button>
         </form>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold">{tw('diary')}</h2>
+
+        <form
+          action={publishUpdateAction.bind(null, loc, id)}
+          className="space-y-3 rounded-md border p-4"
+        >
+          <div>
+            <Label htmlFor="update_title">{ta('updateTitle')}</Label>
+            <Input id="update_title" name="title" required />
+          </div>
+          <div>
+            <Label htmlFor="update_body">{ta('updateBody')}</Label>
+            <textarea
+              id="update_body"
+              name="body"
+              rows={4}
+              required
+              className="w-full rounded-md border p-2 text-sm"
+            />
+          </div>
+          <div>
+            <Label htmlFor="update_milestone">{ta('linkMilestone')}</Label>
+            <select
+              id="update_milestone"
+              name="milestone_id"
+              defaultValue=""
+              className="w-full rounded-md border p-2 text-sm"
+            >
+              <option value="">{ta('none')}</option>
+              {milestones.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button type="submit">{ta('publishUpdate')}</Button>
+        </form>
+
+        {updates.length === 0 ? (
+          <p className="text-sm text-neutral-500">{tw('empty')}</p>
+        ) : (
+          <ul className="space-y-4">
+            {updates.map((u) => (
+              <li key={u.id} className="space-y-2 rounded-md border p-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h3 className="font-medium">{u.title}</h3>
+                  <span className="text-xs text-neutral-500">
+                    {u.published_at.slice(0, 10)}
+                  </span>
+                  <Badge variant="secondary">
+                    {ta('media')}: {mediaCount.get(u.id) ?? 0}
+                  </Badge>
+                </div>
+                <p className="whitespace-pre-line text-sm text-neutral-700">
+                  {u.body}
+                </p>
+                <MediaUploader locale={loc} projectId={id} updateId={u.id} />
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="space-y-3">
