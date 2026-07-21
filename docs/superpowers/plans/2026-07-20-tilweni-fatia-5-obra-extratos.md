@@ -1272,7 +1272,6 @@ import {publishWorkUpdate} from '@/lib/works/service';
 import {
   createMediaUploadUrl,
   workMediaPath,
-  uploadWorkMedia,
   mediaTypeFor
 } from '@/lib/works/storage';
 import {createAdminClient} from '@/lib/supabase/admin';
