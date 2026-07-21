@@ -1,5 +1,6 @@
 import {describe, it, expect, beforeAll} from 'vitest';
 import {randomUUID} from 'node:crypto';
+import {Client} from 'pg';
 import {admin, createTestUser} from '../rls/helpers';
 import {
   manifestInterest,
@@ -11,6 +12,27 @@ import {
 
 const run = randomUUID().slice(0, 8);
 let staffId: string;
+
+/**
+ * `platform_settings.value` é jsonb NOT NULL e o "sem limite" é o jsonb `null`.
+ * Via PostgREST não há forma de o escrever: `{value: null}` é serializado como
+ * SQL NULL e falha com 23502 — o reset ficava silenciosamente por fazer e o
+ * limite de 1 investidor sobrevivia à suite, tornando-a dependente da ordem.
+ * Por isso o setter vai por ligação SQL direta, e o erro nunca é ignorado.
+ */
+async function setMaxInvestors(value: number | null): Promise<void> {
+  const client = new Client({connectionString: process.env.SUPABASE_DB_URL!});
+  await client.connect();
+  try {
+    await client.query(
+      `update public.platform_settings set value = $1::jsonb
+       where key = 'max_investors_per_project'`,
+      [value === null ? 'null' : String(value)]
+    );
+  } finally {
+    await client.end();
+  }
+}
 
 async function makeProject(status = 'subscricao'): Promise<string> {
   const {data, error} = await admin
@@ -133,7 +155,7 @@ describe('transitionSubscription + agregados', () => {
 
   it('respeita max_investors_per_project quando definido', async () => {
     const projectId = await makeProject();
-    await admin.from('platform_settings').update({value: 1}).eq('key', 'max_investors_per_project');
+    await setMaxInvestors(1);
     try {
       const u1 = await freshInvestor();
       const u2 = await freshInvestor();
@@ -146,13 +168,13 @@ describe('transitionSubscription + agregados', () => {
         transitionSubscription({id: s2, to: 'fundos_confirmados', reviewerId: staffId, locale: 'pt'}, noopMail)
       ).rejects.toThrow(/limite|max/i);
     } finally {
-      await admin.from('platform_settings').update({value: null}).eq('key', 'max_investors_per_project');
+      await setMaxInvestors(null);
     }
   });
 
   it('confirmações concorrentes do último lugar: só max passa (atómico)', async () => {
     const projectId = await makeProject();
-    await admin.from('platform_settings').update({value: 1}).eq('key', 'max_investors_per_project');
+    await setMaxInvestors(1);
     try {
       // 3 subscrições prontas a confirmar, mas o limite é 1.
       const ids: string[] = [];
@@ -181,7 +203,7 @@ describe('transitionSubscription + agregados', () => {
         .single();
       expect(proj!.investor_count).toBe(1); // nunca max+1
     } finally {
-      await admin.from('platform_settings').update({value: null}).eq('key', 'max_investors_per_project');
+      await setMaxInvestors(null);
     }
   });
 });
