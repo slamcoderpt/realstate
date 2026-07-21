@@ -77,6 +77,31 @@ export async function expectAnonCannotRead(table: string): Promise<void> {
   expect(data ?? []).toHaveLength(0);
 }
 
+/**
+ * `client` não vê a linha `id` de `table`, e a negação vem mesmo da RLS.
+ *
+ * Mesma armadilha que `expectAnonCannotRead` fecha, aplicada a uma linha
+ * concreta: `expect(data ?? []).toHaveLength(0)` passa também quando a query
+ * rebenta (tabela/coluna inexistente devolve `data: null`). Daí o controlo
+ * positivo com service role — a linha EXISTE — mais o `error` a null.
+ */
+export async function expectRowHidden(
+  client: SupabaseClient,
+  table: string,
+  id: string
+): Promise<void> {
+  const {count, error: adminError} = await admin
+    .from(table)
+    .select('id', {count: 'exact', head: true})
+    .eq('id', id);
+  expect(adminError).toBeNull();
+  expect(count).toBe(1);
+
+  const {data, error} = await client.from(table).select('id').eq('id', id);
+  expect(error).toBeNull();
+  expect(data ?? []).toHaveLength(0);
+}
+
 export async function createTestUser(
   email: string,
   role: 'investor' | 'project_manager' | 'admin' | 'auditor' = 'investor'

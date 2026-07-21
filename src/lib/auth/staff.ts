@@ -37,6 +37,20 @@ export function isStaff(role: string): boolean {
   return STAFF_ROLES.includes(role);
 }
 
+/**
+ * Quem pode ler extratos da conta dedicada SEM ter fundos confirmados no
+ * projeto: staff + `auditor`.
+ *
+ * Predicado à parte, e não `auditor` dentro de `STAFF_ROLES`: a spec dá ao
+ * auditor leitura read-only sobre extratos e documentos fiscais, e mais nada.
+ * Alargar `isStaff` abriria de uma vez o back-office (`requireStaff`, layout
+ * `(admin)`), KYC, gestão de projetos e subscrições. Espelha exatamente a
+ * política RLS "statements: auditor lê" (20260721120000).
+ */
+export function canReadStatements(role: string): boolean {
+  return isStaff(role) || role === 'auditor';
+}
+
 /** Garante que o pedido vem de staff; lança se não. Para Server Actions. */
 export async function requireStaff(): Promise<Session> {
   const session = await getSession();

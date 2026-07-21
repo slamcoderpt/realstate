@@ -1,5 +1,5 @@
 import {NextResponse} from 'next/server';
-import {getSession, isStaff} from '@/lib/auth/staff';
+import {getSession, canReadStatements} from '@/lib/auth/staff';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {signedStatementUrl} from '@/lib/statements/storage';
 
@@ -9,9 +9,11 @@ import {signedStatementUrl} from '@/lib/statements/storage';
  *
  * Duas diferenças deliberadas face à media de obra (`/api/works/media/[id]`):
  *
- *  1. Gate mais apertado: só staff ou investidor com `fundos_confirmados` no
- *     projeto. A obra abre a qualquer subscrição ativa; os extratos são a
+ *  1. Gate mais apertado: só staff/auditor ou investidor com `fundos_confirmados`
+ *     no projeto. A obra abre a qualquer subscrição ativa; os extratos são a
  *     conta que detém o dinheiro e só quem lá tem dinheiro os vê. Não unificar.
+ *     O `auditor` entra por `canReadStatements` (e não por `isStaff`): tem
+ *     leitura sobre extratos e mais nada — e é auditado como qualquer outro.
  *
  *  2. Auditoria ANTES de emitir a URL, fail-closed. São registos financeiros:
  *     uma consulta não registada é uma falha de compliance, logo um insert de
@@ -44,7 +46,7 @@ export async function GET(
     .single();
   if (!st) return NextResponse.json({error: 'not_found'}, {status: 404});
 
-  let allowed = isStaff(session.role);
+  let allowed = canReadStatements(session.role);
   if (!allowed) {
     const {count} = await db
       .from('subscriptions')

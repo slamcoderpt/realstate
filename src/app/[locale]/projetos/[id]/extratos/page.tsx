@@ -1,6 +1,6 @@
 import {getTranslations, setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
-import {getSession, isStaff} from '@/lib/auth/staff';
+import {getSession, canReadStatements} from '@/lib/auth/staff';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {listStatements} from '@/lib/statements/service';
 import type {Locale} from '@/lib/mail/templates';
@@ -30,9 +30,10 @@ export default async function ExtratosPage({
   const db = createAdminClient();
 
   // Gate deliberadamente mais apertado que o da obra (qualquer subscrição
-  // ativa): os extratos da conta dedicada só se abrem a staff ou a quem tem
-  // fundos confirmados no projeto. O mesmo critério de /api/statements/[id].
-  let allowed = isStaff(session.role);
+  // ativa): os extratos da conta dedicada só se abrem a staff/auditor ou a quem
+  // tem fundos confirmados no projeto. O mesmo critério de /api/statements/[id]
+  // — e o auditor precisa de UI para aquilo que a RLS já lhe permite ler.
+  let allowed = canReadStatements(session.role);
   if (!allowed) {
     const {count} = await db
       .from('subscriptions')

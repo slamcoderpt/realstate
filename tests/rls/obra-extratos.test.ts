@@ -4,7 +4,8 @@ import {
   admin,
   createTestUser,
   signInAs,
-  expectAnonCannotRead
+  expectAnonCannotRead,
+  expectRowHidden
 } from './helpers';
 
 const run = randomUUID().slice(0, 8);
@@ -13,23 +14,30 @@ const interested = `obra-int-${run}@test.local`;
 const cancelled = `obra-canc-${run}@test.local`;
 const outsider = `obra-out-${run}@test.local`;
 const staff = `obra-staff-${run}@test.local`;
+const auditor = `obra-audit-${run}@test.local`;
 
 let projectId: string;
 let milestoneId: string;
 let updateId: string;
 let mediaId: string;
 let statementId: string;
+let subscriptionId: string;
 
-async function sub(userId: string, status: string) {
-  const {error} = await admin.from('subscriptions').insert({
-    project_id: projectId,
-    user_id: userId,
-    amount: 20000,
-    status,
-    consent_given: true,
-    terms_version: 'v1'
-  });
+async function sub(userId: string, status: string): Promise<string> {
+  const {data, error} = await admin
+    .from('subscriptions')
+    .insert({
+      project_id: projectId,
+      user_id: userId,
+      amount: 20000,
+      status,
+      consent_given: true,
+      terms_version: 'v1'
+    })
+    .select('id')
+    .single();
   if (error) throw error;
+  return data.id;
 }
 
 beforeAll(async () => {
@@ -38,6 +46,7 @@ beforeAll(async () => {
   const c = (await createTestUser(cancelled)).id;
   await createTestUser(outsider);
   await createTestUser(staff, 'admin');
+  await createTestUser(auditor, 'auditor');
 
   const {data: p, error: pe} = await admin
     .from('projects')
@@ -54,7 +63,7 @@ beforeAll(async () => {
   if (pe) throw pe;
   projectId = p.id;
 
-  await sub(f, 'fundos_confirmados');
+  subscriptionId = await sub(f, 'fundos_confirmados');
   await sub(i, 'interesse');
   await sub(c, 'cancelada');
 
@@ -250,6 +259,41 @@ describe('extratos: só quem tem fundos confirmados', () => {
     await expectAnonCannotRead('account_statements');
     await expectAnonCannotRead('work_updates');
     await expectAnonCannotRead('work_update_media');
+  });
+});
+
+/**
+ * Spec Fase A §4: "`auditor` read-only sobre extratos e documentos fiscais".
+ * O que interessa aqui é tanto o SIM como os NÃOs: o auditor lê extratos SEM
+ * ter subscrição no projeto, mas isso não o torna staff — obra e subscrições
+ * continuam fechadas. Sem os negativos, alargar `STAFF_ROLES` (a implementação
+ * errada) passaria estes testes.
+ */
+describe('auditor: read-only sobre extratos, e só', () => {
+  it('vê o extrato sem ter subscrição no projeto', async () => {
+    const c = await signInAs(auditor);
+    const {data, error} = await c
+      .from('account_statements')
+      .select('id')
+      .eq('id', statementId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it('NÃO vê marcos da obra', async () => {
+    await expectRowHidden(await signInAs(auditor), 'project_milestones', milestoneId);
+  });
+
+  it('NÃO vê atualizações de obra', async () => {
+    await expectRowHidden(await signInAs(auditor), 'work_updates', updateId);
+  });
+
+  it('NÃO vê a media da obra', async () => {
+    await expectRowHidden(await signInAs(auditor), 'work_update_media', mediaId);
+  });
+
+  it('NÃO vê subscrições', async () => {
+    await expectRowHidden(await signInAs(auditor), 'subscriptions', subscriptionId);
   });
 });
 
