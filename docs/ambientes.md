@@ -127,13 +127,42 @@ Região alvo dos projetos cloud: **`eu-central-1`** (UE).
 
 ### Fatias 2–5 — KYC, Catálogo, Subscrição, Obra + Extratos
 
-- [ ] **Migrações por aplicar a prod** (só `foundations`, `convites_email`,
-      `grants_rls_roles` e `harden_definer_grants` lá estão). Falta tudo desde a
-      Fatia 2 — aplicar por ordem de timestamp, incluindo
-      `20260721083458_restore_explicit_grants.sql` (ver nota abaixo).
-- [ ] **Buckets privados** criados pelas migrações (`kyc-docs`, `project-photos`,
-      `project-docs`, `contracts`, `work-media`, `statements`) — confirmar em prod
-      que ficam **privados** e com os limites de tamanho/MIME.
+- [x] **Migrações aplicadas a prod** (2026-07-21, via MCP `apply_migration`).
+      Estado final verificado e **idêntico ao local** nas 11 métricas: 16 tabelas
+      (16 com RLS), 27 políticas — **todas `to authenticated`** —, `anon` sem
+      SELECT/INSERT/UPDATE/DELETE em nenhuma tabela, `authenticated` sem escrita,
+      6 buckets **todos privados**, 10 settings, `audit_log` só com INSERT para
+      `service_role` e SELECT para `authenticated`.
+- [x] **Advisors de segurança:** 8 WARN → **3**. Os 3 restantes são irredutíveis:
+      `current_user_role`, `has_active_subscription` e `has_confirmed_subscription`
+      têm de ser executáveis por `authenticated` porque são usadas **dentro das
+      policies** — revogá-las partiria a RLS de todas as tabelas.
+
+#### Duas armadilhas que só apareceram em produção
+
+Prod e local divergem na imagem do Postgres, e **os testes não podiam apanhar
+isto** — correm contra o local, onde os grants em causa nunca existiram:
+
+1. **`anon` com SELECT em 12 tabelas.** O prod tem default privileges permissivas
+   e concede DML completo ao `anon` em cada tabela criada. Os revokes anteriores
+   tiravam só a escrita e o SELECT de quatro tabelas *nomeadas*; ficaram de fora
+   `audit_log`, `profiles`, `subscriptions`, `account_statements` e outras oito.
+   Fechado por `20260721150000_anon_sem_select_repo_wide.sql`, que **varre
+   `public` inteira** em vez de enumerar — foi a enumeração que deixou lacunas
+   das duas vezes anteriores.
+2. **`revoke ... from public` não chega.** O Supabase concede EXECUTE
+   *explicitamente* a `anon`, além do grant a PUBLIC; revogar de um não remove o
+   outro. Afetava os helpers `has_*` e o `current_user_role`. Fechado por
+   `20260721151000` e `20260721152000`. Regra: revogar **sempre dos três**
+   (`public, anon, authenticated`) e reconceder só a quem precisa.
+
+Diferença benigna que sobra: em prod, `audit_row_change()` e `handle_new_user()`
+mantêm EXECUTE para `service_role` (local só tem `postgres`). São funções de
+trigger — invocá-las por RPC falha na mesma — e `service_role` é o role servidor
+de confiança.
+
+- [ ] **Buckets:** confirmar em prod, quando houver ficheiros, que
+      `storage.remove()` funciona (ver nota da stack local mais abaixo).
 
 #### Grants explícitos (armadilha conhecida)
 
