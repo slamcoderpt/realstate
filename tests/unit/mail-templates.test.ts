@@ -113,3 +113,14 @@ describe('templates obra', () => {
     expect(r.html).toContain('20.0');
   });
 });
+
+describe('template extrato', () => {
+  it('statement_published rende', () => {
+    const r = renderTemplate('statement_published', 'pt', {
+      projectName: 'Campelos',
+      period: '2026-07'
+    });
+    expect(r.html).toContain('Campelos');
+    expect(r.html).toContain('2026-07');
+  });
+});

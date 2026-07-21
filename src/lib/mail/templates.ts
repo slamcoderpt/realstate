@@ -18,7 +18,8 @@ export type TemplateName =
   | 'subscription_interest'
   | 'subscription_confirmed'
   | 'work_update_published'
-  | 'budget_deviation_alert';
+  | 'budget_deviation_alert'
+  | 'statement_published';
 
 export type InvitePayload = {
   fullName: string;
@@ -56,6 +57,9 @@ export type BudgetDeviationAlertPayload = {
   deviationPct: string;
 };
 
+/** Extrato da conta dedicada. `period` no formato AAAA-MM. */
+export type StatementPublishedPayload = {projectName: string; period: string};
+
 export type TemplatePayloadMap = {
   invite: InvitePayload;
   welcome: WelcomePayload;
@@ -66,6 +70,7 @@ export type TemplatePayloadMap = {
   subscription_confirmed: SubscriptionConfirmedPayload;
   work_update_published: WorkUpdatePublishedPayload;
   budget_deviation_alert: BudgetDeviationAlertPayload;
+  statement_published: StatementPublishedPayload;
 };
 
 export type RenderedEmail = {subject: string; html: string};
@@ -350,6 +355,38 @@ function renderBudgetDeviationAlert(
   };
 }
 
+function renderStatementPublished(
+  locale: Locale,
+  p: StatementPublishedPayload
+): RenderedEmail {
+  if (locale === 'en') {
+    return {
+      subject: 'TILWENI — New statement available',
+      html: layout(
+        'en',
+        `<p style="font-size:15px;line-height:1.6">Hello,</p>` +
+          `<p style="font-size:15px;line-height:1.6">The ${esc(
+            p.period
+          )} statement for the dedicated account of the project ${esc(
+            p.projectName
+          )} has been published. It is available in your private area.</p>`
+      )
+    };
+  }
+  return {
+    subject: 'TILWENI — Novo extrato disponível',
+    html: layout(
+      'pt',
+      `<p style="font-size:15px;line-height:1.6">Olá,</p>` +
+        `<p style="font-size:15px;line-height:1.6">Foi publicado o extrato de ${esc(
+          p.period
+        )} da conta dedicada do projeto ${esc(
+          p.projectName
+        )}. Está disponível na sua área privada.</p>`
+    )
+  };
+}
+
 /** Renderiza um template pelo nome, com o payload correspondente. */
 export function renderTemplate<T extends TemplateName>(
   template: T,
@@ -375,6 +412,8 @@ export function renderTemplate<T extends TemplateName>(
       return renderWorkUpdatePublished(locale, payload as WorkUpdatePublishedPayload);
     case 'budget_deviation_alert':
       return renderBudgetDeviationAlert(locale, payload as BudgetDeviationAlertPayload);
+    case 'statement_published':
+      return renderStatementPublished(locale, payload as StatementPublishedPayload);
     default:
       throw new Error(`template desconhecido: ${template}`);
   }
