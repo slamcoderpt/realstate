@@ -40,6 +40,8 @@ export default async function ProjectDetailPage({
   const ts = await getTranslations('ProjectStatus');
   const td = await getTranslations('ProjectDocType');
   const tsub = await getTranslations('Subscription');
+  const tw = await getTranslations('Works');
+  const te = await getTranslations('Statements');
 
   const session = await getSession();
   const staff = session ? isStaff(session.role) : false;
@@ -204,6 +206,26 @@ export default async function ProjectDetailPage({
                   </Button>
                 </form>
               </>
+            )}
+            {/* Acompanhamento de obra: aberto a qualquer subscrição ativa. */}
+            <p>
+              <a
+                href={`/${locale}/projetos/${id}/obra`}
+                className="text-neutral-800 underline underline-offset-2 hover:text-neutral-950"
+              >
+                {tw('title')}
+              </a>
+            </p>
+            {/* Extratos da conta dedicada: só com fundos confirmados. */}
+            {mine.status === 'fundos_confirmados' && (
+              <p>
+                <a
+                  href={`/${locale}/projetos/${id}/extratos`}
+                  className="text-neutral-800 underline underline-offset-2 hover:text-neutral-950"
+                >
+                  {te('title')}
+                </a>
+              </p>
             )}
           </div>
         ) : !staff && project.status === 'subscricao' ? (

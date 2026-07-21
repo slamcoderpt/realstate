@@ -197,5 +197,61 @@
     "confirmFunds": "Confirm funds",
     "maxReached": "Project investor limit reached.",
     "actions": "Actions"
+  },
+  "Works": {
+    "title": "Works progress",
+    "milestones": "Milestones",
+    "planned": "Planned",
+    "actual": "Actual",
+    "diary": "Works diary",
+    "budgetVsActual": "Budget vs. actual cost",
+    "line": "Line",
+    "budget": "Budget",
+    "spent": "Spent",
+    "deviation": "Deviation",
+    "empty": "No works updates yet.",
+    "noMilestones": "No milestones defined yet.",
+    "status_previsto": "Planned",
+    "status_em_curso": "In progress",
+    "status_concluido": "Completed",
+    "backToProject": "Back to project"
+  },
+  "WorksAdmin": {
+    "title": "Works management",
+    "addMilestone": "Add milestone",
+    "milestoneTitle": "Milestone title",
+    "plannedDate": "Planned date",
+    "actualDate": "Actual date",
+    "status": "Status",
+    "save": "Save",
+    "actualAmount": "Actual cost (€)",
+    "saveActuals": "Save actual costs",
+    "publishUpdate": "Publish update",
+    "updateTitle": "Title",
+    "updateBody": "Description",
+    "linkMilestone": "Related milestone (optional)",
+    "none": "None",
+    "media": "Images and videos",
+    "addMedia": "Add file",
+    "uploading": "Uploading…",
+    "uploadFailed": "Upload failed.",
+    "mediaHint": "Images (JPEG/PNG/WebP) up to 200 MB; MP4/MOV videos up to 200 MB."
+  },
+  "Statements": {
+    "title": "Dedicated account statements",
+    "period": "Period",
+    "published": "Published",
+    "version": "Version",
+    "open": "Open",
+    "empty": "No statements published yet.",
+    "notice": "Every statement consultation is recorded in the audit log."
+  },
+  "StatementsAdmin": {
+    "title": "Statements",
+    "periodLabel": "Period (YYYY-MM)",
+    "file": "File (PDF)",
+    "publish": "Publish statement",
+    "empty": "No statements published.",
+    "newVersionHint": "Publishing the same period creates a new version; history is permanent."
   }
 }

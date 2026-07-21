@@ -24,7 +24,12 @@ const BUSINESS_TABLES = [
   'projects',
   'project_budget_lines',
   'project_photos',
-  'project_documents'
+  'project_documents',
+  'subscriptions',
+  'project_milestones',
+  'work_updates',
+  'work_update_media',
+  'account_statements'
 ];
 
 /**
