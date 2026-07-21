@@ -24,12 +24,28 @@
 /** Só o que precisamos de `Headers` — serve `Request.headers` e `headers()`. */
 type HeaderReader = {get(name: string): string | null};
 
+/**
+ * `audit_log.ip` é `inet`: um valor mal formado faz o INSERT rebentar. Como a
+ * rota dos extratos é fail-closed (sem registo, sem documento), um
+ * `x-forwarded-for: lixo` — forjado ou vindo de um proxy mal configurado —
+ * passaria a devolver 500 a downloads legítimos. Validar aqui é o que mantém
+ * "IP ausente" como um caso normal em vez de uma falha.
+ */
+function looksLikeIp(value: string): boolean {
+  // IPv4 com octetos 0-255; IPv6 na forma canónica ou comprimida (inclui as
+  // formas mapeadas ::ffff:1.2.3.4). Deliberadamente conservador: o que não
+  // reconhecemos regista-se como ausente, nunca como texto arbitrário.
+  const ipv4 = /^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+  if (ipv4.test(value)) return true;
+  return /^[0-9a-f:]+(\.\d{1,3}){0,3}$/i.test(value) && value.includes(':');
+}
+
 export function clientIpFromHeaders(headers: HeaderReader): string | null {
   const forwarded = headers.get('x-forwarded-for');
   const first = forwarded?.split(',')[0]?.trim();
-  if (first) return first;
+  if (first && looksLikeIp(first)) return first;
   const real = headers.get('x-real-ip')?.trim();
-  return real || null;
+  return real && looksLikeIp(real) ? real : null;
 }
 
 /** Atalho para route handlers, que recebem o `Request` diretamente. */

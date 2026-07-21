@@ -35,6 +35,30 @@ describe('clientIpFromHeaders', () => {
   it('null quando não há nenhum dos dois', () => {
     expect(clientIpFromHeaders(h({}))).toBeNull();
   });
+
+  // `audit_log.ip` é `inet`: um valor mal formado rebenta o INSERT, e como a
+  // rota dos extratos é fail-closed isso transformava um cabeçalho forjado (ou
+  // um proxy mal configurado) num 500 em downloads legítimos.
+  it('descarta valores que não são IPs', () => {
+    expect(clientIpFromHeaders(h({'x-forwarded-for': 'not-an-ip'}))).toBeNull();
+    expect(clientIpFromHeaders(h({'x-forwarded-for': '999.1.1.1'}))).toBeNull();
+    expect(clientIpFromHeaders(h({'x-forwarded-for': '<script>'}))).toBeNull();
+    expect(clientIpFromHeaders(h({'x-real-ip': 'localhost'}))).toBeNull();
+  });
+
+  it('um XFF inválido não impede o fallback para x-real-ip válido', () => {
+    expect(
+      clientIpFromHeaders(h({'x-forwarded-for': 'lixo', 'x-real-ip': '198.51.100.4'}))
+    ).toBe('198.51.100.4');
+  });
+
+  it('aceita IPv6', () => {
+    expect(clientIpFromHeaders(h({'x-forwarded-for': '2001:db8::1'}))).toBe('2001:db8::1');
+    expect(clientIpFromHeaders(h({'x-real-ip': '::1'}))).toBe('::1');
+    expect(clientIpFromHeaders(h({'x-real-ip': '::ffff:203.0.113.9'}))).toBe(
+      '::ffff:203.0.113.9'
+    );
+  });
 });
 
 describe('clientIp(Request)', () => {
