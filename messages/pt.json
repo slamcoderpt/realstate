@@ -197,5 +197,61 @@
     "confirmFunds": "Confirmar fundos",
     "maxReached": "Limite de investidores do projeto atingido.",
     "actions": "Ações"
+  },
+  "Works": {
+    "title": "Acompanhamento de obra",
+    "milestones": "Marcos da obra",
+    "planned": "Previsto",
+    "actual": "Real",
+    "diary": "Diário de obra",
+    "budgetVsActual": "Orçamento vs. custo real",
+    "line": "Rubrica",
+    "budget": "Orçamento",
+    "spent": "Executado",
+    "deviation": "Desvio",
+    "empty": "Ainda não há atualizações de obra.",
+    "noMilestones": "Ainda não há marcos definidos.",
+    "status_previsto": "Previsto",
+    "status_em_curso": "Em curso",
+    "status_concluido": "Concluído",
+    "backToProject": "Voltar ao projeto"
+  },
+  "WorksAdmin": {
+    "title": "Gestão de obra",
+    "addMilestone": "Adicionar marco",
+    "milestoneTitle": "Título do marco",
+    "plannedDate": "Data prevista",
+    "actualDate": "Data real",
+    "status": "Estado",
+    "save": "Guardar",
+    "actualAmount": "Custo real (€)",
+    "saveActuals": "Guardar custos reais",
+    "publishUpdate": "Publicar atualização",
+    "updateTitle": "Título",
+    "updateBody": "Descrição",
+    "linkMilestone": "Marco associado (opcional)",
+    "none": "Nenhum",
+    "media": "Imagens e vídeos",
+    "addMedia": "Adicionar ficheiro",
+    "uploading": "A carregar…",
+    "uploadFailed": "Falha no carregamento.",
+    "mediaHint": "Imagens (JPEG/PNG/WebP) até 200 MB; vídeos MP4/MOV até 200 MB."
+  },
+  "Statements": {
+    "title": "Extratos da conta dedicada",
+    "period": "Período",
+    "published": "Publicado",
+    "version": "Versão",
+    "open": "Abrir",
+    "empty": "Ainda não há extratos publicados.",
+    "notice": "Cada consulta de um extrato fica registada no registo de auditoria."
+  },
+  "StatementsAdmin": {
+    "title": "Extratos",
+    "periodLabel": "Período (AAAA-MM)",
+    "file": "Ficheiro (PDF)",
+    "publish": "Publicar extrato",
+    "empty": "Sem extratos publicados.",
+    "newVersionHint": "Publicar o mesmo período cria uma nova versão; o histórico é permanente."
   }
 }
