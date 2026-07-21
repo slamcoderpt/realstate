@@ -4,7 +4,7 @@ import {
   admin,
   createTestUser,
   signInAs,
-  anonClient,
+  expectAnonCannotRead,
   attemptTruncateAuditLog
 } from './helpers';
 
@@ -67,11 +67,7 @@ describe('platform_settings', () => {
   });
 
   it('anónimo NÃO lê settings', async () => {
-    const {data, error} = await anonClient()
-      .from('platform_settings')
-      .select('key');
-    expect(error).toBeNull();
-    expect(data).toHaveLength(0);
+    await expectAnonCannotRead('platform_settings');
   });
 
   it('investidor NÃO escreve settings', async () => {

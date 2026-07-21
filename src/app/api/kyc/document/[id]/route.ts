@@ -1,10 +1,11 @@
 import {NextResponse} from 'next/server';
 import {requireStaff} from '@/lib/auth/staff';
+import {clientIp} from '@/lib/auth/request';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {signedKycUrl} from '@/lib/kyc/storage';
 
 export async function GET(
-  _req: Request,
+  req: Request,
   {params}: {params: Promise<{id: string}>}
 ) {
   let staffId: string;
@@ -34,7 +35,8 @@ export async function GET(
     action: 'view_document',
     entity_type: 'kyc_documents',
     entity_id: id,
-    payload: {submission_id: doc.submission_id}
+    payload: {submission_id: doc.submission_id},
+    ip: clientIp(req)
   });
   if (auditError) {
     return NextResponse.json({error: 'audit_failed'}, {status: 500});

@@ -1,6 +1,11 @@
 import {describe, it, expect, beforeAll} from 'vitest';
 import {randomUUID} from 'node:crypto';
-import {admin, createTestUser, signInAs, anonClient} from './helpers';
+import {
+  admin,
+  createTestUser,
+  signInAs,
+  expectAnonCannotRead
+} from './helpers';
 
 const run = randomUUID().slice(0, 8);
 const investor = `inv-${run}@test.local`;
@@ -44,9 +49,7 @@ describe('invites (RLS)', () => {
   });
 
   it('anónimo NÃO lê convites', async () => {
-    const {data, error} = await anonClient().from('invites').select('id');
-    expect(error).toBeNull();
-    expect(data).toHaveLength(0);
+    await expectAnonCannotRead('invites');
   });
 
   it('admin lê convites', async () => {
@@ -93,9 +96,7 @@ describe('email_outbox (RLS)', () => {
   });
 
   it('anónimo NÃO lê a fila de email', async () => {
-    const {data, error} = await anonClient().from('email_outbox').select('id');
-    expect(error).toBeNull();
-    expect(data).toHaveLength(0);
+    await expectAnonCannotRead('email_outbox');
   });
 
   it('admin lê a fila de email', async () => {

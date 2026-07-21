@@ -1,6 +1,11 @@
 import {describe, it, expect, beforeAll} from 'vitest';
 import {randomUUID} from 'node:crypto';
-import {admin, createTestUser, signInAs, anonClient} from './helpers';
+import {
+  admin,
+  createTestUser,
+  signInAs,
+  expectAnonCannotRead
+} from './helpers';
 
 const run = randomUUID().slice(0, 8);
 const investorA = `kyc-a-${run}@test.local`;
@@ -87,11 +92,7 @@ describe('kyc_submissions RLS', () => {
   });
 
   it('anónimo NÃO lê submissões', async () => {
-    const {data, error} = await anonClient()
-      .from('kyc_submissions')
-      .select('id');
-    expect(error).toBeNull();
-    expect(data).toHaveLength(0);
+    await expectAnonCannotRead('kyc_submissions');
   });
 });
 
