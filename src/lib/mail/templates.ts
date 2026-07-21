@@ -16,7 +16,9 @@ export type TemplateName =
   | 'kyc_approved'
   | 'kyc_rejected'
   | 'subscription_interest'
-  | 'subscription_confirmed';
+  | 'subscription_confirmed'
+  | 'work_update_published'
+  | 'budget_deviation_alert';
 
 export type InvitePayload = {
   fullName: string;
@@ -42,6 +44,18 @@ export type SubscriptionInterestPayload = {
 };
 export type SubscriptionConfirmedPayload = {amount: string};
 
+export type WorkUpdatePublishedPayload = {
+  projectName: string;
+  updateTitle: string;
+};
+/** Alerta INTERNO ao staff. Montantes já formatados pela aplicação. */
+export type BudgetDeviationAlertPayload = {
+  lineName: string;
+  budget: string;
+  actual: string;
+  deviationPct: string;
+};
+
 export type TemplatePayloadMap = {
   invite: InvitePayload;
   welcome: WelcomePayload;
@@ -50,6 +64,8 @@ export type TemplatePayloadMap = {
   kyc_rejected: KycRejectedPayload;
   subscription_interest: SubscriptionInterestPayload;
   subscription_confirmed: SubscriptionConfirmedPayload;
+  work_update_published: WorkUpdatePublishedPayload;
+  budget_deviation_alert: BudgetDeviationAlertPayload;
 };
 
 export type RenderedEmail = {subject: string; html: string};
@@ -269,6 +285,71 @@ function renderSubscriptionConfirmed(
   };
 }
 
+function renderWorkUpdatePublished(
+  locale: Locale,
+  p: WorkUpdatePublishedPayload
+): RenderedEmail {
+  if (locale === 'en') {
+    return {
+      subject: 'TILWENI — New works update',
+      html: layout(
+        'en',
+        `<p style="font-size:15px;line-height:1.6">Hello,</p>` +
+          `<p style="font-size:15px;line-height:1.6">There is a new update on the project ${esc(
+            p.projectName
+          )}: «${esc(
+            p.updateTitle
+          )}». Sign in to the platform to see the details and the images.</p>`
+      )
+    };
+  }
+  return {
+    subject: 'TILWENI — Nova atualização de obra',
+    html: layout(
+      'pt',
+      `<p style="font-size:15px;line-height:1.6">Olá,</p>` +
+        `<p style="font-size:15px;line-height:1.6">Há uma nova atualização no projeto ${esc(
+          p.projectName
+        )}: «${esc(
+          p.updateTitle
+        )}». Entre na plataforma para ver os detalhes e as imagens.</p>`
+    )
+  };
+}
+
+/** Alerta INTERNO (staff), não vai para investidores. */
+function renderBudgetDeviationAlert(
+  locale: Locale,
+  p: BudgetDeviationAlertPayload
+): RenderedEmail {
+  if (locale === 'en') {
+    return {
+      subject: 'TILWENI — Budget deviation alert',
+      html: layout(
+        'en',
+        `<p style="font-size:15px;line-height:1.6">Hello,</p>` +
+          `<p style="font-size:15px;line-height:1.6">The line «${esc(
+            p.lineName
+          )}» has an actual cost of ${esc(p.actual)} against a budget of ${esc(
+            p.budget
+          )} — a deviation of ${esc(p.deviationPct)}%.</p>`
+      )
+    };
+  }
+  return {
+    subject: 'TILWENI — Alerta de desvio orçamental',
+    html: layout(
+      'pt',
+      `<p style="font-size:15px;line-height:1.6">Olá,</p>` +
+        `<p style="font-size:15px;line-height:1.6">A rubrica «${esc(
+          p.lineName
+        )}» tem custo real ${esc(p.actual)} face a um orçamento de ${esc(
+          p.budget
+        )} — desvio de ${esc(p.deviationPct)}%.</p>`
+    )
+  };
+}
+
 /** Renderiza um template pelo nome, com o payload correspondente. */
 export function renderTemplate<T extends TemplateName>(
   template: T,
@@ -290,6 +371,10 @@ export function renderTemplate<T extends TemplateName>(
       return renderSubscriptionInterest(locale, payload as SubscriptionInterestPayload);
     case 'subscription_confirmed':
       return renderSubscriptionConfirmed(locale, payload as SubscriptionConfirmedPayload);
+    case 'work_update_published':
+      return renderWorkUpdatePublished(locale, payload as WorkUpdatePublishedPayload);
+    case 'budget_deviation_alert':
+      return renderBudgetDeviationAlert(locale, payload as BudgetDeviationAlertPayload);
     default:
       throw new Error(`template desconhecido: ${template}`);
   }

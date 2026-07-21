@@ -91,3 +91,25 @@ describe('templates subscrição', () => {
     expect(r.html).toContain('20 000');
   });
 });
+
+describe('templates obra', () => {
+  it('work_update_published rende', () => {
+    const r = renderTemplate('work_update_published', 'pt', {
+      projectName: 'Campelos',
+      updateTitle: 'Semana 1'
+    });
+    expect(r.html).toContain('Campelos');
+    expect(r.html).toContain('Semana 1');
+  });
+
+  it('budget_deviation_alert rende', () => {
+    const r = renderTemplate('budget_deviation_alert', 'pt', {
+      lineName: 'Cobertura',
+      budget: '10 000 €',
+      actual: '12 000 €',
+      deviationPct: '20.0'
+    });
+    expect(r.html).toContain('Cobertura');
+    expect(r.html).toContain('20.0');
+  });
+});
