@@ -30,18 +30,38 @@ async function makeProject(): Promise<string> {
   return data.id;
 }
 
-async function funderOn(projectId: string): Promise<string> {
-  const u = await createTestUser(`obra-svc-${randomUUID().slice(0, 8)}@test.local`);
+/**
+ * Cria um investidor com uma subscrição no estado pedido e devolve o email —
+ * é por email que os testes contam linhas na `email_outbox`. Contar por
+ * `template` seria uma tautologia: a tabela nunca é truncada entre execuções,
+ * logo já traz linhas de corridas anteriores.
+ */
+async function subscriberOn(
+  projectId: string,
+  status: 'fundos_confirmados' | 'interesse'
+): Promise<{id: string; email: string}> {
+  const email = `obra-svc-${randomUUID().slice(0, 8)}@test.local`;
+  const u = await createTestUser(email);
   const {error} = await admin.from('subscriptions').insert({
     project_id: projectId,
     user_id: u.id,
     amount: 20000,
-    status: 'fundos_confirmados',
+    status,
     consent_given: true,
     terms_version: 'v1'
   });
   if (error) throw error;
-  return u.id;
+  return {id: u.id, email};
+}
+
+async function outboxFor(email: string, template: string): Promise<number> {
+  const {data, error} = await admin
+    .from('email_outbox')
+    .select('id')
+    .eq('to_email', email)
+    .eq('template', template);
+  expect(error).toBeNull();
+  return (data ?? []).length;
 }
 
 beforeAll(async () => {
@@ -66,7 +86,9 @@ describe('marcos', () => {
 describe('publishWorkUpdate', () => {
   it('publica e notifica só investidores com fundos confirmados', async () => {
     const projectId = await makeProject();
-    await funderOn(projectId);
+    const confirmed = await subscriberOn(projectId, 'fundos_confirmados');
+    // Subscrição ativa mas SEM fundos: vê a obra, não recebe notificação.
+    const interested = await subscriberOn(projectId, 'interesse');
     const {id} = await publishWorkUpdate(
       {projectId, title: 'Semana 1', body: 'Arranque da obra', createdBy: staffId, locale: 'pt'},
       noopMail
@@ -75,12 +97,9 @@ describe('publishWorkUpdate', () => {
     const feed = await listWorkUpdates(projectId);
     expect(feed).toHaveLength(1);
     expect(feed[0].title).toBe('Semana 1');
-    // Um email na outbox para o investidor confirmado.
-    const {data: mails} = await admin
-      .from('email_outbox')
-      .select('template')
-      .eq('template', 'work_update_published');
-    expect((mails ?? []).length).toBeGreaterThanOrEqual(1);
+    // Exatamente um email para o confirmado e NENHUM para o interessado.
+    expect(await outboxFor(confirmed.email, 'work_update_published')).toBe(1);
+    expect(await outboxFor(interested.email, 'work_update_published')).toBe(0);
   });
 });
 
@@ -104,17 +123,23 @@ describe('setActualAmount', () => {
 
   it('dispara alerta de desvio acima do limiar', async () => {
     const projectId = await makeProject();
+    // O alerta vai para um email de staff fixo, logo o `to_email` não distingue
+    // esta execução das anteriores — o nome único da rubrica (que viaja no
+    // payload) é o que torna a contagem exata possível.
+    const lineName = `Cobertura-${randomUUID().slice(0, 8)}`;
     const {data: line} = await admin
       .from('project_budget_lines')
-      .insert({project_id: projectId, name: 'Cobertura', phase: 'Obra', budget_amount: 10000, sort_order: 1})
+      .insert({project_id: projectId, name: lineName, phase: 'Obra', budget_amount: 10000, sort_order: 1})
       .select('id')
       .single();
     // limiar default = 10% → 12000 é +20% ⇒ alerta
     await setActualAmount(line!.id, 12000, {locale: 'pt'}, noopMail);
-    const {data: mails} = await admin
+    const {data: mails, error} = await admin
       .from('email_outbox')
-      .select('template')
-      .eq('template', 'budget_deviation_alert');
-    expect((mails ?? []).length).toBeGreaterThanOrEqual(1);
+      .select('id')
+      .eq('template', 'budget_deviation_alert')
+      .eq('payload->>lineName', lineName);
+    expect(error).toBeNull();
+    expect(mails ?? []).toHaveLength(1);
   });
 });

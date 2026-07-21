@@ -5,12 +5,14 @@ import {admin, createTestUser, signInAs, anonClient} from './helpers';
 const run = randomUUID().slice(0, 8);
 const funder = `obra-funder-${run}@test.local`;
 const interested = `obra-int-${run}@test.local`;
+const cancelled = `obra-canc-${run}@test.local`;
 const outsider = `obra-out-${run}@test.local`;
 const staff = `obra-staff-${run}@test.local`;
 
 let projectId: string;
 let milestoneId: string;
 let updateId: string;
+let mediaId: string;
 let statementId: string;
 
 async function sub(userId: string, status: string) {
@@ -28,6 +30,7 @@ async function sub(userId: string, status: string) {
 beforeAll(async () => {
   const f = (await createTestUser(funder)).id;
   const i = (await createTestUser(interested)).id;
+  const c = (await createTestUser(cancelled)).id;
   await createTestUser(outsider);
   await createTestUser(staff, 'admin');
 
@@ -48,6 +51,7 @@ beforeAll(async () => {
 
   await sub(f, 'fundos_confirmados');
   await sub(i, 'interesse');
+  await sub(c, 'cancelada');
 
   const {data: m, error: me} = await admin
     .from('project_milestones')
@@ -64,6 +68,20 @@ beforeAll(async () => {
     .single();
   if (ue) throw ue;
   updateId = u.id;
+
+  const {data: md, error: mde} = await admin
+    .from('work_update_media')
+    .insert({
+      work_update_id: updateId,
+      storage_path: `${projectId}/foto-1.jpg`,
+      media_type: 'photo',
+      mime_type: 'image/jpeg',
+      size_bytes: 2048
+    })
+    .select('id')
+    .single();
+  if (mde) throw mde;
+  mediaId = md.id;
 
   const {data: s, error: se} = await admin
     .from('account_statements')
@@ -94,10 +112,13 @@ describe('obra: marcos e diário', () => {
 
   it('investidor sem subscrição NÃO vê marcos', async () => {
     const c = await signInAs(outsider);
-    const {data} = await c
+    const {data, error} = await c
       .from('project_milestones')
       .select('id')
       .eq('id', milestoneId);
+    // `error` null junto com zero linhas: sem isto, uma query partida (tabela
+    // inexistente, coluna mudada) passaria por negação de RLS.
+    expect(error).toBeNull();
     expect(data ?? []).toHaveLength(0);
   });
 
@@ -109,7 +130,28 @@ describe('obra: marcos e diário', () => {
 
   it('investidor sem subscrição NÃO vê atualizações', async () => {
     const c = await signInAs(outsider);
-    const {data} = await c.from('work_updates').select('id').eq('id', updateId);
+    const {data, error} = await c.from('work_updates').select('id').eq('id', updateId);
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(0);
+  });
+
+  it('investidor com subscrição ativa vê a media da atualização', async () => {
+    const c = await signInAs(interested);
+    const {data, error} = await c
+      .from('work_update_media')
+      .select('id')
+      .eq('id', mediaId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it('investidor sem subscrição NÃO vê a media', async () => {
+    const c = await signInAs(outsider);
+    const {data, error} = await c
+      .from('work_update_media')
+      .select('id')
+      .eq('id', mediaId);
+    expect(error).toBeNull();
     expect(data ?? []).toHaveLength(0);
   });
 
@@ -117,6 +159,55 @@ describe('obra: marcos e diário', () => {
     const c = await signInAs(staff);
     const {data} = await c.from('work_updates').select('id').eq('id', updateId);
     expect(data).toHaveLength(1);
+    const {data: media} = await c
+      .from('work_update_media')
+      .select('id')
+      .eq('id', mediaId);
+    expect(media).toHaveLength(1);
+  });
+});
+
+/**
+ * `has_active_subscription` exclui explicitamente `cancelada`. Sem estes testes,
+ * apagar o `and s.status <> 'cancelada'` do helper não parte nada — e um
+ * investidor que saiu do projeto mantinha acesso permanente à obra.
+ */
+describe('obra: subscrição cancelada perde o acesso', () => {
+  it('NÃO vê marcos', async () => {
+    const c = await signInAs(cancelled);
+    const {data, error} = await c
+      .from('project_milestones')
+      .select('id')
+      .eq('id', milestoneId);
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(0);
+  });
+
+  it('NÃO vê atualizações de obra', async () => {
+    const c = await signInAs(cancelled);
+    const {data, error} = await c.from('work_updates').select('id').eq('id', updateId);
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(0);
+  });
+
+  it('NÃO vê a media da obra', async () => {
+    const c = await signInAs(cancelled);
+    const {data, error} = await c
+      .from('work_update_media')
+      .select('id')
+      .eq('id', mediaId);
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(0);
+  });
+
+  it('NÃO vê extratos', async () => {
+    const c = await signInAs(cancelled);
+    const {data, error} = await c
+      .from('account_statements')
+      .select('id')
+      .eq('id', statementId);
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(0);
   });
 });
 
@@ -133,10 +224,11 @@ describe('extratos: só quem tem fundos confirmados', () => {
 
   it('investidor só com interesse NÃO vê o extrato', async () => {
     const c = await signInAs(interested);
-    const {data} = await c
+    const {data, error} = await c
       .from('account_statements')
       .select('id')
       .eq('id', statementId);
+    expect(error).toBeNull();
     expect(data ?? []).toHaveLength(0);
   });
 
@@ -153,8 +245,10 @@ describe('extratos: só quem tem fundos confirmados', () => {
     const anon = anonClient();
     const {data: a} = await anon.from('account_statements').select('id');
     const {data: b} = await anon.from('work_updates').select('id');
+    const {data: m} = await anon.from('work_update_media').select('id');
     expect(a ?? []).toHaveLength(0);
     expect(b ?? []).toHaveLength(0);
+    expect(m ?? []).toHaveLength(0);
   });
 });
 

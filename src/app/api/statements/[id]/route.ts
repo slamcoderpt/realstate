@@ -18,11 +18,14 @@ import {signedStatementUrl} from '@/lib/statements/storage';
  *     audit falhado bloqueia o download em vez de degradar em silêncio.
  *     (`audit_log` é append-only: UPDATE/DELETE/TRUNCATE revogados + triggers.)
  *
- * A convenção de auditoria segue a do contrato de subscrição
- * (`/api/subscriptions/contract/[id]`): action `view_document` + o nome da
- * tabela em `entity_type`. Aqui o payload leva `project_id` e `period` — o
- * contrato usa `{}` — porque o auditor precisa de saber QUE extrato foi visto
- * sem ter de reler a tabela.
+ * Auditoria: partilha a action `view_document` com o contrato de subscrição
+ * (`/api/subscriptions/contract/[id]`), mas NÃO a convenção de `entity_type`:
+ * o contrato grava um nome lógico (`subscription_contract`), aqui grava-se o
+ * nome da tabela (`account_statements`). Não há precedente a seguir — as duas
+ * rotas divergem e o valor atual é o que já está gravado no `audit_log`;
+ * uniformizar exigiria migrar o histórico. O payload também difere: leva
+ * `project_id` e `period` (o contrato usa `{}`) porque o auditor precisa de
+ * saber QUE extrato foi visto sem ter de reler a tabela.
  */
 export async function GET(
   _req: Request,

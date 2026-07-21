@@ -5,7 +5,7 @@ import {detectMime} from '@/lib/kyc/filetype';
 import type {SendEmailDeps} from '@/lib/mail/outbox';
 import type {Locale} from '@/lib/mail/templates';
 import {notifyConfirmedInvestors} from '@/lib/notify/investors';
-import {statementPath, uploadStatement} from './storage';
+import {removeStatement, statementPath, uploadStatement} from './storage';
 
 /**
  * Extratos da conta dedicada (server-only, service role). Publicar o mesmo
@@ -23,7 +23,9 @@ export type StatementRow = {
   published_at: string;
 };
 
-const PERIOD_RE = /^\d{4}-\d{2}$/;
+// Mês 01-12: o CHECK na BD aceita `\d{2}` (aceitaria 2026-00 ou 2026-99), o
+// serviço é que fecha a porta — um período impossível corrompe o histórico.
+const PERIOD_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const ALLOWED_MIME = ['application/pdf'];
 
 export type PublishStatementInput = {
@@ -100,6 +102,13 @@ export async function publishStatement(
     .select('id')
     .single();
   if (error || !data) {
+    // O PDF já subiu. Sem esta limpeza, um insert falhado (tipicamente o
+    // perdedor da corrida no unique (project_id, period, version)) deixava o
+    // ficheiro no bucket sem linha na BD: invisível para a app e para o
+    // auditor, mas presente no armazenamento. Um documento financeiro órfão é
+    // pior do que documento nenhum. Best-effort — se a remoção falhar,
+    // prevalece o erro original (removeStatement não lança).
+    await removeStatement(path, db);
     throw new Error(`publicar extrato falhou: ${error?.message ?? 'sem linha'}`);
   }
 
