@@ -346,6 +346,7 @@
     "createdAt": "Registered",
     "save": "Save",
     "empty": "No users.",
+    "saveError": "Could not save the change.",
     "cannotDemoteSelf": "You cannot remove your own administrator role.",
     "role_investor": "Investor",
     "role_project_manager": "Project manager",

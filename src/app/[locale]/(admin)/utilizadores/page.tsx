@@ -42,9 +42,9 @@ export default async function UtilizadoresPage({
     <main className="mx-auto max-w-6xl space-y-6 p-6">
       <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
 
-      {err === 'self_demotion' && (
+      {err && (
         <p role="alert" className="text-sm text-red-600">
-          {t('cannotDemoteSelf')}
+          {err === 'self_demotion' ? t('cannotDemoteSelf') : t('saveError')}
         </p>
       )}
 

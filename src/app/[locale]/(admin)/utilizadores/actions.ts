@@ -1,22 +1,8 @@
 'use server';
 
 import {revalidatePath} from 'next/cache';
-import {getSession, type Session} from '@/lib/auth/staff';
+import {requireAdmin, type Session} from '@/lib/auth/staff';
 import {changeUserRole, isUserRole} from '@/lib/users/service';
-
-/**
- * Guarda local de admin. `requireStaff()` deixaria passar `project_manager`,
- * que não deve mudar papéis. Está aqui e não em @/lib/auth/staff porque um
- * commit paralelo está a acrescentar `requireAdmin()` a esse ficheiro —
- * unificar depois de ambos aterrarem.
- */
-async function requireAdminLocal(): Promise<Session> {
-  const session = await getSession();
-  if (!session || session.role !== 'admin') {
-    throw new Error('acesso restrito a administradores');
-  }
-  return session;
-}
 
 export type ChangeRoleState = {
   ok: boolean;
@@ -40,7 +26,7 @@ export async function changeUserRoleAction(
 ): Promise<ChangeRoleState> {
   let session: Session;
   try {
-    session = await requireAdminLocal();
+    session = await requireAdmin();
   } catch {
     return {ok: false, error: 'forbidden'};
   }

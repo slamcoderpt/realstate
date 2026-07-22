@@ -346,6 +346,7 @@
     "createdAt": "Registado",
     "save": "Guardar",
     "empty": "Sem utilizadores.",
+    "saveError": "Não foi possível guardar a alteração.",
     "cannotDemoteSelf": "Não pode retirar-se a si próprio o papel de administrador.",
     "role_investor": "Investidor",
     "role_project_manager": "Gestor de projeto",
