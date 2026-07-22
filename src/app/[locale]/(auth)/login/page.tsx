@@ -50,12 +50,11 @@ export default function LoginPage() {
     // Entrada partida: a tela de marca à esquerda, o formulário à direita.
     // No telemóvel a tela encolhe para uma faixa fina no topo — decoração
     // nenhuma pode empurrar o formulário para baixo da dobra.
-    <main className="flex min-h-screen flex-col md:grid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-      <aside className="brand-canvas flex items-center px-6 py-6 md:items-start md:px-14 md:py-16">
-        <Brand onDark className="relative" />
-      </aside>
-
-      <div className="flex flex-1 items-center justify-center px-4 py-10 sm:px-8 md:py-16">
+    <main className="brand-canvas flex min-h-screen flex-col items-center justify-center px-4 py-10 sm:px-8">
+      {/* `relative` põe o conteúdo acima dos ::before/::after decorativos da
+          tela de marca — sem isso, as formas pintam por cima do cartão. */}
+      <div className="relative flex w-full max-w-md flex-col items-center gap-7">
+        <Brand onDark />
         <Card className="w-full max-w-md py-8">
           <CardContent className="px-6 sm:px-8">
             <form onSubmit={onSubmit} className="space-y-5">

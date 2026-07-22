@@ -38,12 +38,11 @@ export default async function KycPage({
   const status = profile?.kyc_status ?? 'pending';
 
   return (
-    <main className="flex min-h-screen flex-col md:grid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-      <aside className="brand-canvas flex items-center px-6 py-6 md:items-start md:px-14 md:py-16">
-        <Brand onDark className="relative" />
-      </aside>
-
-      <div className="flex flex-1 items-center justify-center px-4 py-10 sm:px-8 md:py-16">
+    <main className="brand-canvas flex min-h-screen flex-col items-center justify-center px-4 py-10 sm:px-8">
+      {/* `relative` põe o conteúdo acima dos ::before/::after decorativos da
+          tela de marca — sem isso, as formas pintam por cima do cartão. */}
+      <div className="relative flex w-full max-w-md flex-col items-center gap-7">
+        <Brand onDark />
         <Card className="w-full max-w-md py-8">
           <CardHeader className="px-6 sm:px-8">
             <CardTitle className="text-xl font-bold tracking-tight text-ink">
