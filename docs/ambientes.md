@@ -197,6 +197,36 @@ defeito da app (numa stack alinhada a API define o GUC). Afeta a limpeza de
 ficheiros órfãos em `src/lib/statements/service.ts`. **Confirmar em staging/prod**
 que a remoção funciona antes de assumir que a limpeza é efetiva.
 
+### Contas de demonstração (produção, 2026-07-22)
+
+Criadas para os sócios testarem. **As passwords não vivem aqui** — foram
+entregues em conversa; para as rodar, usar `/utilizadores` no back-office ou o
+dashboard do Supabase (Authentication → Users).
+
+| Email | Papel | KYC |
+| --- | --- | --- |
+| `admin.demo@tilweni.pt` | `admin` | pending |
+| `investidor.demo@tilweni.pt` | `investor` | pending |
+
+Criadas por SQL direto e não pelo fluxo de convite, porque (a) o SMTP de
+produção ainda não está configurado, logo o email de convite não seria
+entregue, e (b) não havia nenhum admin em produção que pudesse convidar alguém.
+
+**Armadilha ao criar utilizadores por SQL:** o GoTrue lê `confirmation_token`,
+`recovery_token`, `email_change` e `email_change_token_new` para `string` não
+anulável de Go. Se ficarem a `NULL`, o login falha com *"Database error querying
+schema"* — **antes** de comparar a password, pelo que uma password errada dá
+exatamente o mesmo erro e mascara o problema. Preencher com `''`. O
+`email_confirmed_at` também tem de vir preenchido.
+
+**MFA: um fator TOTP por conta.** Quem entrar primeiro numa conta enrola a app
+de autenticação e fica com o segredo; os restantes só entram se adicionarem o
+mesmo segredo à sua app. Para várias pessoas em simultâneo, preferir uma conta
+por pessoa.
+
+Para limpar depois da demonstração: apagar em Authentication → Users (o perfil
+cai por cascata). As linhas do `audit_log` ficam — é append-only por desenho.
+
 ---
 
 ## Documentos relacionados
