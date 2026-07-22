@@ -138,7 +138,8 @@ export async function publishWorkUpdate(
     'work_update_published',
     {projectName: project.name, updateTitle: input.title.trim()},
     input.locale,
-    {transport: deps.transport}
+    {transport: deps.transport},
+    `/projetos/${input.projectId}/obra`
   );
 
   return {id: data.id};

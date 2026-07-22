@@ -3,6 +3,7 @@ import type {SupabaseClient} from '@supabase/supabase-js';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {sendEmail, type SendEmailDeps} from '@/lib/mail/outbox';
 import type {Locale} from '@/lib/mail/templates';
+import {createNotification} from '@/lib/notifications/service';
 import {canTransition, type SubscriptionStatus} from './states';
 
 /**
@@ -184,6 +185,23 @@ export async function transitionSubscription(
         payload: {amount: formatEur(Number(cur.amount))}
       },
       {db, transport: deps.transport}
+    );
+    // In-app ao lado do email. `body_subscription_confirmed` interpola
+    // {projectName}, daí a leitura do nome — o payload guarda o dado, nunca a
+    // frase já escrita.
+    const {data: project} = await db
+      .from('projects')
+      .select('name')
+      .eq('id', cur.project_id)
+      .maybeSingle();
+    await createNotification(
+      {
+        userId: cur.user_id,
+        type: 'subscription_confirmed',
+        payload: {projectName: (project?.name as string | undefined) ?? ''},
+        href: `/projetos/${cur.project_id}`
+      },
+      db
     );
   }
 }

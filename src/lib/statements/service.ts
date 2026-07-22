@@ -118,7 +118,8 @@ export async function publishStatement(
     'statement_published',
     {projectName: project.name, period: input.period},
     input.locale,
-    {transport: deps.transport}
+    {transport: deps.transport},
+    `/projetos/${input.projectId}/extratos`
   );
 
   return {id: data.id, version};
