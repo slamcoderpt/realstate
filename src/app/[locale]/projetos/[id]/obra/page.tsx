@@ -128,6 +128,23 @@ export default async function ObraPage({
 
   return (
     <main className="mx-auto max-w-6xl space-y-8 px-6 py-8">
+      {/* Staff chega aqui pelo "Ver como investidor" da gestão de obra. Dizer
+          que é pré-visualização evita a dúvida de estar a ver a página certa —
+          é a mesma para toda a gente, só o caminho é que difere. */}
+      {isStaff(session.role) && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] border border-brand-200 bg-brand-50 px-5 py-3.5">
+          <p className="text-sm font-semibold text-brand-700">
+            {t('staffPreview')}
+          </p>
+          <a
+            href={`/${locale}/gestao-projetos/${id}/obra`}
+            className="text-sm font-bold text-brand-700 underline-offset-4 hover:underline"
+          >
+            {t('backToAdmin')}
+          </a>
+        </div>
+      )}
+
       <header className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-ink">
           {t('title')}

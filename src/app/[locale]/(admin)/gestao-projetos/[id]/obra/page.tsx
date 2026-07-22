@@ -1,4 +1,5 @@
 import {getTranslations} from 'next-intl/server';
+import {ExternalLinkIcon} from 'lucide-react';
 import {
   listMilestones,
   listWorkUpdates,
@@ -101,16 +102,31 @@ export default async function GestaoObraPage({
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-500">
           {tp('title')}
         </p>
-        <div className="flex flex-wrap items-center gap-4">
-          <h1 className="text-3xl font-extrabold tracking-tight text-ink">
-            {ta('title')}
-          </h1>
-          <a
-            href={`/${locale}/gestao-projetos/${id}`}
-            className="inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-100"
-          >
-            {tw('backToProject')}
-          </a>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <h1 className="text-3xl font-extrabold tracking-tight text-ink">
+              {ta('title')}
+            </h1>
+            <a
+              href={`/${locale}/gestao-projetos/${id}`}
+              className="inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-100"
+            >
+              {tw('backToProject')}
+            </a>
+          </div>
+          {/* O que aqui se publica só se vê como o investidor o vê na página de
+              acompanhamento — que staff sempre pôde abrir, mas só escrevendo o
+              URL à mão. */}
+          <Button asChild variant="outline">
+            <a
+              href={`/${locale}/projetos/${id}/obra`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {tp('viewAsInvestor')}
+              <ExternalLinkIcon aria-hidden className="size-4" />
+            </a>
+          </Button>
         </div>
       </header>
 

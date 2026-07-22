@@ -251,6 +251,28 @@ export default async function ProjectDetailPage({
         </div>
 
         <aside className="space-y-6 lg:sticky lg:top-24">
+          {/* Para o investidor estes dois links vivem dentro do cartão da sua
+              posição — é a posição que os desbloqueia. Staff não tem posição,
+              e sem isto a pré-visualização era um beco: dava para ver a ficha
+              e mais nada. */}
+          {staff && (
+            <section className="space-y-4">
+              <SectionTitle>{t('staffLinks')}</SectionTitle>
+              <Card>
+                <CardContent className="flex flex-wrap gap-3">
+                  <Button asChild variant="outline" size="sm">
+                    <a href={`/${locale}/projetos/${id}/obra`}>{tw('title')}</a>
+                  </Button>
+                  <Button asChild variant="outline" size="sm">
+                    <a href={`/${locale}/projetos/${id}/extratos`}>
+                      {te('title')}
+                    </a>
+                  </Button>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
           {/* Staff nunca tem posição (só investidores subscrevem), pelo que a
               secção seria sempre o cartão "ainda não subscreveu" — ruído numa
               pré-visualização. Fica de fora e o lugar é do progresso. */}

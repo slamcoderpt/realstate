@@ -122,6 +122,7 @@
     "investorsCount": "{n} investors subscribed {amount}",
     "staffPreview": "Staff preview: you see the full page, without the subscription form.",
     "backToAdmin": "Manage project",
+    "staffLinks": "Investor pages",
     "riskNotice": "Investing involves the risk of total loss of capital, is illiquid and carries no guarantee of return. Figures shown are estimates."
   },
   "ProjectAdmin": {
@@ -231,7 +232,9 @@
     "status_previsto": "Planned",
     "status_em_curso": "In progress",
     "status_concluido": "Completed",
-    "backToProject": "Back to project"
+    "backToProject": "Back to project",
+    "staffPreview": "Staff preview: this is what the investor sees.",
+    "backToAdmin": "Manage works"
   },
   "WorksAdmin": {
     "title": "Works management",

@@ -122,6 +122,7 @@
     "investorsCount": "{n} investidores subscreveram {amount}",
     "staffPreview": "Pré-visualização de staff: vê a ficha completa, sem o formulário de subscrição.",
     "backToAdmin": "Gerir projeto",
+    "staffLinks": "Páginas do investidor",
     "riskNotice": "O investimento envolve risco de perda total do capital, é ilíquido e não beneficia de garantia de retorno. As rentabilidades apresentadas são estimativas."
   },
   "ProjectAdmin": {
@@ -231,7 +232,9 @@
     "status_previsto": "Previsto",
     "status_em_curso": "Em curso",
     "status_concluido": "Concluído",
-    "backToProject": "Voltar ao projeto"
+    "backToProject": "Voltar ao projeto",
+    "staffPreview": "Pré-visualização de staff: é isto que o investidor vê.",
+    "backToAdmin": "Gerir obra"
   },
   "WorksAdmin": {
     "title": "Gestão de obra",
