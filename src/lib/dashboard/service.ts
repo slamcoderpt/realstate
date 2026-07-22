@@ -49,6 +49,7 @@ export type DashboardData = {
   }>;
   recentStatements: Array<{
     id: string;
+    projectId: string;
     projectName: string;
     period: string;
     publishedAt: string;
@@ -133,6 +134,7 @@ export async function getInvestorDashboard(
     })),
     recentStatements: statements.map((s) => ({
       id: s.id,
+      projectId: s.project_id,
       projectName: projectName.get(s.project_id) ?? '',
       period: s.period,
       publishedAt: s.published_at

@@ -190,7 +190,12 @@ export default async function DashboardPage({
               <ul className="space-y-3">
                 {dash.recentStatements.map((s) => (
                   <li key={s.id}>
-                    <p className="text-neutral-800">{s.period}</p>
+                    <Link
+                      href={`/${locale}/projetos/${s.projectId}/extratos`}
+                      className="text-neutral-800 underline-offset-2 hover:underline"
+                    >
+                      {s.period}
+                    </Link>
                     <p className="text-xs text-neutral-500">
                       {s.projectName} · {s.publishedAt.slice(0, 10)}
                     </p>
