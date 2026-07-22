@@ -2,30 +2,16 @@ import {notFound} from 'next/navigation';
 import {getTranslations} from 'next-intl/server';
 import {getSession} from '@/lib/auth/staff';
 import {createAdminClient} from '@/lib/supabase/admin';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {saveSettingAction} from './actions';
-import {SettingRow} from './SettingRow';
+import {SettingField} from './SettingField';
+import {GROUP_LABEL, GROUP_ORDER, specFor, type SettingGroup} from './registry';
 import type {Locale} from '@/lib/mail/templates';
 
 // Parâmetros vivos da plataforma + guard por sessão: render dinâmico.
 export const dynamic = 'force-dynamic';
 
 type SettingRowData = {key: string; description: string; value: unknown};
-
-const TH =
-  'h-12 px-5 text-xs font-bold uppercase tracking-[0.12em] text-ink-muted';
 
 export default async function DefinicoesPage({
   params
@@ -48,49 +34,51 @@ export default async function DefinicoesPage({
     .order('key');
   const settings = (data ?? []) as SettingRowData[];
 
+  // Agrupadas por área em vez de por ordem alfabética: quem vem mudar o
+  // montante mínimo não quer passar os olhos por definições de KYC pelo
+  // caminho. Um grupo sem definições não é renderizado.
+  const porGrupo = new Map<SettingGroup, SettingRowData[]>();
+  for (const s of settings) {
+    const g = specFor(s.key).group;
+    porGrupo.set(g, [...(porGrupo.get(g) ?? []), s]);
+  }
+
   return (
-    <main className="mx-auto max-w-5xl space-y-8 p-6">
+    <main className="mx-auto max-w-4xl space-y-8 px-6 py-8">
       <header className="space-y-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-ink">
           {t('title')}
         </h1>
-        <p className="max-w-3xl text-sm text-ink-soft">{t('hint')}</p>
+        <p className="max-w-2xl text-sm text-ink-soft">{t('hint')}</p>
       </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xs font-bold uppercase tracking-[0.12em] text-ink-muted">
-            {t('title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* O `<Table>` traz o seu próprio contentor com `overflow-x-auto`;
-              anula-se aqui para que quem role seja este invólucro — é ele que
-              tem a barra fina de `.scroll-soft`. */}
-          <div className="scroll-soft overflow-x-auto [&>div]:overflow-visible">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border bg-secondary hover:bg-secondary">
-                  <TableHead className={TH}>{t('key')}</TableHead>
-                  <TableHead className={TH}>{t('description')}</TableHead>
-                  <TableHead className={TH}>{t('value')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {settings.map((s) => (
-                  <SettingRow
-                    key={s.key}
-                    settingKey={s.key}
-                    description={s.description}
-                    value={JSON.stringify(s.value)}
-                    action={saveSettingAction.bind(null, loc, s.key)}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      {GROUP_ORDER.filter((g) => porGrupo.has(g)).map((grupo) => (
+        <Card key={grupo} className="py-0">
+          <CardHeader className="border-b border-border px-6 py-4 [.border-b]:pb-4">
+            <CardTitle className="text-xs font-bold tracking-[0.12em] text-ink-muted uppercase">
+              {t(GROUP_LABEL[grupo])}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="divide-y divide-border p-0">
+            {porGrupo.get(grupo)!.map((s) => (
+              <SettingField
+                // A chave inclui o VALOR: quando a gravação revalida a página e
+                // o servidor manda um valor diferente, o React remonta o campo
+                // em vez de tentar reconciliar estado de cliente com dados
+                // novos. Sem isto os controlos ficavam dessincronizados do
+                // rascunho — o campo mostrava 25 e a caixa "sem limite"
+                // aparecia marcada ao mesmo tempo.
+                key={`${s.key}:${JSON.stringify(s.value)}`}
+                settingKey={s.key}
+                description={s.description}
+                value={JSON.stringify(s.value)}
+                spec={specFor(s.key)}
+                action={saveSettingAction.bind(null, loc, s.key)}
+              />
+            ))}
+          </CardContent>
+        </Card>
+      ))}
     </main>
   );
 }

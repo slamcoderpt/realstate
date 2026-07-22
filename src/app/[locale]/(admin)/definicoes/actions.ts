@@ -5,7 +5,17 @@ import {requireAdmin} from '@/lib/auth/staff';
 import {createAdminClient} from '@/lib/supabase/admin';
 import type {Locale} from '@/lib/mail/templates';
 
-export type SaveSettingState = {ok: boolean; error?: 'invalidJson'};
+export type SaveSettingState = {
+  ok: boolean;
+  error?: 'invalidJson';
+  /**
+   * O JSON efetivamente gravado. O cliente precisa dele para actualizar a sua
+   * referência do "valor guardado": sem isto continuaria a comparar contra o
+   * valor com que a página foi carregada, e voltar ao valor antigo escondia o
+   * botão de guardar apesar de a base já ter o novo.
+   */
+  saved?: string;
+};
 
 /**
  * Devolve estado em vez de lançar no caso do JSON inválido: um `throw` numa
@@ -43,5 +53,5 @@ export async function saveSettingAction(
   // Rota dinâmica: o caminho concreto é no-op, o padrão do segmento é que conta.
   revalidatePath('/[locale]/definicoes', 'page');
   revalidatePath(`/${locale}/definicoes`);
-  return {ok: true};
+  return {ok: true, saved: raw};
 }
