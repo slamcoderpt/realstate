@@ -116,6 +116,50 @@ describe('manifestInterest', () => {
   });
 });
 
+describe('só investidores subscrevem', () => {
+  // A ficha esconde o formulário ao staff, mas a Server Action é alcançável
+  // por si própria — a regra tem de estar no serviço, e é isso que se prova
+  // aqui: chama-se o serviço diretamente, como faria quem contornasse o ecrã.
+  it.each([
+    ['admin', 'admin'],
+    ['project_manager', 'project_manager'],
+    ['auditor', 'auditor']
+  ] as const)('%s NÃO consegue subscrever', async (_rotulo, papel) => {
+    const projectId = await makeProject();
+    const u = await createTestUser(
+      `sub-papel-${randomUUID().slice(0, 8)}@test.local`,
+      papel
+    );
+    // KYC aprovado de propósito: sem isto o teste passaria pela razão errada
+    // (era o gate de KYC a recusar, não a regra de papel).
+    await admin.from('profiles').update({kyc_status: 'approved'}).eq('id', u.id);
+
+    await expect(
+      manifestInterest(
+        {userId: u.id, projectId, amount: 20000, consentVersion: 'v1'},
+        noopMail
+      )
+    ).rejects.toThrow(/investidor/i);
+
+    const {data, error} = await admin
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', u.id);
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(0);
+  });
+
+  it('o investidor continua a conseguir (controlo)', async () => {
+    const projectId = await makeProject();
+    const userId = await freshInvestor();
+    const {id} = await manifestInterest(
+      {userId, projectId, amount: 20000, consentVersion: 'v1'},
+      noopMail
+    );
+    expect(id).toBeTruthy();
+  });
+});
+
 describe('transitionSubscription + agregados', () => {
   it('confirmar fundos recomputa subscribed_amount/investor_count', async () => {
     const projectId = await makeProject();

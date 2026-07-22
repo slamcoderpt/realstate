@@ -70,9 +70,25 @@ export async function manifestInterest(
 
   const {data: profile} = await db
     .from('profiles')
-    .select('kyc_status, full_name')
+    .select('role, kyc_status, full_name')
     .eq('id', input.userId)
     .single();
+
+  // SÓ INVESTIDORES SUBSCREVEM. Decisão de 2026-07-22.
+  //
+  // Quem decide que um projeto passa a subscrição, quem aprova KYC e quem
+  // confirma fundos não pode ser parte no mesmo negócio — é conflito de
+  // interesses, e fica no audit_log para sempre. `auditor` também não: existe
+  // para fiscalizar, não para participar.
+  //
+  // A regra vive AQUI e não na página. A ficha já escondia o formulário ao
+  // staff, mas a Server Action é um endpoint alcançável por si só — esconder
+  // um botão nunca foi proteção neste repo, e não podia ser a única barreira
+  // justamente na operação que move dinheiro.
+  if ((profile?.role ?? 'investor') !== 'investor') {
+    throw new Error('apenas investidores podem subscrever');
+  }
+
   if (profile?.kyc_status !== 'approved') {
     throw new Error('KYC não aprovado');
   }

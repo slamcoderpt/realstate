@@ -105,6 +105,30 @@ vêm da aplicação — registam quem **consultou**, com IP. Documentado como
 
 ---
 
+## 5. Staff não subscreve — regra explícita
+
+**Decisão de 2026-07-22.** Só o papel `investor` pode manifestar interesse.
+`admin`, `project_manager` e `auditor` são recusados em
+`src/lib/subscriptions/service.ts`.
+
+**Porquê:** quem decide que um projeto passa a subscrição, quem aprova KYC e
+quem confirma fundos não pode ser parte no mesmo negócio. O `auditor` também
+não: existe para fiscalizar, não para participar.
+
+**Como estava antes:** a ficha do projeto escondia o formulário ao staff, mas
+a Server Action não verificava o papel — verificado empiricamente, os três
+papéis criavam a subscrição quando o serviço era chamado diretamente. Havia
+ainda um segundo travão acidental (o staff está isento do gate de KYC, logo
+ficaria em `pending` e seria recusado pela verificação de KYC), mas bastava um
+admin aprovar o KYC de outro para cair. Nenhum dos dois era uma regra escrita.
+
+**Se um dia os sócios quiserem investir:** não basta remover esta verificação.
+Tem de ficar desenhado quem aprova o KYC de um admin, quem confirma os fundos
+dele (não ele próprio), e como o back-office distingue uma posição de staff de
+uma de investidor externo.
+
+---
+
 ## 5. Contrato: sem validação de conteúdo no upload
 
 O upload de contratos assinados (`contracts`) valida o tipo declarado mas ainda
