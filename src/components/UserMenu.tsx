@@ -1,6 +1,8 @@
 'use client';
 
 import {ChevronDownIcon} from 'lucide-react';
+import {useTranslations} from 'next-intl';
+import {Link} from '@/i18n/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +33,10 @@ export function UserMenu({
   accountLabel: string;
   signOut: () => Promise<void>;
 }) {
+  // O rótulo do perfil vem do provider de mensagens (isto é um componente de
+  // cliente) e não por prop: acrescentar uma prop obrigatória obrigava a mexer
+  // no AppShell — dois pontos de chamada — para um texto que o cliente já tem.
+  const t = useTranslations('Nav');
   // Iniciais do email: `carlos.almeida@x.pt` -> CA. Quadrado, não círculo — a
   // forma lê-se mais institucional e menos rede social.
   const initials = email
@@ -63,6 +69,16 @@ export function UserMenu({
             {roleLabel}
           </p>
         </div>
+        <DropdownMenuSeparator />
+        {/* `Link` do next-intl e não o do Next: sem ele o href perdia o prefixo
+            de locale e o utilizador saltava para /pt a meio de uma sessão em
+            inglês. Separado do "terminar sessão" — o alvo de sair não deve
+            ficar encostado a um destino de navegação normal. */}
+        <DropdownMenuItem asChild>
+          <Link href="/perfil" className="cursor-pointer">
+            {t('profile')}
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <form action={signOut}>
           <DropdownMenuItem asChild>

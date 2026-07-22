@@ -118,6 +118,40 @@ describe('publishWorkUpdate', () => {
   });
 });
 
+describe('idioma das notificações', () => {
+  it('cada investidor recebe no SEU idioma, não no de quem publica', async () => {
+    const projectId = await makeProject();
+    const pt = await subscriberOn(projectId, 'fundos_confirmados');
+    const en = await subscriberOn(projectId, 'fundos_confirmados');
+    // Um investidor configurou inglês no perfil; o outro fica no default.
+    const {error: prefErr} = await admin
+      .from('profiles')
+      .update({preferred_locale: 'en'})
+      .eq('id', en.id);
+    expect(prefErr).toBeNull();
+
+    // Staff publica em português.
+    await publishWorkUpdate(
+      {projectId, title: 'Semana 1', body: 'Arranque', createdBy: staffId, locale: 'pt'},
+      noopMail
+    );
+
+    const locales = async (email: string) => {
+      const {data, error} = await admin
+        .from('email_outbox')
+        .select('locale')
+        .eq('to_email', email)
+        .eq('template', 'work_update_published');
+      expect(error).toBeNull();
+      return (data ?? []).map((r) => r.locale);
+    };
+
+    // Sem isto, ambos recebiam 'pt' — o idioma de quem carregou no botão.
+    expect(await locales(pt.email)).toEqual(['pt']);
+    expect(await locales(en.email)).toEqual(['en']);
+  });
+});
+
 describe('setActualAmount', () => {
   it('grava o custo real na rubrica', async () => {
     const projectId = await makeProject();

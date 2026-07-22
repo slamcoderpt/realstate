@@ -3,7 +3,9 @@ import {NextResponse, type NextRequest} from 'next/server';
 
 const PUBLIC_PATHS = [
   /^\/(pt|en)\/login$/,
-  /^\/(pt|en)\/aceitar-convite\/.+$/
+  /^\/(pt|en)\/aceitar-convite\/.+$/,
+  /^\/(pt|en)\/recuperar$/,
+  /^\/(pt|en)\/nova-palavra-passe$/
 ];
 
 export async function updateSession(

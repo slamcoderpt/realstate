@@ -43,6 +43,22 @@ export async function notifyConfirmedInvestors<T extends TemplateName>(
     .eq('status', 'fundos_confirmados');
 
   const userIds = [...new Set((subs ?? []).map((s) => s.user_id as string))];
+
+  // O idioma é o DE CADA DESTINATÁRIO, não o de quem publicou. O `locale`
+  // recebido é só o recurso para quem ainda não escolheu — sem isto, um gestor
+  // a publicar em português mandava o email em português a um investidor que
+  // configurou inglês. Uma query para todos, não uma por investidor.
+  const {data: perfis} = await db
+    .from('profiles')
+    .select('id, preferred_locale')
+    .in('id', userIds.length ? userIds : ['00000000-0000-0000-0000-000000000000']);
+  const localePorUtilizador = new Map<string, Locale>(
+    (perfis ?? []).map((p) => [
+      p.id as string,
+      (p.preferred_locale === 'en' ? 'en' : 'pt') as Locale
+    ])
+  );
+
   const notificationType = TEMPLATE_TO_NOTIFICATION[template];
   let sent = 0;
   for (const userId of userIds) {
@@ -50,7 +66,12 @@ export async function notifyConfirmedInvestors<T extends TemplateName>(
     const email = data.user?.email;
     if (!email) continue;
     await sendEmail(
-      {toEmail: email, locale, template, payload},
+      {
+        toEmail: email,
+        locale: localePorUtilizador.get(userId) ?? locale,
+        template,
+        payload
+      },
       {db, transport: deps.transport}
     );
     if (notificationType) {

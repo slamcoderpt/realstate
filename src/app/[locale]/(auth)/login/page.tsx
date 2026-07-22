@@ -2,7 +2,7 @@
 
 import {useState} from 'react';
 import {useTranslations} from 'next-intl';
-import {useRouter} from '@/i18n/navigation';
+import {Link, useRouter} from '@/i18n/navigation';
 import {createClient} from '@/lib/supabase/client';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
@@ -12,6 +12,7 @@ import {Brand} from '@/components/Brand';
 
 export default function LoginPage() {
   const t = useTranslations('Login');
+  const tNav = useTranslations('Nav');
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -95,6 +96,15 @@ export default function LoginPage() {
               <Button type="submit" className="w-full" disabled={loading}>
                 {t('submit')}
               </Button>
+
+              {/* Debaixo do botão, não ao lado do campo: quem chega aqui vem
+                  para entrar; a recuperação é a saída de emergência. */}
+              <Link
+                href="/recuperar"
+                className="block text-center text-sm font-medium text-brand-500 hover:underline"
+              >
+                {tNav('forgotPassword')}
+              </Link>
             </form>
           </CardContent>
         </Card>

@@ -268,6 +268,8 @@
     "administration": "Administration",
     "menu": "Menu",
     "account": "Account",
+    "profile": "Profile",
+    "forgotPassword": "Forgot your password?",
     "signOut": "Sign out",
     "language": "Language"
   },
@@ -355,5 +357,54 @@
     "role_project_manager": "Project manager",
     "role_admin": "Administrator",
     "role_auditor": "Auditor"
+  },
+  "ResetPassword": {
+    "title": "Recover access",
+    "intro": "Enter your email. If an account exists, we will send a link to set a new password.",
+    "email": "Email",
+    "submit": "Send link",
+    "sent": "If an account exists with this email, the link has been sent. Please check your inbox.",
+    "error": "Could not send. Please try again.",
+    "backToLogin": "Back to sign in"
+  },
+  "NewPassword": {
+    "title": "Set a new password",
+    "password": "New password",
+    "confirm": "Confirm password",
+    "hint": "At least 8 characters.",
+    "submit": "Save",
+    "mismatch": "The passwords do not match.",
+    "weak": "The password must be at least 8 characters.",
+    "invalidLink": "This link has expired or has already been used. Please request a new one.",
+    "error": "Could not save. Please try again.",
+    "done": "Password changed. You will need the code from your authenticator app to sign in.",
+    "goToLogin": "Sign in"
+  },
+  "Profile": {
+    "title": "My profile",
+    "account": "Account",
+    "email": "Email",
+    "role": "Role",
+    "kycStatus": "Identity verification",
+    "kyc_pending": "Not submitted",
+    "kyc_submitted": "Under review",
+    "kyc_approved": "Verified",
+    "kyc_rejected": "Not accepted",
+    "details": "Personal details",
+    "fullName": "Full name",
+    "language": "Preferred language",
+    "lang_pt": "Portuguese",
+    "lang_en": "English",
+    "save": "Save",
+    "saved": "Changes saved.",
+    "saveError": "Could not save.",
+    "security": "Security",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "changePassword": "Change password",
+    "passwordChanged": "Password changed.",
+    "wrongPassword": "The current password is incorrect.",
+    "mfaOn": "Two-step verification is active."
   }
 }

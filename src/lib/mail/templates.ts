@@ -19,7 +19,8 @@ export type TemplateName =
   | 'subscription_confirmed'
   | 'work_update_published'
   | 'budget_deviation_alert'
-  | 'statement_published';
+  | 'statement_published'
+  | 'password_reset';
 
 export type InvitePayload = {
   fullName: string;
@@ -60,6 +61,16 @@ export type BudgetDeviationAlertPayload = {
 /** Extrato da conta dedicada. `period` no formato AAAA-MM. */
 export type StatementPublishedPayload = {projectName: string; period: string};
 
+/**
+ * Reposição de palavra-passe. Só o link — sem nome, sem email, sem qualquer
+ * outro dado da conta: este email é o único artefacto do fluxo que sai da
+ * plataforma e não tem de confirmar nada sobre quem o recebe.
+ */
+export type PasswordResetPayload = {
+  /** Link absoluto, ex.: https://app/pt/nova-palavra-passe?token=<token> */
+  url: string;
+};
+
 export type TemplatePayloadMap = {
   invite: InvitePayload;
   welcome: WelcomePayload;
@@ -71,6 +82,7 @@ export type TemplatePayloadMap = {
   work_update_published: WorkUpdatePublishedPayload;
   budget_deviation_alert: BudgetDeviationAlertPayload;
   statement_published: StatementPublishedPayload;
+  password_reset: PasswordResetPayload;
 };
 
 export type RenderedEmail = {subject: string; html: string};
@@ -387,6 +399,36 @@ function renderStatementPublished(
   };
 }
 
+/**
+ * Reposição de palavra-passe. O texto assume que o destinatário pode NÃO ter
+ * pedido nada — o formulário é público, logo qualquer pessoa pode escrever aqui
+ * o email de outra —, por isso diz explicitamente o que fazer nesse caso.
+ */
+function renderPasswordReset(locale: Locale, p: PasswordResetPayload): RenderedEmail {
+  if (locale === 'en') {
+    return {
+      subject: 'TILWENI — Reset your password',
+      html: layout(
+        'en',
+        `<p style="font-size:15px;line-height:1.6">Hello,</p>` +
+          `<p style="font-size:15px;line-height:1.6">We received a request to reset the password of your TILWENI account. Use the button below to choose a new one.</p>` +
+          button(p.url, 'Set a new password') +
+          `<p style="font-size:13px;color:#666;line-height:1.6">This link expires in one hour and can only be used once. If you did not request it, ignore this email — your password stays unchanged.</p>`
+      )
+    };
+  }
+  return {
+    subject: 'TILWENI — Repor a palavra-passe',
+    html: layout(
+      'pt',
+      `<p style="font-size:15px;line-height:1.6">Olá,</p>` +
+        `<p style="font-size:15px;line-height:1.6">Recebemos um pedido para repor a palavra-passe da sua conta TILWENI. Utilize o botão abaixo para definir uma nova.</p>` +
+        button(p.url, 'Definir nova palavra-passe') +
+        `<p style="font-size:13px;color:#666;line-height:1.6">Este link expira dentro de uma hora e só pode ser usado uma vez. Se não fez este pedido, ignore este email — a sua palavra-passe permanece inalterada.</p>`
+    )
+  };
+}
+
 /** Renderiza um template pelo nome, com o payload correspondente. */
 export function renderTemplate<T extends TemplateName>(
   template: T,
@@ -414,6 +456,8 @@ export function renderTemplate<T extends TemplateName>(
       return renderBudgetDeviationAlert(locale, payload as BudgetDeviationAlertPayload);
     case 'statement_published':
       return renderStatementPublished(locale, payload as StatementPublishedPayload);
+    case 'password_reset':
+      return renderPasswordReset(locale, payload as PasswordResetPayload);
     default:
       throw new Error(`template desconhecido: ${template}`);
   }

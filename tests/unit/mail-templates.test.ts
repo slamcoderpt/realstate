@@ -124,3 +124,36 @@ describe('template extrato', () => {
     expect(r.html).toContain('2026-07');
   });
 });
+
+describe('template recuperação de palavra-passe', () => {
+  const payload = {
+    url: 'https://app.tilweni.pt/pt/nova-palavra-passe?token=tok123'
+  };
+
+  it('password_reset pt: assunto e link', () => {
+    const {subject, html} = renderTemplate('password_reset', 'pt', payload);
+    expect(subject).toBe('TILWENI — Repor a palavra-passe');
+    expect(html).toContain(payload.url);
+    expect(html).toContain('Definir nova palavra-passe');
+  });
+
+  it('password_reset en: assunto e conteúdo em inglês', () => {
+    const {subject, html} = renderTemplate('password_reset', 'en', payload);
+    expect(subject).toBe('TILWENI — Reset your password');
+    expect(html).toContain('Set a new password');
+    expect(html).not.toContain('Definir nova palavra-passe');
+  });
+
+  it('avisa que o link expira numa hora, em ambos os locales', () => {
+    expect(renderTemplate('password_reset', 'pt', payload).html).toContain('hora');
+    expect(renderTemplate('password_reset', 'en', payload).html).toContain('hour');
+  });
+
+  it('escapa o URL (sem injeção de atributo)', () => {
+    const {html} = renderTemplate('password_reset', 'pt', {
+      url: 'https://app/x?token=a"><script>alert(1)</script>'
+    });
+    expect(html).not.toContain('<script>alert(1)</script>');
+    expect(html).toContain('&quot;');
+  });
+});

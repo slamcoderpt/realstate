@@ -268,6 +268,8 @@
     "administration": "Administração",
     "menu": "Menu",
     "account": "Conta",
+    "profile": "Perfil",
+    "forgotPassword": "Esqueci-me da palavra-passe",
     "signOut": "Terminar sessão",
     "language": "Idioma"
   },
@@ -355,5 +357,54 @@
     "role_project_manager": "Gestor de projeto",
     "role_admin": "Administrador",
     "role_auditor": "Auditor"
+  },
+  "ResetPassword": {
+    "title": "Recuperar acesso",
+    "intro": "Indique o seu email. Se existir uma conta, enviamos um link para definir uma nova palavra-passe.",
+    "email": "Email",
+    "submit": "Enviar link",
+    "sent": "Se existir uma conta com este email, o link foi enviado. Verifique a sua caixa de correio.",
+    "error": "Não foi possível enviar. Tente novamente.",
+    "backToLogin": "Voltar a entrar"
+  },
+  "NewPassword": {
+    "title": "Definir nova palavra-passe",
+    "password": "Nova palavra-passe",
+    "confirm": "Confirmar palavra-passe",
+    "hint": "Mínimo de 8 caracteres.",
+    "submit": "Guardar",
+    "mismatch": "As palavras-passe não coincidem.",
+    "weak": "A palavra-passe deve ter pelo menos 8 caracteres.",
+    "invalidLink": "Este link expirou ou já foi usado. Peça um novo.",
+    "error": "Não foi possível guardar. Tente novamente.",
+    "done": "Palavra-passe alterada. Vai precisar do código da sua app de autenticação para entrar.",
+    "goToLogin": "Entrar"
+  },
+  "Profile": {
+    "title": "O meu perfil",
+    "account": "Conta",
+    "email": "Email",
+    "role": "Papel",
+    "kycStatus": "Verificação de identidade",
+    "kyc_pending": "Por submeter",
+    "kyc_submitted": "Em análise",
+    "kyc_approved": "Verificada",
+    "kyc_rejected": "Não aceite",
+    "details": "Dados pessoais",
+    "fullName": "Nome completo",
+    "language": "Idioma preferido",
+    "lang_pt": "Português",
+    "lang_en": "Inglês",
+    "save": "Guardar",
+    "saved": "Alterações guardadas.",
+    "saveError": "Não foi possível guardar.",
+    "security": "Segurança",
+    "currentPassword": "Palavra-passe atual",
+    "newPassword": "Nova palavra-passe",
+    "confirmPassword": "Confirmar nova palavra-passe",
+    "changePassword": "Alterar palavra-passe",
+    "passwordChanged": "Palavra-passe alterada.",
+    "wrongPassword": "A palavra-passe atual está incorreta.",
+    "mfaOn": "Verificação em dois passos ativa."
   }
 }
