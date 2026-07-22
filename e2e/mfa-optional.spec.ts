@@ -50,7 +50,9 @@ test('MFA opcional: staff ignora a configuração, entra e não é reincomodado'
 
   // Entra na app: a casca aparece (staff em aal1 que dispensou o prompt).
   await page.waitForURL((u) => /\/pt(\/?$|\?)/.test(u.pathname + u.search));
-  await expect(page.getByRole('link', {name: 'Projetos'})).toBeVisible();
+  await expect(
+    page.getByRole('link', {name: 'Projetos', exact: true})
+  ).toBeVisible();
 
   // Navegar de novo NÃO volta a /mfa (prompt já visto).
   await page.goto('/pt/projetos');
