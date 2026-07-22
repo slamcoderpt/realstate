@@ -265,6 +265,9 @@
     "settings": "Definições",
     "users": "Utilizadores",
     "audit": "Auditoria",
+    "administration": "Administração",
+    "menu": "Menu",
+    "account": "Conta",
     "signOut": "Terminar sessão",
     "language": "Idioma"
   },

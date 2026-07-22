@@ -4,7 +4,9 @@ import {getSession, isStaff} from '@/lib/auth/staff';
 import {countUnread} from '@/lib/notifications/service';
 import {createClient} from '@/lib/supabase/server';
 import {NotificationBell} from '@/components/NotificationBell';
-import {Button} from '@/components/ui/button';
+import {MainNav} from '@/components/MainNav';
+import type {NavItem, NavMenu, NavSection} from '@/components/MainNav';
+import {UserMenu} from '@/components/UserMenu';
 
 /**
  * Casca da aplicação: cabeçalho + navegação por papel + sino de notificações.
@@ -39,30 +41,52 @@ export default async function AppShell({
   if (aal?.currentLevel !== 'aal2') return <>{children}</>;
 
   const t = await getTranslations('Nav');
+  const tRoles = await getTranslations('UsersAdmin');
   const loc = locale === 'en' ? 'en' : 'pt';
   const {role} = session;
 
-  const items: Array<{href: string; label: string}> = [
+  // Agrupado pelo modelo mental do utilizador, não pela árvore de papéis: o que
+  // é do investidor fica plano (é o uso diário), e tudo o que é de gestão
+  // recolhe para um só menu. Um admin tinha 8 links na barra; passa a ter 3.
+  const flat: NavItem[] = [
     {href: '/', label: t('dashboard')},
     {href: '/projetos', label: t('projects')}
   ];
+  const menus: NavMenu[] = [];
+
   if (isStaff(role)) {
-    items.push(
-      {href: '/convites', label: t('invites')},
-      {href: '/kyc-revisao', label: t('kycQueue')},
-      {href: '/gestao-projetos', label: t('projectsAdmin')}
-    );
+    const sections: NavSection[] = [
+      {
+        items: [
+          {href: '/convites', label: t('invites')},
+          {href: '/kyc-revisao', label: t('kycQueue')},
+          {href: '/gestao-projetos', label: t('projectsAdmin')}
+        ]
+      }
+    ];
+    if (role === 'admin') {
+      sections.push({
+        label: t('administration'),
+        items: [
+          {href: '/definicoes', label: t('settings')},
+          {href: '/utilizadores', label: t('users')},
+          {href: '/auditoria', label: t('audit')}
+        ]
+      });
+    }
+    menus.push({label: t('backoffice'), sections});
+  } else if (role === 'auditor') {
+    // O auditor não é staff e só tem um destino além do que já é plano — um
+    // dropdown de um item só seria fricção sem arrumação nenhuma.
+    flat.push({href: '/auditoria', label: t('audit')});
   }
-  if (role === 'admin') {
-    items.push(
-      {href: '/definicoes', label: t('settings')},
-      {href: '/utilizadores', label: t('users')}
-    );
-  }
-  // O auditor não é staff (não entra no back-office), mas lê a auditoria.
-  if (role === 'admin' || role === 'auditor') {
-    items.push({href: '/auditoria', label: t('audit')});
-  }
+
+  const ROLE_LABEL = {
+    investor: tRoles('role_investor'),
+    project_manager: tRoles('role_project_manager'),
+    admin: tRoles('role_admin'),
+    auditor: tRoles('role_auditor')
+  } as const;
 
   const unread = await countUnread(session.userId);
 
@@ -75,40 +99,46 @@ export default async function AppShell({
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-3">
-          <Link
-            href="/"
-            className="text-sm font-semibold tracking-[0.2em] text-neutral-900"
-          >
-            TILWENI
-          </Link>
+      <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-2 px-6">
+          <div className="flex items-center gap-4 py-3">
+            <Link
+              href="/"
+              className="text-sm font-semibold tracking-[0.2em] text-neutral-900 transition-opacity hover:opacity-70"
+            >
+              TILWENI
+            </Link>
+            {/* Filete a separar a identidade da navegação: a marca não é um
+                item de menu, e sem isto lia-se como o primeiro deles. */}
+            <span aria-hidden className="hidden h-4 w-px bg-neutral-200 md:block" />
+          </div>
 
-          <nav
-            aria-label="TILWENI"
-            className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm"
-          >
-            {items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-neutral-600 transition-colors hover:text-neutral-900"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="ml-auto flex items-center gap-2">
+          {/* No telemóvel estes vêm ANTES do MainNav no DOM de propósito: o
+              painel do menu é `w-full` e, se viessem depois, seriam empurrados
+              para baixo da lista aberta em vez de ficarem na barra. Aqui o
+              `ml-auto` encosta-os à direita e o botão do menu fica a seguir. */}
+          <div className="ml-auto flex items-center py-3 md:hidden">
             <NotificationBell locale={loc} initialCount={unread} />
-            <span className="hidden text-xs text-neutral-500 sm:inline">
-              {session.email}
-            </span>
-            <form action={signOutAction}>
-              <Button type="submit" variant="ghost" size="sm">
-                {t('signOut')}
-              </Button>
-            </form>
+            <UserMenu
+              email={session.email}
+              roleLabel={ROLE_LABEL[role as keyof typeof ROLE_LABEL] ?? role}
+              signOutLabel={t('signOut')}
+              accountLabel={t('account')}
+              signOut={signOutAction}
+            />
+          </div>
+
+          <MainNav flat={flat} menus={menus} menuLabel={t('menu')} />
+
+          <div className="ml-auto hidden items-center gap-1 py-3 md:flex">
+            <NotificationBell locale={loc} initialCount={unread} />
+            <UserMenu
+              email={session.email}
+              roleLabel={ROLE_LABEL[role as keyof typeof ROLE_LABEL] ?? role}
+              signOutLabel={t('signOut')}
+              accountLabel={t('account')}
+              signOut={signOutAction}
+            />
           </div>
         </div>
       </header>

@@ -226,7 +226,12 @@ test('jornada do investidor: convite → registo → MFA → KYC → subscriçã
     // --- 1. Convite → registo → MFA -----------------------------------------
     // A MFA é obrigatória para toda a gente, staff incluído.
     await loginAndEnrolMfa(staff, staffEmail);
-    await expect(staff.getByRole('link', {name: 'Convites'})).toBeVisible();
+    // A navegação de gestão vive dentro do menu "Back-office". Abri-lo prova
+    // mais do que a asserção anterior (um link solto na barra): que o
+    // agrupamento por papel aparece mesmo para staff e leva aos destinos.
+    await staff.getByRole('button', {name: 'Back-office'}).click();
+    await expect(staff.getByRole('menuitem', {name: 'Convites'})).toBeVisible();
+    await staff.keyboard.press('Escape');
 
     await staff.goto(`${APP}/pt/convites`);
     await staff.getByLabel('Nome completo').fill(investorName);

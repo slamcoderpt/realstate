@@ -265,6 +265,9 @@
     "settings": "Settings",
     "users": "Users",
     "audit": "Audit",
+    "administration": "Administration",
+    "menu": "Menu",
+    "account": "Account",
     "signOut": "Sign out",
     "language": "Language"
   },
