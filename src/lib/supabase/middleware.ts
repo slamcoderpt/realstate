@@ -1,5 +1,6 @@
 import {createServerClient} from '@supabase/ssr';
 import {NextResponse, type NextRequest} from 'next/server';
+import {decodeAccessToken} from '@/lib/auth/claims';
 
 const PUBLIC_PATHS = [
   /^\/(pt|en)\/login$/,
@@ -62,9 +63,12 @@ export async function updateSession(
   }
 
   if (user) {
-    const {data: aal} =
-      await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    const needsMfa = aal?.currentLevel === 'aal1';
+    // aal + role + kyc lidos do JWT (local); getUser() já validou o token.
+    const {
+      data: {session}
+    } = await supabase.auth.getSession();
+    const claims = decodeAccessToken(session?.access_token);
+    const needsMfa = claims.aal === 'aal1';
 
     // MFA obrigatória: aal1 tem de completar o enrolment/challenge TOTP antes de
     // aceder ao resto da app. A própria /mfa é a exceção (senão haveria loop).
@@ -83,15 +87,31 @@ export async function updateSession(
     // própria /kyc é a exceção (senão haveria loop). Não se aplica a aal1 (o
     // bloco acima trata disso primeiro) nem a /api (clientes fetch).
     if (!needsMfa && !isKycPage && !isApi) {
-      const {data: profile} = await supabase
-        .from('profiles')
-        .select('role, kyc_status')
-        .eq('id', user.id)
-        .single();
-      const isInvestor = (profile?.role ?? 'investor') === 'investor';
-      const approved = profile?.kyc_status === 'approved';
-      if (isInvestor && !approved) {
-        return redirectTo('kyc');
+      // Role do claim; fallback à BD só para tokens antigos (sem o claim).
+      let role = claims.user_role;
+      if (role === undefined) {
+        const {data: profile} = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        role = profile?.role ?? 'investor';
+      }
+      if (role === 'investor') {
+        // Gate auto-curável: se o claim não disser "approved", confirma na BD
+        // (fresco) antes de bloquear — um investidor já aprovado mas com token
+        // stale (claim ainda "pending") NÃO é mandado para /kyc. Em regime
+        // estável (claim já "approved") não há query nenhuma.
+        let approved = claims.kyc_status === 'approved';
+        if (!approved) {
+          const {data: profile} = await supabase
+            .from('profiles')
+            .select('kyc_status')
+            .eq('id', user.id)
+            .single();
+          approved = profile?.kyc_status === 'approved';
+        }
+        if (!approved) return redirectTo('kyc');
       }
     }
   }

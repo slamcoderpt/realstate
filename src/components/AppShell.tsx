@@ -37,9 +37,8 @@ export default async function AppShell({
   // /mfa e o utilizador ficava preso, tendo de introduzir um segundo código.
   // Só o staff era atingido — o investidor escapava por acaso, salvo pelo
   // redirect de KYC. A casca só aparece quando a navegação é mesmo navegável.
-  const supabase = await createClient();
-  const {data: aal} = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (aal?.currentLevel !== 'aal2') return <>{children}</>;
+  // O aal vem do JWT (via getSession dentro de getSession()), sem chamada extra.
+  if (session.aal !== 'aal2') return <>{children}</>;
 
   const t = await getTranslations('Nav');
   const tRoles = await getTranslations('UsersAdmin');

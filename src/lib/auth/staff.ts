@@ -1,37 +1,62 @@
 import 'server-only';
+import {cache} from 'react';
 import {createClient} from '@/lib/supabase/server';
 import {createAdminClient} from '@/lib/supabase/admin';
+import {decodeAccessToken} from '@/lib/auth/claims';
 
 /**
- * Autorização server-side. A verdade sobre o role vive no `profiles` (Supabase),
- * lido com service role — nunca no cliente. Usado pelo layout `(admin)` e pelas
- * Server Actions de convite.
+ * Autorização server-side. O role vem do claim `user_role` do JWT (injetado pelo
+ * Custom Access Token Hook), lido localmente após getUser() validar o token —
+ * evita uma query a `profiles` a cada navegação. Fallback à BD para tokens
+ * antigos sem o claim. A RLS continua a ser a barreira real de dados; para
+ * escrita, `requireAdmin`/`requireStaff` abaixo bastam-se por este role (que só
+ * fica stale numa despromoção, evento raro; a RLS nunca é enganada).
+ *
+ * `cache()` deduplica a chamada dentro de um mesmo pedido (AppShell + páginas
+ * partilham um só getUser + decode).
  */
 
-export type Session = {userId: string; email: string; role: string};
+export type Session = {
+  userId: string;
+  email: string;
+  role: string;
+  /** Nível de asseguração (aal1/aal2) lido do JWT. */
+  aal: string | null;
+};
 
 const STAFF_ROLES = ['admin', 'project_manager'];
 
-export async function getSession(): Promise<Session | null> {
+export const getSession = cache(async (): Promise<Session | null> => {
   const supabase = await createClient();
   const {
     data: {user}
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const admin = createAdminClient();
-  const {data} = await admin
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  const {
+    data: {session}
+  } = await supabase.auth.getSession();
+  const claims = decodeAccessToken(session?.access_token);
+
+  let role = claims.user_role;
+  if (role === undefined) {
+    // Token antigo (pré-hook): cai para a BD.
+    const admin = createAdminClient();
+    const {data} = await admin
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    role = data?.role ?? 'investor';
+  }
 
   return {
     userId: user.id,
     email: user.email ?? '',
-    role: data?.role ?? 'investor'
+    role: role ?? 'investor',
+    aal: claims.aal ?? null
   };
-}
+});
 
 export function isStaff(role: string): boolean {
   return STAFF_ROLES.includes(role);
