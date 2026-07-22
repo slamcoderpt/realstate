@@ -133,6 +133,20 @@ Região alvo dos projetos cloud: **`eu-central-1`** (UE).
       SELECT/INSERT/UPDATE/DELETE em nenhuma tabela, `authenticated` sem escrita,
       6 buckets **todos privados**, 10 settings, `audit_log` só com INSERT para
       `service_role` e SELECT para `authenticated`.
+### Fatia 6 — Dashboard + polimento (fim da Fase A)
+
+- [x] **Migração `notifications` aplicada a prod** (2026-07-22). Inclui a tabela
+      de notificações in-app e o RPC `set_platform_setting`.
+- [x] **Retrato de segurança pós-Fatia 6, prod == local** nas seis métricas:
+      17 tabelas / 17 com RLS · 0 políticas fora de `{authenticated}` ·
+      0 grants de leitura ou escrita ao `anon` · 0 escrita para `authenticated` ·
+      0 funções `SECURITY DEFINER` executáveis pelo `anon` ·
+      `set_platform_setting` com ACL `{postgres, service_role}`.
+- [x] **Advisors:** continuam os mesmos **3** irredutíveis (ver abaixo) — o RPC
+      novo não acrescentou nenhum.
+
+---
+
 - [x] **Advisors de segurança:** 8 WARN → **3**. Os 3 restantes são irredutíveis:
       `current_user_role`, `has_active_subscription` e `has_confirmed_subscription`
       têm de ser executáveis por `authenticated` porque são usadas **dentro das
