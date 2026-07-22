@@ -1,10 +1,11 @@
 import {getTranslations, setRequestLocale} from 'next-intl/server';
 import {ShieldCheckIcon} from 'lucide-react';
-import {redirect} from '@/i18n/navigation';
+import {Link, redirect} from '@/i18n/navigation';
 import {getSession} from '@/lib/auth/staff';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {MIN_PASSWORD_LENGTH} from '@/lib/invites/accept';
 import {Badge} from '@/components/ui/badge';
+import {Button} from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -27,10 +28,10 @@ export const dynamic = 'force-dynamic';
  * O que é editável aqui é deliberadamente pouco:
  * - **KYC é leitura.** Quem decide o estado é o staff no back-office; deixar o
  *   próprio mexer-lhe anulava o controlo.
- * - **A MFA não tem botão.** É obrigatória e imposta no middleware; um
- *   interruptor para desligar/reinicializar seria exatamente o que faltava a
- *   quem tivesse apanhado uma sessão aberta para lhe arrancar o segundo fator.
- *   Fica como afirmação de facto.
+ * - **MFA é opcional e opt-in aqui.** Quem não a tem vê um botão para a ativar
+ *   (leva ao enrolamento em /mfa); quem já a tem vê a afirmação de que está
+ *   ativa. Não há botão para DESATIVAR de propósito: seria exatamente o que
+ *   faltava a quem apanhasse uma sessão aberta para lhe arrancar o 2º fator.
  */
 const SECTION_LABEL =
   'text-xs font-bold uppercase tracking-[0.12em] text-ink-muted';
@@ -109,10 +110,28 @@ export default async function PerfilPage({
             </ReadOnlyField>
           </div>
 
-          <p className="flex items-center gap-2.5 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-medium text-ink-soft">
-            <ShieldCheckIcon className="size-4 shrink-0 text-brand-500" aria-hidden />
-            {t('mfaOn')}
-          </p>
+          {session!.hasMfa ? (
+            <p className="flex items-center gap-2.5 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-medium text-ink-soft">
+              <ShieldCheckIcon
+                className="size-4 shrink-0 text-brand-500"
+                aria-hidden
+              />
+              {t('mfaOn')}
+            </p>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-secondary/60 px-4 py-3">
+              <p className="flex items-center gap-2.5 text-sm text-ink-soft">
+                <ShieldCheckIcon
+                  className="size-4 shrink-0 text-ink-muted"
+                  aria-hidden
+                />
+                {t('mfaOff')}
+              </p>
+              <Button asChild size="sm">
+                <Link href="/mfa">{t('mfaEnable')}</Link>
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

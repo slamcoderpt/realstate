@@ -57,7 +57,8 @@
     "challengeHint": "Enter the 6-digit code from your authenticator app.",
     "code": "Code",
     "verify": "Verify",
-    "error": "Invalid code. Please try again."
+    "error": "Invalid code. Please try again.",
+    "skip": "Set up later"
   },
   "Kyc": {
     "title": "Identity verification",
@@ -441,6 +442,8 @@
     "changePassword": "Change password",
     "passwordChanged": "Password changed.",
     "wrongPassword": "The current password is incorrect.",
-    "mfaOn": "Two-step verification is active."
+    "mfaOn": "Two-step verification is active.",
+    "mfaOff": "Two-step verification is off.",
+    "mfaEnable": "Enable"
   }
 }

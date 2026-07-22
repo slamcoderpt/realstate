@@ -30,15 +30,14 @@ export default async function AppShell({
   // ainda tentaria contar notificações de um utilizador que não existe.
   if (!session) return <>{children}</>;
 
-  // Nem em aal1 (autenticado mas com a MFA por resolver). Não é cosmética: cada
-  // <Link> faz prefetch do payload RSC, o middleware responde 307 -> /mfa a
-  // TODOS, e a cache do router passa a mapear cada destino para /mfa. O
-  // `router.push('/')` a seguir ao código TOTP correto resolvia então para
-  // /mfa e o utilizador ficava preso, tendo de introduzir um segundo código.
-  // Só o staff era atingido — o investidor escapava por acaso, salvo pelo
-  // redirect de KYC. A casca só aparece quando a navegação é mesmo navegável.
-  // O aal vem do JWT (via getSession dentro de getSession()), sem chamada extra.
-  if (session.aal !== 'aal2') return <>{children}</>;
+  // A casca só aparece quando a navegação é mesmo navegável — ou seja, quando o
+  // utilizador NÃO está a caminho de /mfa. Com MFA opcional, isso é: aal2, ou
+  // aal1 que dispensou o prompt (sem fator). Quem tem fator por desafiar, ou
+  // ainda não viu o prompt, é encaminhado para /mfa pelo middleware — mostrar a
+  // casca aí faria o prefetch dos <Link> resolver para /mfa e prender o router.
+  const mfaPending =
+    session.aal !== 'aal2' && (session.hasMfa || !session.mfaPromptSeen);
+  if (mfaPending) return <>{children}</>;
 
   const t = await getTranslations('Nav');
   const tRoles = await getTranslations('UsersAdmin');
