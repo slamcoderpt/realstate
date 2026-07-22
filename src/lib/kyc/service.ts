@@ -3,6 +3,7 @@ import type {SupabaseClient} from '@supabase/supabase-js';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {sendEmail, type SendEmailDeps} from '@/lib/mail/outbox';
 import type {Locale} from '@/lib/mail/templates';
+import {createNotification} from '@/lib/notifications/service';
 import {isValidNif, normalizeNif} from './nif';
 import {detectMime} from './filetype';
 import {kycObjectPath, uploadKycFile} from './storage';
@@ -189,6 +190,12 @@ export async function approveKyc(
     },
     {db, transport: deps.transport}
   );
+  // In-app ao lado do email. Payload vazio: `body_kyc_approved` não interpola
+  // nada — a cópia vive no i18n, não aqui.
+  await createNotification(
+    {userId: sub.user_id, type: 'kyc_approved', payload: {}, href: '/kyc'},
+    db
+  );
 }
 
 export async function rejectKyc(
@@ -215,6 +222,12 @@ export async function rejectKyc(
       payload: {fullName: sub.full_name, reason: note}
     },
     {db, transport: deps.transport}
+  );
+  // Sem o motivo no payload: `body_kyc_rejected` não o interpola e a
+  // notificação in-app não é sítio para texto livre de staff.
+  await createNotification(
+    {userId: sub.user_id, type: 'kyc_rejected', payload: {}, href: '/kyc'},
+    db
   );
 }
 

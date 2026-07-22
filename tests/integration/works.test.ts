@@ -100,6 +100,21 @@ describe('publishWorkUpdate', () => {
     // Exatamente um email para o confirmado e NENHUM para o interessado.
     expect(await outboxFor(confirmed.email, 'work_update_published')).toBe(1);
     expect(await outboxFor(interested.email, 'work_update_published')).toBe(0);
+
+    // In-app além do email, e só para quem tem fundos confirmados.
+    const {data: notifs, error: notifErr} = await admin
+      .from('notifications')
+      .select('user_id, type')
+      .eq('type', 'work_update')
+      .eq('user_id', confirmed.id);
+    expect(notifErr).toBeNull();
+    expect(notifs).toHaveLength(1);
+
+    const {data: naoConfirmado} = await admin
+      .from('notifications')
+      .select('id')
+      .eq('user_id', interested.id);
+    expect(naoConfirmado ?? []).toHaveLength(0);
   });
 });
 

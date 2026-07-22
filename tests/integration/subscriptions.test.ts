@@ -138,6 +138,24 @@ describe('transitionSubscription + agregados', () => {
       .single();
     expect(Number(proj!.subscribed_amount)).toBe(20000);
     expect(proj!.investor_count).toBe(1);
+
+    // In-app ao confirmar fundos, só para quem foi confirmado. Sem esta
+    // asserção uma regressão seria silenciosa (createNotification não lança).
+    const {data: notifs, error: notifErr} = await admin
+      .from('notifications')
+      .select('type, payload')
+      .eq('user_id', u1);
+    expect(notifErr).toBeNull();
+    expect(notifs).toHaveLength(1);
+    expect(notifs![0].type).toBe('subscription_confirmed');
+    expect(notifs![0].payload).toHaveProperty('projectName');
+
+    const {data: doOutro} = await admin
+      .from('notifications')
+      .select('id')
+      .eq('user_id', u2);
+    expect(doOutro ?? []).toHaveLength(0);
+
     void s2;
   });
 

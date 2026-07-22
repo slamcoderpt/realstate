@@ -51,11 +51,34 @@ export function canReadStatements(role: string): boolean {
   return isStaff(role) || role === 'auditor';
 }
 
+/**
+ * O audit_log é legível por `admin` e `auditor` — NÃO por `project_manager`
+ * (é o que a política "audit: admin e auditor leem" diz desde a Fatia 0). Por
+ * isso esta página NÃO pode viver sob o route group (admin), cujo layout deixa
+ * entrar project_manager: um PM veria a página e uma tabela vazia.
+ */
+export function canReadAudit(role: string): boolean {
+  return role === 'admin' || role === 'auditor';
+}
+
 /** Garante que o pedido vem de staff; lança se não. Para Server Actions. */
 export async function requireStaff(): Promise<Session> {
   const session = await getSession();
   if (!session || !isStaff(session.role)) {
     throw new Error('acesso restrito a staff');
+  }
+  return session;
+}
+
+/**
+ * Garante `admin`, não apenas staff. `requireStaff()` deixaria passar
+ * `project_manager`, que não deve mexer em parâmetros legais/operacionais
+ * (montante mínimo, limite de investidores, versões de termos aceites).
+ */
+export async function requireAdmin(): Promise<Session> {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    throw new Error('acesso restrito a administradores');
   }
   return session;
 }

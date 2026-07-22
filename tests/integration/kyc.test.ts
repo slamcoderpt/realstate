@@ -289,6 +289,17 @@ describe('approve/reject', () => {
       .eq('id', investorId)
       .single();
     expect(profile!.kyc_status).toBe('approved');
+
+    // In-app além do email. createNotification engole erros por design (uma
+    // notificação falhada não pode reverter a aprovação), pelo que sem esta
+    // asserção uma regressão aqui seria silenciosa.
+    const {data: notifs, error: notifErr} = await admin
+      .from('notifications')
+      .select('type, href')
+      .eq('user_id', investorId);
+    expect(notifErr).toBeNull();
+    expect(notifs).toHaveLength(1);
+    expect(notifs![0].type).toBe('kyc_approved');
   });
 
   it('rejectKyc exige motivo e marca o perfil rejected', async () => {
@@ -316,6 +327,18 @@ describe('approve/reject', () => {
       .single();
     expect(sub!.status).toBe('rejected');
     expect(sub!.review_note).toBe('Documento ilegível');
+
+    // O motivo da rejeição fica SÓ no email: a notificação in-app é renderizada
+    // a partir do i18n e o payload nunca leva texto livre do staff.
+    const {data: notifs, error: notifErr} = await admin
+      .from('notifications')
+      .select('type, payload')
+      .eq('user_id', investorId);
+    expect(notifErr).toBeNull();
+    expect(notifs).toHaveLength(1);
+    expect(notifs![0].type).toBe('kyc_rejected');
+    expect(JSON.stringify(notifs![0].payload)).not.toContain('ilegível');
+
     const {data: profile} = await admin
       .from('profiles')
       .select('kyc_status')
