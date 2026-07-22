@@ -127,7 +127,7 @@ export default async function ObraPage({
     'px-5 py-3 text-xs font-bold tracking-[0.12em] text-ink-muted uppercase';
 
   return (
-    <main className="mx-auto max-w-4xl space-y-10 px-6 py-8">
+    <main className="mx-auto max-w-6xl space-y-8 px-6 py-8">
       <header className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h1 className="text-3xl font-extrabold tracking-tight text-ink">
           {t('title')}
@@ -141,146 +141,155 @@ export default async function ObraPage({
         </a>
       </header>
 
-      <section className="space-y-4">
-        <SectionTitle>{t('milestones')}</SectionTitle>
-        {milestones.length === 0 ? (
-          <EmptyState icon={ClipboardListIcon}>{t('noMilestones')}</EmptyState>
-        ) : (
-          <Card>
-            <CardContent>
-              <ol className="space-y-5 border-l-2 border-brand-100 pl-6">
-                {milestones.map((m) => (
-                  <li key={m.id} className="relative space-y-1.5">
-                    <span
-                      aria-hidden
-                      className="absolute top-1.5 -left-[1.9375rem] size-3 rounded-full bg-brand-400 ring-4 ring-card"
-                    />
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-ink">{m.title}</span>
-                      <Badge variant="secondary">
-                        {t(`status_${m.status}` as 'status_previsto')}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-ink-muted tabular-nums">
-                      {t('planned')}: {dateFmt(loc, m.planned_date)} ·{' '}
-                      {t('actual')}: {dateFmt(loc, m.actual_date)}
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            </CardContent>
-          </Card>
-        )}
-      </section>
-
-      <section className="space-y-4">
-        <SectionTitle>{t('budgetVsActual')}</SectionTitle>
-        <Card className="gap-0 overflow-hidden py-0">
-          <div className="overflow-x-auto scroll-soft">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-secondary text-left">
-                  <th className={th}>{t('line')}</th>
-                  <th className={`${th} text-right`}>{t('budget')}</th>
-                  <th className={`${th} text-right`}>{t('spent')}</th>
-                  <th className={`${th} text-right`}>{t('deviation')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {budgetLines.map((line) => {
-                  const budget = Number(line.budget_amount);
-                  const actual = Number(line.actual_amount);
-                  const pct =
-                    budget > 0 ? ((actual - budget) / budget) * 100 : null;
-                  return (
-                    <tr key={line.id}>
-                      <td className="px-5 py-4 font-semibold text-ink">
-                        {line.name}
-                      </td>
-                      <td className="px-5 py-4 text-right text-ink-soft tabular-nums">
-                        {eur(budget)}
-                      </td>
-                      <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">
-                        {eur(actual)}
-                      </td>
-                      {/* Derrapagem a vermelho: é a única cor semântica que
-                          sobrevive à mudança de marca, e tem de continuar a
-                          saltar à vista sobre o fundo azulado. */}
-                      <td
-                        className={`px-5 py-4 text-right font-bold tabular-nums ${
-                          pct !== null && pct > 0
-                            ? 'text-destructive'
-                            : 'text-ink-muted'
-                        }`}
-                      >
-                        {pct === null
-                          ? '—'
-                          : `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`}
-                      </td>
+      {/* Mesmo corte da ficha do projeto: a leitura à esquerda, a orientação à
+          direita e fixa. Os marcos são o "onde vamos" — quer-se à vista
+          enquanto se percorre o diário, não a rolar por cima dele. */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
+        <div className="min-w-0 space-y-10">
+          <section className="space-y-4">
+            <SectionTitle>{t('budgetVsActual')}</SectionTitle>
+            <Card className="gap-0 overflow-hidden py-0">
+              <div className="overflow-x-auto scroll-soft">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-secondary text-left">
+                      <th className={th}>{t('line')}</th>
+                      <th className={`${th} text-right`}>{t('budget')}</th>
+                      <th className={`${th} text-right`}>{t('spent')}</th>
+                      <th className={`${th} text-right`}>{t('deviation')}</th>
                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {budgetLines.map((line) => {
+                      const budget = Number(line.budget_amount);
+                      const actual = Number(line.actual_amount);
+                      const pct =
+                        budget > 0 ? ((actual - budget) / budget) * 100 : null;
+                      return (
+                        <tr key={line.id}>
+                          <td className="px-5 py-4 font-semibold text-ink">
+                            {line.name}
+                          </td>
+                          <td className="px-5 py-4 text-right text-ink-soft tabular-nums">
+                            {eur(budget)}
+                          </td>
+                          <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">
+                            {eur(actual)}
+                          </td>
+                          {/* Derrapagem a vermelho: é a única cor semântica que
+                              sobrevive à mudança de marca, e tem de continuar a
+                              saltar à vista sobre o fundo azulado. */}
+                          <td
+                            className={`px-5 py-4 text-right font-bold tabular-nums ${
+                              pct !== null && pct > 0
+                                ? 'text-destructive'
+                                : 'text-ink-muted'
+                            }`}
+                          >
+                            {pct === null
+                              ? '—'
+                              : `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </section>
+
+          <section className="space-y-4">
+            <SectionTitle>{t('diary')}</SectionTitle>
+            {updates.length === 0 ? (
+              <EmptyState icon={HardHatIcon}>{t('empty')}</EmptyState>
+            ) : (
+              <ul className="space-y-5">
+                {updates.map((u) => {
+                  const items = mediaByUpdate.get(u.id) ?? [];
+                  return (
+                    <li key={u.id}>
+                      <Card>
+                        <CardContent className="space-y-4">
+                          <div className="space-y-1">
+                            <h3 className="text-base font-bold tracking-tight text-ink">
+                              {u.title}
+                            </h3>
+                            <p className="text-xs font-semibold text-ink-muted tabular-nums">
+                              {dateFmt(loc, u.published_at)}
+                            </p>
+                          </div>
+                          {u.body && (
+                            <p className="whitespace-pre-line text-sm leading-relaxed text-ink-soft">
+                              {u.body}
+                            </p>
+                          )}
+                          {items.length > 0 && (
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              {items.map((m) =>
+                                m.media_type === 'photo' ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    key={m.id}
+                                    src={`/api/works/media/${m.id}`}
+                                    alt={u.title}
+                                    className="aspect-video w-full rounded-2xl object-cover"
+                                  />
+                                ) : (
+                                  <video
+                                    key={m.id}
+                                    controls
+                                    src={`/api/works/media/${m.id}`}
+                                    className="aspect-video w-full rounded-2xl bg-ink"
+                                  />
+                                )
+                              )}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </li>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      </section>
+              </ul>
+            )}
+          </section>
+        </div>
 
-      <section className="space-y-4">
-        <SectionTitle>{t('diary')}</SectionTitle>
-        {updates.length === 0 ? (
-          <EmptyState icon={HardHatIcon}>{t('empty')}</EmptyState>
-        ) : (
-          <ul className="space-y-5">
-            {updates.map((u) => {
-              const items = mediaByUpdate.get(u.id) ?? [];
-              return (
-                <li key={u.id}>
-                  <Card>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-1">
-                        <h3 className="text-base font-bold tracking-tight text-ink">
-                          {u.title}
-                        </h3>
-                        <p className="text-xs font-semibold text-ink-muted tabular-nums">
-                          {dateFmt(loc, u.published_at)}
-                        </p>
-                      </div>
-                      {u.body && (
-                        <p className="whitespace-pre-line text-sm leading-relaxed text-ink-soft">
-                          {u.body}
-                        </p>
-                      )}
-                      {items.length > 0 && (
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          {items.map((m) =>
-                            m.media_type === 'photo' ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                key={m.id}
-                                src={`/api/works/media/${m.id}`}
-                                alt={u.title}
-                                className="aspect-video w-full rounded-2xl object-cover"
-                              />
-                            ) : (
-                              <video
-                                key={m.id}
-                                controls
-                                src={`/api/works/media/${m.id}`}
-                                className="aspect-video w-full rounded-2xl bg-ink"
-                              />
-                            )
-                          )}
+        <aside className="lg:sticky lg:top-24">
+          <section className="space-y-4">
+            <SectionTitle>{t('milestones')}</SectionTitle>
+            {milestones.length === 0 ? (
+              <EmptyState icon={ClipboardListIcon}>{t('noMilestones')}</EmptyState>
+            ) : (
+              <Card>
+                <CardContent>
+                  <ol className="space-y-5 border-l-2 border-brand-100 pl-6">
+                    {milestones.map((m) => (
+                      <li key={m.id} className="relative space-y-1.5">
+                        <span
+                          aria-hidden
+                          className="absolute top-1.5 -left-[1.9375rem] size-3 rounded-full bg-brand-400 ring-4 ring-card"
+                        />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-bold text-ink">{m.title}</span>
+                          <Badge variant="secondary">
+                            {t(`status_${m.status}` as 'status_previsto')}
+                          </Badge>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+                        <p className="text-xs text-ink-muted tabular-nums">
+                          {t('planned')}: {dateFmt(loc, m.planned_date)} ·{' '}
+                          {t('actual')}: {dateFmt(loc, m.actual_date)}
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                </CardContent>
+              </Card>
+            )}
+          </section>
+        </aside>
+      </div>
     </main>
   );
 }
