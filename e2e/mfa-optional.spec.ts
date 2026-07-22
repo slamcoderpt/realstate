@@ -31,7 +31,9 @@ test('MFA opcional: staff ignora a configuração, entra e não é reincomodado'
     user_metadata: {full_name: 'Skip Staff', locale: 'pt'}
   });
   expect(error).toBeNull();
-  await admin.from('profiles').update({role: 'admin'}).eq('id', created!.user.id);
+  const userId = created?.user?.id;
+  expect(userId).toBeTruthy();
+  await admin.from('profiles').update({role: 'admin'}).eq('id', userId!);
 
   // Login com password.
   await page.goto('/pt/login');
