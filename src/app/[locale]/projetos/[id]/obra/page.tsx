@@ -1,5 +1,11 @@
 import {getTranslations, setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
+import {
+  ArrowLeftIcon,
+  ClipboardListIcon,
+  HardHatIcon,
+  type LucideIcon
+} from 'lucide-react';
 import {getSession, isStaff} from '@/lib/auth/staff';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {
@@ -7,6 +13,8 @@ import {
   listWorkUpdates,
   listUpdateMedia
 } from '@/lib/works/service';
+import {Badge} from '@/components/ui/badge';
+import {Card, CardContent} from '@/components/ui/card';
 import type {Locale} from '@/lib/mail/templates';
 
 export const dynamic = 'force-dynamic';
@@ -24,6 +32,38 @@ function dateFmt(loc: Locale, value: string | null): string {
   return new Intl.DateTimeFormat(loc === 'en' ? 'en-GB' : 'pt-PT', {
     dateStyle: 'medium'
   }).format(new Date(value));
+}
+
+/** Cabeçalho de secção com filete de marca — decorativo, sem copy nova. */
+function SectionTitle({children}: {children: React.ReactNode}) {
+  return (
+    <h2 className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-ink">
+      <span aria-hidden className="h-4 w-1 rounded-full bg-brand-500" />
+      {children}
+    </h2>
+  );
+}
+
+function EmptyState({
+  icon: Icon,
+  children
+}: {
+  icon: LucideIcon;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="py-10">
+      <CardContent className="flex flex-col items-center gap-4 text-center">
+        <span
+          aria-hidden
+          className="grid size-12 place-items-center rounded-2xl bg-brand-50 text-brand-400"
+        >
+          <Icon className="size-6" />
+        </span>
+        <p className="max-w-sm text-sm text-ink-muted">{children}</p>
+      </CardContent>
+    </Card>
+  );
 }
 
 type BudgetLineRow = {
@@ -83,125 +123,158 @@ export default async function ObraPage({
     .order('sort_order', {ascending: true});
   const budgetLines = (lines ?? []) as BudgetLineRow[];
 
+  const th =
+    'px-5 py-3 text-xs font-bold tracking-[0.12em] text-ink-muted uppercase';
+
   return (
-    <main className="mx-auto max-w-4xl space-y-10 p-6">
-      <header className="flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
+    <main className="mx-auto max-w-4xl space-y-10 px-6 py-8">
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">
+          {t('title')}
+        </h1>
         <a
           href={`/${locale}/projetos/${id}`}
-          className="text-sm text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 underline-offset-4 hover:text-brand-700 hover:underline"
         >
+          <ArrowLeftIcon aria-hidden className="size-4" />
           {t('backToProject')}
         </a>
       </header>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">{t('milestones')}</h2>
+      <section className="space-y-4">
+        <SectionTitle>{t('milestones')}</SectionTitle>
         {milestones.length === 0 ? (
-          <p className="text-sm text-neutral-500">{t('noMilestones')}</p>
+          <EmptyState icon={ClipboardListIcon}>{t('noMilestones')}</EmptyState>
         ) : (
-          <ol className="space-y-3 border-l border-neutral-200 pl-5">
-            {milestones.map((m) => (
-              <li key={m.id} className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">{m.title}</span>
-                  <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-                    {t(`status_${m.status}` as 'status_previsto')}
-                  </span>
-                </div>
-                <p className="font-mono text-xs text-neutral-500">
-                  {t('planned')}: {dateFmt(loc, m.planned_date)} · {t('actual')}:{' '}
-                  {dateFmt(loc, m.actual_date)}
-                </p>
-              </li>
-            ))}
-          </ol>
+          <Card>
+            <CardContent>
+              <ol className="space-y-5 border-l-2 border-brand-100 pl-6">
+                {milestones.map((m) => (
+                  <li key={m.id} className="relative space-y-1.5">
+                    <span
+                      aria-hidden
+                      className="absolute top-1.5 -left-[1.9375rem] size-3 rounded-full bg-brand-400 ring-4 ring-card"
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-bold text-ink">{m.title}</span>
+                      <Badge variant="secondary">
+                        {t(`status_${m.status}` as 'status_previsto')}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-ink-muted tabular-nums">
+                      {t('planned')}: {dateFmt(loc, m.planned_date)} ·{' '}
+                      {t('actual')}: {dateFmt(loc, m.actual_date)}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </CardContent>
+          </Card>
         )}
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">{t('budgetVsActual')}</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-neutral-200 text-left text-neutral-500">
-              <th className="py-2 font-medium">{t('line')}</th>
-              <th className="py-2 text-right font-medium">{t('budget')}</th>
-              <th className="py-2 text-right font-medium">{t('spent')}</th>
-              <th className="py-2 text-right font-medium">{t('deviation')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {budgetLines.map((line) => {
-              const budget = Number(line.budget_amount);
-              const actual = Number(line.actual_amount);
-              const pct =
-                budget > 0 ? ((actual - budget) / budget) * 100 : null;
-              return (
-                <tr key={line.id} className="border-b border-neutral-100">
-                  <td className="py-2">{line.name}</td>
-                  <td className="py-2 text-right font-mono">{eur(budget)}</td>
-                  <td className="py-2 text-right font-mono">{eur(actual)}</td>
-                  <td
-                    className={`py-2 text-right font-mono ${
-                      pct !== null && pct > 0
-                        ? 'text-red-700'
-                        : 'text-neutral-600'
-                    }`}
-                  >
-                    {pct === null
-                      ? '—'
-                      : `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`}
-                  </td>
+      <section className="space-y-4">
+        <SectionTitle>{t('budgetVsActual')}</SectionTitle>
+        <Card className="gap-0 overflow-hidden py-0">
+          <div className="overflow-x-auto scroll-soft">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-secondary text-left">
+                  <th className={th}>{t('line')}</th>
+                  <th className={`${th} text-right`}>{t('budget')}</th>
+                  <th className={`${th} text-right`}>{t('spent')}</th>
+                  <th className={`${th} text-right`}>{t('deviation')}</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {budgetLines.map((line) => {
+                  const budget = Number(line.budget_amount);
+                  const actual = Number(line.actual_amount);
+                  const pct =
+                    budget > 0 ? ((actual - budget) / budget) * 100 : null;
+                  return (
+                    <tr key={line.id}>
+                      <td className="px-5 py-4 font-semibold text-ink">
+                        {line.name}
+                      </td>
+                      <td className="px-5 py-4 text-right text-ink-soft tabular-nums">
+                        {eur(budget)}
+                      </td>
+                      <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">
+                        {eur(actual)}
+                      </td>
+                      {/* Derrapagem a vermelho: é a única cor semântica que
+                          sobrevive à mudança de marca, e tem de continuar a
+                          saltar à vista sobre o fundo azulado. */}
+                      <td
+                        className={`px-5 py-4 text-right font-bold tabular-nums ${
+                          pct !== null && pct > 0
+                            ? 'text-destructive'
+                            : 'text-ink-muted'
+                        }`}
+                      >
+                        {pct === null
+                          ? '—'
+                          : `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold">{t('diary')}</h2>
+        <SectionTitle>{t('diary')}</SectionTitle>
         {updates.length === 0 ? (
-          <p className="text-sm text-neutral-500">{t('empty')}</p>
+          <EmptyState icon={HardHatIcon}>{t('empty')}</EmptyState>
         ) : (
-          <ul className="space-y-8">
+          <ul className="space-y-5">
             {updates.map((u) => {
               const items = mediaByUpdate.get(u.id) ?? [];
               return (
-                <li key={u.id} className="space-y-3">
-                  <div className="space-y-1">
-                    <h3 className="font-medium">{u.title}</h3>
-                    <p className="font-mono text-xs text-neutral-500">
-                      {dateFmt(loc, u.published_at)}
-                    </p>
-                  </div>
-                  {u.body && (
-                    <p className="whitespace-pre-line text-sm leading-relaxed text-neutral-700">
-                      {u.body}
-                    </p>
-                  )}
-                  {items.length > 0 && (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {items.map((m) =>
-                        m.media_type === 'photo' ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            key={m.id}
-                            src={`/api/works/media/${m.id}`}
-                            alt={u.title}
-                            className="aspect-video w-full rounded-lg object-cover"
-                          />
-                        ) : (
-                          <video
-                            key={m.id}
-                            controls
-                            src={`/api/works/media/${m.id}`}
-                            className="aspect-video w-full rounded-lg bg-black"
-                          />
-                        )
+                <li key={u.id}>
+                  <Card>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-1">
+                        <h3 className="text-base font-bold tracking-tight text-ink">
+                          {u.title}
+                        </h3>
+                        <p className="text-xs font-semibold text-ink-muted tabular-nums">
+                          {dateFmt(loc, u.published_at)}
+                        </p>
+                      </div>
+                      {u.body && (
+                        <p className="whitespace-pre-line text-sm leading-relaxed text-ink-soft">
+                          {u.body}
+                        </p>
                       )}
-                    </div>
-                  )}
+                      {items.length > 0 && (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {items.map((m) =>
+                            m.media_type === 'photo' ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                key={m.id}
+                                src={`/api/works/media/${m.id}`}
+                                alt={u.title}
+                                className="aspect-video w-full rounded-2xl object-cover"
+                              />
+                            ) : (
+                              <video
+                                key={m.id}
+                                controls
+                                src={`/api/works/media/${m.id}`}
+                                className="aspect-video w-full rounded-2xl bg-ink"
+                              />
+                            )
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </li>
               );
             })}

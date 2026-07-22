@@ -3,6 +3,7 @@ import {createAdminClient} from '@/lib/supabase/admin';
 import {listPendingKyc} from '@/lib/kyc/service';
 import {approveKycAction, rejectKycAction} from './actions';
 import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
 import {Badge} from '@/components/ui/badge';
 import {
   Card,
@@ -41,21 +42,25 @@ export default async function AdminKycPage({
 
   return (
     <main className="mx-auto max-w-4xl p-6">
-      <h1 className="mb-6 text-2xl font-semibold">{t('title')}</h1>
+      <h1 className="mb-8 text-3xl font-extrabold tracking-tight text-ink">
+        {t('title')}
+      </h1>
       {pending.length === 0 && (
-        <p className="text-sm text-neutral-500">{t('empty')}</p>
+        <p className="rounded-[var(--radius-card)] border border-border bg-card px-6 py-14 text-center text-sm text-ink-muted shadow-[var(--shadow-card)]">
+          {t('empty')}
+        </p>
       )}
-      <div className="space-y-4">
+      <div className="space-y-5">
         {pending.map((sub) => (
           <Card key={sub.id}>
             <CardHeader>
-              <CardTitle className="text-base">
+              <CardTitle className="flex flex-wrap items-center gap-3 text-lg font-bold tracking-tight text-ink">
                 {sub.full_name}{' '}
                 <Badge variant="secondary">{sub.citizen_type}</Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-neutral-600">
+            <CardContent className="space-y-5">
+              <p className="text-sm tabular-nums text-ink-soft">
                 NIF: {sub.nif} ·{' '}
                 {new Date(sub.created_at).toLocaleDateString(loc)}
               </p>
@@ -66,13 +71,13 @@ export default async function AdminKycPage({
                     href={`/api/kyc/document/${d.id}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-sm text-blue-700 underline"
+                    className="inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-100"
                   >
                     {t(`doc_${d.doc_type}` as 'doc_cartao_cidadao')}
                   </a>
                 ))}
               </div>
-              <div className="flex flex-wrap items-end gap-2">
+              <div className="flex flex-wrap items-end gap-3 border-t border-border pt-5">
                 <form action={approveKycAction.bind(null, loc, sub.id)}>
                   <Button type="submit">{t('approve')}</Button>
                 </form>
@@ -85,13 +90,13 @@ export default async function AdminKycPage({
                       String(fd.get('note') ?? '')
                     );
                   }}
-                  className="flex items-end gap-2"
+                  className="flex flex-1 flex-wrap items-end justify-end gap-3"
                 >
-                  <input
+                  <Input
                     name="note"
                     placeholder={t('rejectReason')}
                     required
-                    className="rounded-md border p-2 text-sm"
+                    className="w-64 flex-none"
                   />
                   <Button type="submit" variant="destructive">
                     {t('reject')}

@@ -24,6 +24,9 @@ export const dynamic = 'force-dynamic';
 
 type SettingRowData = {key: string; description: string; value: unknown};
 
+const TH =
+  'h-12 px-5 text-xs font-bold uppercase tracking-[0.12em] text-ink-muted';
+
 export default async function DefinicoesPage({
   params
 }: {
@@ -47,36 +50,45 @@ export default async function DefinicoesPage({
 
   return (
     <main className="mx-auto max-w-5xl space-y-8 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-        <p className="text-sm text-neutral-500">{t('hint')}</p>
-      </div>
+      <header className="space-y-2">
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">
+          {t('title')}
+        </h1>
+        <p className="max-w-3xl text-sm text-ink-soft">{t('hint')}</p>
+      </header>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t('title')}</CardTitle>
+          <CardTitle className="text-xs font-bold uppercase tracking-[0.12em] text-ink-muted">
+            {t('title')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('key')}</TableHead>
-                <TableHead>{t('description')}</TableHead>
-                <TableHead>{t('value')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {settings.map((s) => (
-                <SettingRow
-                  key={s.key}
-                  settingKey={s.key}
-                  description={s.description}
-                  value={JSON.stringify(s.value)}
-                  action={saveSettingAction.bind(null, loc, s.key)}
-                />
-              ))}
-            </TableBody>
-          </Table>
+          {/* O `<Table>` traz o seu próprio contentor com `overflow-x-auto`;
+              anula-se aqui para que quem role seja este invólucro — é ele que
+              tem a barra fina de `.scroll-soft`. */}
+          <div className="scroll-soft overflow-x-auto [&>div]:overflow-visible">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border bg-secondary hover:bg-secondary">
+                  <TableHead className={TH}>{t('key')}</TableHead>
+                  <TableHead className={TH}>{t('description')}</TableHead>
+                  <TableHead className={TH}>{t('value')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {settings.map((s) => (
+                  <SettingRow
+                    key={s.key}
+                    settingKey={s.key}
+                    description={s.description}
+                    value={JSON.stringify(s.value)}
+                    action={saveSettingAction.bind(null, loc, s.key)}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </main>

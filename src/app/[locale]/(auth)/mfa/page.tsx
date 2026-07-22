@@ -8,6 +8,7 @@ import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {Brand} from '@/components/Brand';
 
 type Mode = 'loading' | 'enroll' | 'challenge';
 
@@ -89,72 +90,92 @@ export default function MfaPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-neutral-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-center text-xl tracking-tight">
-            {t('title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {mode === 'loading' && (
-            <p className="text-center text-sm text-neutral-500">{t('loading')}</p>
-          )}
+    // Esta página não tem casca (a AppShell só aparece em aal2), por isso a
+    // tela de marca é também aqui a única âncora visual.
+    <main className="flex min-h-screen flex-col md:grid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <aside className="brand-canvas flex items-center px-6 py-6 md:items-start md:px-14 md:py-16">
+        <Brand onDark className="relative" />
+      </aside>
 
-          {mode !== 'loading' && (
-            <div className="space-y-4">
-              {mode === 'enroll' && (
-                <div className="space-y-3">
-                  <p className="text-sm text-neutral-600">{t('enrollHint')}</p>
-                  {qrCode && (
-                    // qr_code é um data URI SVG gerado pelo Supabase.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={qrCode}
-                      alt="QR code"
-                      className="mx-auto h-44 w-44"
+      <div className="flex flex-1 items-center justify-center px-4 py-10 sm:px-8 md:py-16">
+        <Card className="w-full max-w-md py-8">
+          <CardHeader className="px-6 sm:px-8">
+            <CardTitle className="text-xl font-bold tracking-tight text-ink">
+              {t('title')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-6 sm:px-8">
+            {mode === 'loading' && (
+              <p className="text-sm text-ink-muted">{t('loading')}</p>
+            )}
+
+            {mode !== 'loading' && (
+              <div className="space-y-6">
+                {mode === 'enroll' && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-ink-soft">{t('enrollHint')}</p>
+                    {qrCode && (
+                      // qr_code é um data URI SVG gerado pelo Supabase.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={qrCode}
+                        alt="QR code"
+                        className="mx-auto size-48 rounded-2xl border border-border bg-white p-2"
+                      />
+                    )}
+                    {secret && (
+                      // A chave é lida caractere a caractere por uma pessoa:
+                      // monoespaçada, contrastada e nada decorativa.
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-ink-muted">
+                          {t('secretLabel')}:
+                        </p>
+                        <code className="block rounded-xl border border-border bg-secondary px-3.5 py-2.5 text-center font-mono text-sm font-semibold tracking-[0.12em] break-all text-ink select-all">
+                          {secret}
+                        </code>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {mode === 'challenge' && (
+                  <p className="text-sm text-ink-soft">{t('challengeHint')}</p>
+                )}
+
+                <form onSubmit={onVerify} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="code" className="text-ink">
+                      {t('code')}
+                    </Label>
+                    <Input
+                      id="code"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      required
+                      value={code}
+                      onChange={(e) => setCode(e.target.value)}
+                      className="font-mono text-base tracking-[0.3em]"
                     />
-                  )}
-                  {secret && (
-                    <p className="text-center text-xs text-neutral-500">
-                      {t('secretLabel')}:{' '}
-                      <code className="break-all">{secret}</code>
+                  </div>
+                  {error && (
+                    <p
+                      role="alert"
+                      className="rounded-xl bg-destructive/10 px-3.5 py-2.5 text-sm font-medium text-destructive"
+                    >
+                      {t('error')}
                     </p>
                   )}
-                </div>
-              )}
-
-              {mode === 'challenge' && (
-                <p className="text-sm text-neutral-600">{t('challengeHint')}</p>
-              )}
-
-              <form onSubmit={onVerify} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="code">{t('code')}</Label>
-                  <Input
-                    id="code"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                    required
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                  />
-                </div>
-                {error && (
-                  <p role="alert" className="text-sm text-red-600">
-                    {t('error')}
-                  </p>
-                )}
-                <Button type="submit" className="w-full" disabled={busy}>
-                  {t('verify')}
-                </Button>
-              </form>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  <Button type="submit" className="w-full" disabled={busy}>
+                    {t('verify')}
+                  </Button>
+                </form>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </main>
   );
 }

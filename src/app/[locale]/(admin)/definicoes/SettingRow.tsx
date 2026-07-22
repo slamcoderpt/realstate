@@ -30,37 +30,39 @@ export function SettingRow({
   // cima do que o utilizador entretanto tivesse escrito. O `revalidatePath` na
   // action já garante valores frescos na próxima navegação/reload.
   return (
-    <TableRow>
-      <TableCell className="align-top font-mono text-xs font-medium">
+    <TableRow className="border-border hover:bg-brand-50/60">
+      <TableCell className="px-5 py-4 align-top font-mono text-xs font-bold text-ink">
         {settingKey}
       </TableCell>
-      <TableCell className="align-top text-sm text-neutral-500">
+      <TableCell className="px-5 py-4 align-top text-sm whitespace-normal text-ink-soft">
         {description}
         {value === 'null' && (
-          <span className="block text-xs text-neutral-400">{t('noLimit')}</span>
+          <span className="mt-1 block text-xs text-ink-muted">
+            {t('noLimit')}
+          </span>
         )}
       </TableCell>
-      <TableCell className="align-top">
-        <form action={formAction} className="space-y-2">
+      <TableCell className="px-5 py-4 align-top">
+        <form action={formAction} className="space-y-2.5">
           <textarea
             name="value"
             aria-label={`${settingKey} — ${t('value')}`}
             defaultValue={value}
             rows={2}
             spellCheck={false}
-            className="w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+            className="w-full min-w-0 rounded-xl border border-input bg-white px-3.5 py-2.5 font-mono text-xs text-ink shadow-[0_1px_2px_rgba(7,18,53,0.04)] transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
           />
           <div className="flex items-center gap-3">
             <Button type="submit" size="sm" variant="outline" disabled={pending}>
               {t('save')}
             </Button>
             {state.error && (
-              <span role="alert" className="text-xs text-red-600">
+              <span role="alert" className="text-xs font-semibold text-destructive">
                 {t('invalidJson')}
               </span>
             )}
             {state.ok && !state.error && (
-              <span role="status" className="text-xs text-emerald-600">
+              <span role="status" className="text-xs font-semibold text-emerald-600">
                 {t('saved')}
               </span>
             )}

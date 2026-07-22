@@ -4,6 +4,38 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================
+   Sistema de marca Altronix
+   Adotado do projeto Altronix Prémios para a plataforma falar a mesma língua
+   visual do resto da casa. Os tokens semânticos do shadcn (:root, mais abaixo)
+   apontam para esta rampa — mudar aqui muda a app inteira.
+
+   Nota de contexto: o Prémios é uma app de concursos e usa o amarelo/rosa com
+   generosidade festiva. Aqui o azul e a tinta fazem o trabalho todo e o
+   amarelo entra só como acento pontual — um portal onde se investe dinheiro
+   não deve ler-se como uma promoção.
+   ============================================================ */
+@theme {
+  --color-brand-50: #eef5ff;
+  --color-brand-100: #d9e8ff;
+  --color-brand-200: #b3d1ff;
+  --color-brand-300: #8dccff;
+  --color-brand-400: #2aa8ff;
+  --color-brand-500: #006bff;
+  --color-brand-600: #0055e8;
+  --color-brand-700: #0046bf;
+
+  --color-accent-300: #ffe042;
+  --color-accent-400: #ffd400;
+  --color-accent-500: #ff9000;
+
+  --color-ink: #071235;
+  --color-ink-soft: #45506b;
+  --color-ink-muted: #6b7693;
+
+  --radius-card: 22px;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -46,38 +78,55 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Cantos mais generosos que o default do shadcn (0.625rem): é o que dá o ar
+     macio do Prémios sem cair no arredondado de brinquedo. */
+  --radius: 1rem;
+
+  /* Fundo levemente azulado em vez de branco: as fichas brancas por cima
+     ganham presença sem precisar de sombras pesadas. */
+  --background: #f4f8ff;
+  --foreground: #071235;
+  --card: #ffffff;
+  --card-foreground: #071235;
+  --popover: #ffffff;
+  --popover-foreground: #071235;
+
+  --primary: #006bff;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f6ff;
+  --secondary-foreground: #071235;
+  --muted: #f1f6ff;
+  --muted-foreground: #6b7693;
+  --accent: #eef5ff;
+  --accent-foreground: #0046bf;
+
+  --destructive: #dc2626;
+  --border: #e2eaf7;
+  --input: #e2eaf7;
+  --ring: #2aa8ff;
+
+  --surface-muted: #f1f6ff;
+  --app-gradient: linear-gradient(180deg, #0055e8 0%, #006bff 46%, #2aa8ff 100%);
+
+  /* Sombras tingidas de azul em vez de cinzento: é o detalhe que faz a
+     interface parecer desenhada e não apenas "com bordas". */
+  --shadow-card: 0 14px 34px rgba(7, 18, 53, 0.08);
+  --shadow-brand: 0 12px 24px rgba(0, 107, 255, 0.28);
+  --shadow-brand-hover: 0 16px 30px rgba(0, 107, 255, 0.34);
+
+  --chart-1: #006bff;
+  --chart-2: #2aa8ff;
+  --chart-3: #8dccff;
+  --chart-4: #0046bf;
+  --chart-5: #ffd400;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #071235;
+  --sidebar-primary: #006bff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef5ff;
+  --sidebar-accent-foreground: #0046bf;
+  --sidebar-border: #e2eaf7;
+  --sidebar-ring: #2aa8ff;
 }
 
 .dark {
@@ -120,5 +169,61 @@
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
+}
+
+/* ============================================================
+   Tela de marca — só nas superfícies de entrada (login, MFA, aceitar convite)
+   ============================================================
+   O gradiente e as formas dão a cara da marca a quem ainda não entrou. Dentro
+   da aplicação NÃO se usa: quem está a olhar para o capital investido ou para
+   um extrato precisa de sossego, não de decoração. É a mesma razão pela qual
+   as formas decorativas do Prémios ficaram aqui reduzidas a duas. */
+.brand-canvas {
+  position: relative;
+  background: var(--app-gradient);
+  overflow: hidden;
+}
+
+.brand-canvas::before,
+.brand-canvas::after {
+  content: "";
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+/* Anel largo em baixo à direita e um disco claro em cima à esquerda: a mesma
+   gramática do Prémios, sem o rosa — que naquele contexto é festivo e neste
+   seria ruído. */
+.brand-canvas::before {
+  top: -80px;
+  left: -80px;
+  width: 220px;
+  height: 220px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.brand-canvas::after {
+  right: -90px;
+  bottom: -90px;
+  width: 240px;
+  height: 240px;
+  border: 30px solid rgba(255, 255, 255, 0.16);
+}
+
+/* Barra de deslocamento fina para painéis densos (tabelas do back-office). */
+.scroll-soft {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-brand-300) transparent;
+}
+.scroll-soft::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.scroll-soft::-webkit-scrollbar-thumb {
+  background: var(--color-brand-300);
+  border-radius: 9999px;
 }

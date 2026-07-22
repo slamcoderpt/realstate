@@ -1,5 +1,6 @@
 import {getTranslations, setRequestLocale} from 'next-intl/server';
 import Link from 'next/link';
+import {FolderOpenIcon, MapPinIcon} from 'lucide-react';
 import {listCatalogue} from '@/lib/projects/service';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
@@ -13,6 +14,18 @@ function eur(v: number): string {
     currency: 'EUR',
     maximumFractionDigits: 0
   }).format(v);
+}
+
+/** Linha rótulo/valor das fichas do catálogo. */
+function Row({label, value}: {label: string; value: string}) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 py-2">
+      <span className="text-xs font-bold tracking-[0.1em] text-ink-muted uppercase">
+        {label}
+      </span>
+      <span className="font-bold text-ink tabular-nums">{value}</span>
+    </div>
+  );
 }
 
 export default async function CatalogPage({
@@ -37,48 +50,61 @@ export default async function CatalogPage({
   const showProgress = flag?.value === true;
 
   return (
-    <main className="mx-auto max-w-5xl p-6">
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight">{t('title')}</h1>
+    <main className="mx-auto max-w-5xl px-6 py-8">
+      <h1 className="mb-8 text-3xl font-extrabold tracking-tight text-ink">
+        {t('title')}
+      </h1>
+
       {projects.length === 0 && (
-        <p className="text-sm text-neutral-500">{t('empty')}</p>
+        <Card className="py-12">
+          <CardContent className="flex flex-col items-center gap-4 text-center">
+            <span
+              aria-hidden
+              className="grid size-12 place-items-center rounded-2xl bg-brand-50 text-brand-400"
+            >
+              <FolderOpenIcon className="size-6" />
+            </span>
+            <p className="max-w-sm text-sm text-ink-muted">{t('empty')}</p>
+          </CardContent>
+        </Card>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {projects.map((p) => {
           const pct =
             p.total_amount > 0
               ? Math.round((p.subscribed_amount / p.total_amount) * 100)
               : 0;
           return (
-            <Link key={p.id} href={`/${locale}/projetos/${p.id}`}>
-              <Card className="h-full transition hover:shadow-md">
+            <Link key={p.id} href={`/${locale}/projetos/${p.id}`} className="group">
+              <Card className="h-full gap-4 transition-all duration-200 group-hover:-translate-y-1 group-hover:border-brand-200 group-hover:shadow-[0_18px_40px_rgba(0,107,255,0.14)]">
                 <CardHeader>
-                  <CardTitle className="text-base">{p.name}</CardTitle>
-                  <p className="text-sm text-neutral-500">{p.location}</p>
+                  <CardTitle className="text-base font-bold text-ink group-hover:text-brand-600">
+                    {p.name}
+                  </CardTitle>
+                  <p className="flex items-center gap-1.5 text-sm text-ink-muted">
+                    <MapPinIcon aria-hidden className="size-3.5 shrink-0" />
+                    {p.location}
+                  </p>
                 </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-neutral-500">{t('irr')}</span>
-                    <span className="font-mono">{p.estimated_irr}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-500">{t('amount')}</span>
-                    <span className="font-mono">{eur(p.total_amount)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-500">{t('term')}</span>
-                    <span className="font-mono">
-                      {t('months', {n: p.term_months})}
-                    </span>
+                <CardContent className="text-sm">
+                  <div className="divide-y divide-border">
+                    <Row label={t('irr')} value={`${p.estimated_irr}%`} />
+                    <Row label={t('amount')} value={eur(p.total_amount)} />
+                    <Row
+                      label={t('term')}
+                      value={t('months', {n: p.term_months})}
+                    />
                   </div>
                   {showProgress && (
-                    <div className="pt-2">
-                      <div className="h-1.5 w-full rounded bg-neutral-200">
+                    <div className="pt-4">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-brand-100">
                         <div
-                          className="h-full rounded bg-neutral-800"
+                          className="h-full rounded-full bg-brand-500"
                           style={{width: `${Math.min(100, pct)}%`}}
                         />
                       </div>
-                      <p className="mt-1 font-mono text-xs text-neutral-500">
+                      <p className="mt-2 text-xs font-semibold text-ink-muted tabular-nums">
                         {t('subscribed', {pct})}
                       </p>
                     </div>

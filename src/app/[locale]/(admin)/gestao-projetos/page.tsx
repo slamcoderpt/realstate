@@ -31,6 +31,18 @@ const eur = (v: number) =>
     maximumFractionDigits: 0
   }).format(Number(v));
 
+/**
+ * Painel de tabela da marca. O `<Table>` traz o seu próprio contentor com
+ * `overflow-x-auto`; anula-se aqui (`[&>div]:overflow-visible`) para que quem
+ * rola seja este invólucro — é ele que tem a barra fina de `.scroll-soft`.
+ */
+const TABLE_PANEL =
+  'scroll-soft overflow-x-auto rounded-[var(--radius-card)] border border-border bg-card shadow-[var(--shadow-card)] [&>div]:overflow-visible';
+const TH =
+  'h-12 px-5 text-xs font-bold uppercase tracking-[0.12em] text-ink-muted';
+const TD = 'px-5 py-4 text-ink-soft';
+const FIELD_LABEL = 'font-semibold text-ink';
+
 export default async function GestaoProjetosPage({
   params
 }: {
@@ -44,31 +56,43 @@ export default async function GestaoProjetosPage({
 
   return (
     <main className="mx-auto max-w-5xl space-y-8 p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-ink">
+        {t('title')}
+      </h1>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t('new')}</CardTitle>
+          <CardTitle className="text-xs font-bold uppercase tracking-[0.12em] text-ink-muted">
+            {t('new')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form
             action={createProjectAction.bind(null, loc)}
-            className="grid gap-3 sm:grid-cols-2"
+            className="grid gap-5 sm:grid-cols-2"
           >
-            <div>
-              <Label htmlFor="name">{t('name')}</Label>
+            <div className="space-y-2">
+              <Label htmlFor="name" className={FIELD_LABEL}>
+                {t('name')}
+              </Label>
               <Input id="name" name="name" required />
             </div>
-            <div>
-              <Label htmlFor="location">{t('location')}</Label>
+            <div className="space-y-2">
+              <Label htmlFor="location" className={FIELD_LABEL}>
+                {t('location')}
+              </Label>
               <Input id="location" name="location" required />
             </div>
-            <div className="sm:col-span-2">
-              <Label htmlFor="description">{t('description')}</Label>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="description" className={FIELD_LABEL}>
+                {t('description')}
+              </Label>
               <Input id="description" name="description" />
             </div>
-            <div>
-              <Label htmlFor="acquisition_cost">{t('acquisition')}</Label>
+            <div className="space-y-2">
+              <Label htmlFor="acquisition_cost" className={FIELD_LABEL}>
+                {t('acquisition')}
+              </Label>
               <Input
                 id="acquisition_cost"
                 name="acquisition_cost"
@@ -76,8 +100,10 @@ export default async function GestaoProjetosPage({
                 step="0.01"
               />
             </div>
-            <div>
-              <Label htmlFor="works_budget">{t('works')}</Label>
+            <div className="space-y-2">
+              <Label htmlFor="works_budget" className={FIELD_LABEL}>
+                {t('works')}
+              </Label>
               <Input
                 id="works_budget"
                 name="works_budget"
@@ -85,12 +111,16 @@ export default async function GestaoProjetosPage({
                 step="0.01"
               />
             </div>
-            <div>
-              <Label htmlFor="arv">{t('arv')}</Label>
+            <div className="space-y-2">
+              <Label htmlFor="arv" className={FIELD_LABEL}>
+                {t('arv')}
+              </Label>
               <Input id="arv" name="arv" type="number" step="0.01" />
             </div>
-            <div>
-              <Label htmlFor="total_amount">{t('amount')}</Label>
+            <div className="space-y-2">
+              <Label htmlFor="total_amount" className={FIELD_LABEL}>
+                {t('amount')}
+              </Label>
               <Input
                 id="total_amount"
                 name="total_amount"
@@ -98,8 +128,10 @@ export default async function GestaoProjetosPage({
                 step="0.01"
               />
             </div>
-            <div>
-              <Label htmlFor="estimated_irr">{t('irr')}</Label>
+            <div className="space-y-2">
+              <Label htmlFor="estimated_irr" className={FIELD_LABEL}>
+                {t('irr')}
+              </Label>
               <Input
                 id="estimated_irr"
                 name="estimated_irr"
@@ -107,57 +139,66 @@ export default async function GestaoProjetosPage({
                 step="0.01"
               />
             </div>
-            <div>
-              <Label htmlFor="term_months">{t('term')}</Label>
+            <div className="space-y-2">
+              <Label htmlFor="term_months" className={FIELD_LABEL}>
+                {t('term')}
+              </Label>
               <Input id="term_months" name="term_months" type="number" />
             </div>
-            <div className="sm:col-span-2">
+            <div className="pt-1 sm:col-span-2">
               <Button type="submit">{t('create')}</Button>
             </div>
           </form>
         </CardContent>
       </Card>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t('name')}</TableHead>
-            <TableHead>{t('location')}</TableHead>
-            <TableHead>{t('status')}</TableHead>
-            <TableHead className="text-right">{t('amount')}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {projects.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={4} className="text-center text-neutral-500">
-                {t('empty')}
-              </TableCell>
+      <div className={TABLE_PANEL}>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border bg-secondary hover:bg-secondary">
+              <TableHead className={TH}>{t('name')}</TableHead>
+              <TableHead className={TH}>{t('location')}</TableHead>
+              <TableHead className={TH}>{t('status')}</TableHead>
+              <TableHead className={`${TH} text-right`}>{t('amount')}</TableHead>
             </TableRow>
-          )}
-          {projects.map((p) => (
-            <TableRow key={p.id}>
-              <TableCell className="font-medium">
-                <Link
-                  href={`/${loc}/gestao-projetos/${p.id}`}
-                  className="text-blue-700 underline"
+          </TableHeader>
+          <TableBody>
+            {projects.length === 0 && (
+              <TableRow className="border-border hover:bg-transparent">
+                <TableCell
+                  colSpan={4}
+                  className="px-5 py-14 text-center text-sm text-ink-muted"
                 >
-                  {p.name}
-                </Link>
-              </TableCell>
-              <TableCell>{p.location}</TableCell>
-              <TableCell>
-                <Badge variant="secondary">
-                  {ts(p.status as 'preparacao')}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                {eur(Number(p.total_amount))}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                  {t('empty')}
+                </TableCell>
+              </TableRow>
+            )}
+            {projects.map((p) => (
+              <TableRow key={p.id} className="border-border hover:bg-brand-50/60">
+                <TableCell className={TD}>
+                  <Link
+                    href={`/${loc}/gestao-projetos/${p.id}`}
+                    className="font-semibold text-brand-600 underline-offset-4 transition-colors hover:text-brand-700 hover:underline"
+                  >
+                    {p.name}
+                  </Link>
+                </TableCell>
+                <TableCell className={TD}>{p.location}</TableCell>
+                <TableCell className={TD}>
+                  <Badge variant="secondary">
+                    {ts(p.status as 'preparacao')}
+                  </Badge>
+                </TableCell>
+                <TableCell
+                  className={`${TD} text-right font-semibold tabular-nums text-ink`}
+                >
+                  {eur(Number(p.total_amount))}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </main>
   );
 }

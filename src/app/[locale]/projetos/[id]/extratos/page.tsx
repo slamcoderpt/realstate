@@ -1,8 +1,10 @@
 import {getTranslations, setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
+import {ArrowLeftIcon, ReceiptTextIcon, ShieldCheckIcon} from 'lucide-react';
 import {getSession, canReadStatements} from '@/lib/auth/staff';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {listStatements} from '@/lib/statements/service';
+import {Card, CardContent} from '@/components/ui/card';
 import type {Locale} from '@/lib/mail/templates';
 
 export const dynamic = 'force-dynamic';
@@ -47,56 +49,87 @@ export default async function ExtratosPage({
 
   const statements = await listStatements(id, db);
 
+  const th =
+    'px-5 py-3 text-xs font-bold tracking-[0.12em] text-ink-muted uppercase';
+
   return (
-    <main className="mx-auto max-w-3xl space-y-8 p-6">
-      <header className="flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
+    <main className="mx-auto max-w-3xl space-y-8 px-6 py-8">
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">
+          {t('title')}
+        </h1>
         <a
           href={`/${locale}/projetos/${id}`}
-          className="text-sm text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 underline-offset-4 hover:text-brand-700 hover:underline"
         >
+          <ArrowLeftIcon aria-hidden className="size-4" />
           {tw('backToProject')}
         </a>
       </header>
 
-      <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
-        {t('notice')}
-      </p>
+      {/* Aviso de auditoria: antes era âmbar, o que o fazia ler como alerta. É
+          informação de confiança — fica em azul da casa, com o cadeado a dar o
+          tom em vez da cor. */}
+      <div className="flex items-start gap-3 rounded-[var(--radius-card)] border border-brand-100 bg-brand-50 p-4">
+        <ShieldCheckIcon
+          aria-hidden
+          className="mt-0.5 size-4 shrink-0 text-brand-500"
+        />
+        <p className="text-xs leading-relaxed text-ink-soft">{t('notice')}</p>
+      </div>
 
       {statements.length === 0 ? (
-        <p className="text-sm text-neutral-500">{t('empty')}</p>
+        <Card className="py-10">
+          <CardContent className="flex flex-col items-center gap-4 text-center">
+            <span
+              aria-hidden
+              className="grid size-12 place-items-center rounded-2xl bg-brand-50 text-brand-400"
+            >
+              <ReceiptTextIcon className="size-6" />
+            </span>
+            <p className="max-w-sm text-sm text-ink-muted">{t('empty')}</p>
+          </CardContent>
+        </Card>
       ) : (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-neutral-200 text-left text-neutral-500">
-              <th className="py-2 font-medium">{t('period')}</th>
-              <th className="py-2 font-medium">{t('version')}</th>
-              <th className="py-2 font-medium">{t('published')}</th>
-              <th className="py-2 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {statements.map((s) => (
-              <tr key={s.id} className="border-b border-neutral-100">
-                <td className="py-2 font-mono">{s.period}</td>
-                <td className="py-2 font-mono">{s.version}</td>
-                <td className="py-2 font-mono">
-                  {dateFmt(loc, s.published_at)}
-                </td>
-                <td className="py-2 text-right">
-                  <a
-                    href={`/api/statements/${s.id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-neutral-800 underline underline-offset-2 hover:text-neutral-950"
-                  >
-                    {t('open')}
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Card className="gap-0 overflow-hidden py-0">
+          <div className="overflow-x-auto scroll-soft">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-secondary text-left">
+                  <th className={th}>{t('period')}</th>
+                  <th className={th}>{t('version')}</th>
+                  <th className={th}>{t('published')}</th>
+                  <th className={th} />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {statements.map((s) => (
+                  <tr key={s.id} className="hover:bg-brand-50/60">
+                    <td className="px-5 py-4 font-bold text-ink tabular-nums">
+                      {s.period}
+                    </td>
+                    <td className="px-5 py-4 text-ink-soft tabular-nums">
+                      {s.version}
+                    </td>
+                    <td className="px-5 py-4 text-ink-muted tabular-nums">
+                      {dateFmt(loc, s.published_at)}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <a
+                        href={`/api/statements/${s.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-semibold text-brand-600 underline-offset-4 hover:text-brand-700 hover:underline"
+                      >
+                        {t('open')}
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
     </main>
   );

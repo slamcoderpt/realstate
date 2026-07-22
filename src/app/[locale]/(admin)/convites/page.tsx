@@ -47,6 +47,17 @@ const STATUS_VARIANT: Record<
   revoked: 'destructive'
 };
 
+/**
+ * Painel de tabela da marca. O `<Table>` traz o seu próprio contentor com
+ * `overflow-x-auto`; anula-se aqui (`[&>div]:overflow-visible`) para que quem
+ * rola seja este invólucro — é ele que tem a barra fina de `.scroll-soft`.
+ */
+const TABLE_PANEL =
+  'scroll-soft overflow-x-auto rounded-[var(--radius-card)] border border-border bg-card shadow-[var(--shadow-card)] [&>div]:overflow-visible';
+const TH =
+  'h-12 px-5 text-xs font-bold uppercase tracking-[0.12em] text-ink-muted';
+const TD = 'px-5 py-4 text-ink-soft';
+
 export default async function ConvitesPage({
   params
 }: {
@@ -68,24 +79,32 @@ export default async function ConvitesPage({
 
   return (
     <main className="mx-auto max-w-4xl space-y-8 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-        <p className="text-sm text-neutral-500">{t('subtitle')}</p>
-      </div>
+      <header className="space-y-2">
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">
+          {t('title')}
+        </h1>
+        <p className="max-w-2xl text-sm text-ink-soft">{t('subtitle')}</p>
+      </header>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t('newInvite')}</CardTitle>
+          <CardTitle className="text-xs font-bold uppercase tracking-[0.12em] text-ink-muted">
+            {t('newInvite')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form action={createInviteAction} className="flex flex-wrap items-end gap-4">
             <input type="hidden" name="locale" value={locale} />
             <div className="flex-1 space-y-2" style={{minWidth: 180}}>
-              <Label htmlFor="fullName">{t('fullName')}</Label>
+              <Label htmlFor="fullName" className="font-semibold text-ink">
+                {t('fullName')}
+              </Label>
               <Input id="fullName" name="fullName" required />
             </div>
             <div className="flex-1 space-y-2" style={{minWidth: 220}}>
-              <Label htmlFor="email">{t('email')}</Label>
+              <Label htmlFor="email" className="font-semibold text-ink">
+                {t('email')}
+              </Label>
               <Input id="email" name="email" type="email" required />
             </div>
             <Button type="submit">{t('send')}</Button>
@@ -93,58 +112,67 @@ export default async function ConvitesPage({
         </CardContent>
       </Card>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t('fullName')}</TableHead>
-            <TableHead>{t('email')}</TableHead>
-            <TableHead>{t('status')}</TableHead>
-            <TableHead>{t('expiresAt')}</TableHead>
-            <TableHead className="text-right">{t('actions')}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {invites.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center text-neutral-500">
-                {t('empty')}
-              </TableCell>
+      <div className={TABLE_PANEL}>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border bg-secondary hover:bg-secondary">
+              <TableHead className={TH}>{t('fullName')}</TableHead>
+              <TableHead className={TH}>{t('email')}</TableHead>
+              <TableHead className={TH}>{t('status')}</TableHead>
+              <TableHead className={TH}>{t('expiresAt')}</TableHead>
+              <TableHead className={`${TH} text-right`}>{t('actions')}</TableHead>
             </TableRow>
-          )}
-          {invites.map((invite) => (
-            <TableRow key={invite.id}>
-              <TableCell className="font-medium">{invite.full_name}</TableCell>
-              <TableCell>{invite.email}</TableCell>
-              <TableCell>
-                <Badge variant={STATUS_VARIANT[invite.status]}>
-                  {t(`statusLabel.${invite.status}`)}
-                </Badge>
-              </TableCell>
-              <TableCell>{fmtDate(invite.expires_at)}</TableCell>
-              <TableCell className="text-right">
-                {invite.status === 'pending' && (
-                  <div className="flex justify-end gap-2">
-                    <form action={resendInviteAction}>
-                      <input type="hidden" name="id" value={invite.id} />
-                      <input type="hidden" name="locale" value={locale} />
-                      <Button type="submit" variant="outline" size="sm">
-                        {t('resend')}
-                      </Button>
-                    </form>
-                    <form action={revokeInviteAction}>
-                      <input type="hidden" name="id" value={invite.id} />
-                      <input type="hidden" name="locale" value={locale} />
-                      <Button type="submit" variant="destructive" size="sm">
-                        {t('revoke')}
-                      </Button>
-                    </form>
-                  </div>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {invites.length === 0 && (
+              <TableRow className="border-border hover:bg-transparent">
+                <TableCell
+                  colSpan={5}
+                  className="px-5 py-14 text-center text-sm text-ink-muted"
+                >
+                  {t('empty')}
+                </TableCell>
+              </TableRow>
+            )}
+            {invites.map((invite) => (
+              <TableRow key={invite.id} className="border-border hover:bg-brand-50/60">
+                <TableCell className={`${TD} font-semibold text-ink`}>
+                  {invite.full_name}
+                </TableCell>
+                <TableCell className={TD}>{invite.email}</TableCell>
+                <TableCell className={TD}>
+                  <Badge variant={STATUS_VARIANT[invite.status]}>
+                    {t(`statusLabel.${invite.status}`)}
+                  </Badge>
+                </TableCell>
+                <TableCell className={`${TD} tabular-nums`}>
+                  {fmtDate(invite.expires_at)}
+                </TableCell>
+                <TableCell className={`${TD} text-right`}>
+                  {invite.status === 'pending' && (
+                    <div className="flex justify-end gap-2">
+                      <form action={resendInviteAction}>
+                        <input type="hidden" name="id" value={invite.id} />
+                        <input type="hidden" name="locale" value={locale} />
+                        <Button type="submit" variant="outline" size="sm">
+                          {t('resend')}
+                        </Button>
+                      </form>
+                      <form action={revokeInviteAction}>
+                        <input type="hidden" name="id" value={invite.id} />
+                        <input type="hidden" name="locale" value={locale} />
+                        <Button type="submit" variant="destructive" size="sm">
+                          {t('revoke')}
+                        </Button>
+                      </form>
+                    </div>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </main>
   );
 }

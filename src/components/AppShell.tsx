@@ -1,12 +1,13 @@
 import {getTranslations} from 'next-intl/server';
-import {Link, redirect} from '@/i18n/navigation';
+import {redirect} from '@/i18n/navigation';
 import {getSession, isStaff} from '@/lib/auth/staff';
 import {countUnread} from '@/lib/notifications/service';
 import {createClient} from '@/lib/supabase/server';
 import {NotificationBell} from '@/components/NotificationBell';
 import {MainNav} from '@/components/MainNav';
-import type {NavItem, NavMenu, NavSection} from '@/components/MainNav';
+import type {NavItem, NavMenu} from '@/components/MainNav';
 import {UserMenu} from '@/components/UserMenu';
+import {Brand} from '@/components/Brand';
 
 /**
  * Casca da aplicação: cabeçalho + navegação por papel + sino de notificações.
@@ -55,26 +56,36 @@ export default async function AppShell({
   const menus: NavMenu[] = [];
 
   if (isStaff(role)) {
-    const sections: NavSection[] = [
-      {
-        items: [
-          {href: '/convites', label: t('invites')},
-          {href: '/kyc-revisao', label: t('kycQueue')},
-          {href: '/gestao-projetos', label: t('projectsAdmin')}
-        ]
-      }
-    ];
+    menus.push({
+      label: t('backoffice'),
+      sections: [
+        {
+          items: [
+            {href: '/convites', label: t('invites')},
+            {href: '/kyc-revisao', label: t('kycQueue')},
+            {href: '/gestao-projetos', label: t('projectsAdmin')}
+          ]
+        }
+      ]
+    });
+    // Administração em menu próprio e não como secção do Back-office: são
+    // tarefas de frequência e consequência diferentes (mexer em limites
+    // legais ou papéis não é o mesmo que rever um KYC), e separá-las evita
+    // que se abra o menu de gestão diária e se tropece nelas.
     if (role === 'admin') {
-      sections.push({
+      menus.push({
         label: t('administration'),
-        items: [
-          {href: '/definicoes', label: t('settings')},
-          {href: '/utilizadores', label: t('users')},
-          {href: '/auditoria', label: t('audit')}
+        sections: [
+          {
+            items: [
+              {href: '/definicoes', label: t('settings')},
+              {href: '/utilizadores', label: t('users')},
+              {href: '/auditoria', label: t('audit')}
+            ]
+          }
         ]
       });
     }
-    menus.push({label: t('backoffice'), sections});
   } else if (role === 'auditor') {
     // O auditor não é staff e só tem um destino além do que já é plano — um
     // dropdown de um item só seria fricção sem arrumação nenhuma.
@@ -98,19 +109,11 @@ export default async function AppShell({
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-2 px-6">
-          <div className="flex items-center gap-4 py-3">
-            <Link
-              href="/"
-              className="text-sm font-semibold tracking-[0.2em] text-neutral-900 transition-opacity hover:opacity-70"
-            >
-              TILWENI
-            </Link>
-            {/* Filete a separar a identidade da navegação: a marca não é um
-                item de menu, e sem isto lia-se como o primeiro deles. */}
-            <span aria-hidden className="hidden h-4 w-px bg-neutral-200 md:block" />
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-40 border-b border-white/15 bg-brand-600/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 px-6">
+          <div className="flex items-center gap-3 py-3">
+            <Brand onDark href="/" />
           </div>
 
           {/* No telemóvel estes vêm ANTES do MainNav no DOM de propósito: o

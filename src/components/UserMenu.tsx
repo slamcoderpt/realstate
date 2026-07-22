@@ -45,21 +45,23 @@ export function UserMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={accountLabel}
-        className="group inline-flex items-center gap-2 rounded-md py-1 pr-1 pl-1 outline-none transition-colors hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-neutral-900/10"
+        className="group inline-flex items-center gap-1.5 rounded-full bg-white/10 py-1 pr-2 pl-1 outline-none transition hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/50"
       >
-        <span className="inline-flex size-7 items-center justify-center rounded-[0.25rem] bg-neutral-900 text-[0.6875rem] font-medium tracking-wide text-white">
+        <span className="inline-flex size-7 items-center justify-center rounded-lg bg-white/20 text-[0.6875rem] font-bold tracking-wide text-white">
           {initials || '—'}
         </span>
         <ChevronDownIcon
-          className="size-3.5 text-neutral-400 transition-transform duration-200 group-data-[state=open]:rotate-180"
+          className="size-3.5 text-white/70 transition-transform duration-200 group-data-[state=open]:rotate-180"
           aria-hidden
         />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-60">
         <div className="px-2 py-1.5">
-          <p className="truncate text-sm text-neutral-900">{email}</p>
-          <p className="mt-0.5 text-xs text-neutral-500">{roleLabel}</p>
+          <p className="truncate text-sm font-semibold text-ink">{email}</p>
+          <p className="mt-0.5 text-xs font-bold tracking-[0.1em] text-brand-500 uppercase">
+            {roleLabel}
+          </p>
         </div>
         <DropdownMenuSeparator />
         <form action={signOut}>

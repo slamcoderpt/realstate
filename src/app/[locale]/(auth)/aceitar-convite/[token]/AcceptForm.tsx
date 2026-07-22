@@ -27,20 +27,26 @@ export function AcceptForm({
   );
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-5">
       <input type="hidden" name="token" value={token} />
       <input type="hidden" name="locale" value={locale} />
 
       <div className="space-y-2">
-        <Label htmlFor="name">{t('name')}</Label>
-        <Input id="name" value={fullName} disabled />
+        <Label htmlFor="name" className="text-ink">
+          {t('name')}
+        </Label>
+        <Input id="name" value={fullName} disabled className="bg-secondary" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="email">{t('email')}</Label>
-        <Input id="email" value={email} disabled />
+        <Label htmlFor="email" className="text-ink">
+          {t('email')}
+        </Label>
+        <Input id="email" value={email} disabled className="bg-secondary" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">{t('password')}</Label>
+        <Label htmlFor="password" className="text-ink">
+          {t('password')}
+        </Label>
         <Input
           id="password"
           name="password"
@@ -49,21 +55,26 @@ export function AcceptForm({
           minLength={8}
           autoComplete="new-password"
         />
-        <p className="text-xs text-neutral-500">{t('passwordHint')}</p>
+        <p className="text-xs text-ink-muted">{t('passwordHint')}</p>
       </div>
 
-      <label className="flex items-start gap-2 text-sm">
+      {/* Aceitação dos termos: caixa própria e alvo largo. Aqui reconhece-se o
+          risco e a iliquidez do investimento — não pode ler-se como rodapé. */}
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-secondary/70 p-3.5 text-sm text-ink-soft">
         <input
           type="checkbox"
           name="accept"
-          className="mt-1"
+          className="mt-0.5 size-5 shrink-0 cursor-pointer accent-brand-500"
           required
         />
         <span>{t('acceptTerms')}</span>
       </label>
 
       {state.error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p
+          role="alert"
+          className="rounded-xl bg-destructive/10 px-3.5 py-2.5 text-sm font-medium text-destructive"
+        >
           {t(`errors.${state.error}`)}
         </p>
       )}

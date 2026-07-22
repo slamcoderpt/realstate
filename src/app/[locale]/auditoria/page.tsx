@@ -21,6 +21,20 @@ export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 50;
 const PAYLOAD_MAX = 400;
 
+/**
+ * Painel de tabela da marca. O `<Table>` traz o seu próprio contentor com
+ * `overflow-x-auto`; anula-se aqui (`[&>div]:overflow-visible`) para que quem
+ * rola seja este invólucro — é ele que tem a barra fina de `.scroll-soft`.
+ * Esta é a tabela mais larga do back-office e a razão de a classe existir.
+ */
+const TABLE_PANEL =
+  'scroll-soft overflow-x-auto rounded-[var(--radius-card)] border border-border bg-card shadow-[var(--shadow-card)] [&>div]:overflow-visible';
+const TH =
+  'h-12 px-5 text-xs font-bold uppercase tracking-[0.12em] text-ink-muted';
+const TD = 'px-5 py-4 align-top text-ink-soft';
+const FILTER_LABEL =
+  'text-xs font-bold uppercase tracking-[0.12em] text-ink-muted';
+
 type AuditRow = {
   id: number;
   actor_id: string | null;
@@ -129,47 +143,52 @@ export default async function AuditoriaPage({
 
   return (
     <main className="mx-auto max-w-7xl space-y-6 p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-ink">
+        {t('title')}
+      </h1>
 
-      <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+      <p className="rounded-[var(--radius-card)] border border-brand-200 bg-brand-50 px-5 py-4 text-sm leading-relaxed text-ink-soft">
         {t('triggerNote')}
       </p>
 
       {/* GET puro: os filtros ficam no URL, logo são partilháveis e o prev/next
           consegue preservá-los sem estado de cliente. */}
-      <form method="get" className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-neutral-600">{t('filterAction')}</span>
+      <form
+        method="get"
+        className="flex flex-wrap items-end gap-4 rounded-[var(--radius-card)] border border-border bg-card p-5 shadow-[var(--shadow-card)]"
+      >
+        <label className="flex flex-col gap-2 text-sm">
+          <span className={FILTER_LABEL}>{t('filterAction')}</span>
           <Input
             name="action"
             defaultValue={filters.action}
-            className="h-9 w-48"
+            className="h-10 w-48"
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-neutral-600">{t('filterEntity')}</span>
+        <label className="flex flex-col gap-2 text-sm">
+          <span className={FILTER_LABEL}>{t('filterEntity')}</span>
           <Input
             name="entity"
             defaultValue={filters.entity}
-            className="h-9 w-48"
+            className="h-10 w-48"
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-neutral-600">{t('filterFrom')}</span>
+        <label className="flex flex-col gap-2 text-sm">
+          <span className={FILTER_LABEL}>{t('filterFrom')}</span>
           <Input
             type="date"
             name="from"
             defaultValue={filters.from}
-            className="h-9 w-40"
+            className="h-10 w-40"
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-neutral-600">{t('filterTo')}</span>
+        <label className="flex flex-col gap-2 text-sm">
+          <span className={FILTER_LABEL}>{t('filterTo')}</span>
           <Input
             type="date"
             name="to"
             defaultValue={filters.to}
-            className="h-9 w-40"
+            className="h-10 w-40"
           />
         </label>
         <Button type="submit" size="sm">
@@ -183,19 +202,21 @@ export default async function AuditoriaPage({
       </form>
 
       {rows.length === 0 ? (
-        <p className="text-sm text-neutral-500">{t('empty')}</p>
+        <p className="rounded-[var(--radius-card)] border border-border bg-card px-6 py-14 text-center text-sm text-ink-muted shadow-[var(--shadow-card)]">
+          {t('empty')}
+        </p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className={TABLE_PANEL}>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>{t('when')}</TableHead>
-                <TableHead>{t('actor')}</TableHead>
-                <TableHead>{t('action')}</TableHead>
-                <TableHead>{t('entity')}</TableHead>
-                <TableHead>{t('entityId')}</TableHead>
-                <TableHead>{t('ip')}</TableHead>
-                <TableHead>{t('payload')}</TableHead>
+              <TableRow className="border-border bg-secondary hover:bg-secondary">
+                <TableHead className={TH}>{t('when')}</TableHead>
+                <TableHead className={TH}>{t('actor')}</TableHead>
+                <TableHead className={TH}>{t('action')}</TableHead>
+                <TableHead className={TH}>{t('entity')}</TableHead>
+                <TableHead className={TH}>{t('entityId')}</TableHead>
+                <TableHead className={TH}>{t('ip')}</TableHead>
+                <TableHead className={TH}>{t('payload')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -206,31 +227,37 @@ export default async function AuditoriaPage({
                     ? `${raw.slice(0, PAYLOAD_MAX)}…`
                     : raw;
                 return (
-                  <TableRow key={row.id}>
-                    <TableCell className="whitespace-nowrap text-sm">
+                  <TableRow key={row.id} className="border-border hover:bg-brand-50/60">
+                    <TableCell
+                      className={`${TD} whitespace-nowrap text-sm tabular-nums`}
+                    >
                       {when.format(new Date(row.created_at))}
                     </TableCell>
-                    <TableCell className="text-sm">
+                    <TableCell className={`${TD} text-sm`}>
                       {row.actor_id ? (
-                        <span className="font-medium">
+                        <span className="font-semibold text-ink">
                           {names.get(row.actor_id) ?? row.actor_id}
                         </span>
                       ) : (
-                        <span className="text-neutral-400">{t('system')}</span>
+                        <span className="text-ink-muted">{t('system')}</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className={TD}>
                       <Badge variant="secondary">{row.action}</Badge>
                     </TableCell>
-                    <TableCell className="text-sm">{row.entity_type}</TableCell>
-                    <TableCell className="max-w-[16rem] truncate text-xs text-neutral-500">
+                    <TableCell className={`${TD} text-sm`}>
+                      {row.entity_type}
+                    </TableCell>
+                    <TableCell
+                      className={`${TD} max-w-[16rem] truncate font-mono text-xs text-ink-muted`}
+                    >
                       {row.entity_id ?? '—'}
                     </TableCell>
-                    <TableCell className="text-xs text-neutral-500">
+                    <TableCell className={`${TD} font-mono text-xs text-ink-muted`}>
                       {row.ip ?? '—'}
                     </TableCell>
-                    <TableCell>
-                      <pre className="max-w-md overflow-x-auto whitespace-pre-wrap break-all text-xs text-neutral-600">
+                    <TableCell className={TD}>
+                      <pre className="scroll-soft max-w-md overflow-x-auto whitespace-pre-wrap break-all text-xs leading-relaxed text-ink-soft">
                         {payload}
                       </pre>
                     </TableCell>

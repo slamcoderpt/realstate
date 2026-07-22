@@ -99,15 +99,15 @@ export function NotificationItem({
       className={cn(
         'rounded-md border-l-2 px-3 py-2',
         unread
-          ? 'border-l-neutral-900 bg-neutral-50'
+          ? 'border-l-brand-500 bg-brand-50'
           : 'border-l-transparent opacity-70'
       )}
     >
-      <p className="text-sm font-medium text-neutral-900">
+      <p className="text-sm font-semibold text-ink">
         {t(TITLE_KEY[notification.type])}
       </p>
-      <p className="text-xs text-neutral-600">{body()}</p>
-      <p className="mt-1 text-[11px] text-neutral-400">
+      <p className="text-xs text-ink-soft">{body()}</p>
+      <p className="mt-1 text-[11px] text-ink-muted">
         {formatWhen(notification.created_at, locale)}
       </p>
     </div>
@@ -115,7 +115,7 @@ export function NotificationItem({
 
   if (!notification.href) return inner;
   return (
-    <Link href={notification.href} className="block hover:bg-neutral-100">
+    <Link href={notification.href} className="block rounded-md hover:bg-brand-50">
       {inner}
     </Link>
   );
@@ -169,32 +169,33 @@ export function NotificationBell({
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
+          type="button"
           aria-label={t('title')}
-          className="relative gap-1.5"
+          className="relative inline-flex size-9 items-center justify-center rounded-full text-white/85 transition hover:bg-white/15 hover:text-white focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:outline-none"
         >
-          <BellIcon aria-hidden="true" />
+          <BellIcon aria-hidden="true" className="size-5" />
           {count > 0 && (
-            <span className="text-xs text-neutral-600">
-              {t('unreadCount', {n: count})}
-            </span>
+            <span
+              aria-hidden
+              className="absolute top-1 right-1 size-2 rounded-full bg-accent-400 ring-2 ring-brand-600"
+            />
           )}
-        </Button>
+          <span className="sr-only">{t('unreadCount', {n: count})}</span>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80 p-2">
         <div className="max-h-80 space-y-1 overflow-y-auto">
           {loading && items === null && (
             <div className="flex justify-center py-4">
               <LoaderCircleIcon
-                className="size-4 animate-spin text-neutral-400"
+                className="size-4 animate-spin text-brand-400"
                 aria-hidden="true"
               />
             </div>
           )}
           {items !== null && items.length === 0 && (
-            <p className="px-3 py-4 text-center text-xs text-neutral-500">
+            <p className="px-3 py-4 text-center text-xs text-ink-muted">
               {t('empty')}
             </p>
           )}
@@ -213,7 +214,7 @@ export function NotificationBell({
           </Button>
           <Link
             href="/notificacoes"
-            className="px-2 text-xs text-neutral-600 underline-offset-4 hover:underline"
+            className="px-2 text-xs font-semibold text-brand-600 underline-offset-4 hover:underline"
             onClick={() => setOpen(false)}
           >
             {t('viewAll')}

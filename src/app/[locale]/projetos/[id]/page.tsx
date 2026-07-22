@@ -1,5 +1,6 @@
 import {getTranslations, setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
+import {FileTextIcon, MapPinIcon} from 'lucide-react';
 import {getProjectDetail} from '@/lib/projects/service';
 import {getMySubscription} from '@/lib/subscriptions/service';
 import {getSession, isStaff} from '@/lib/auth/staff';
@@ -7,7 +8,9 @@ import {createAdminClient} from '@/lib/supabase/admin';
 import type {Locale} from '@/lib/mail/templates';
 import {ManifestForm} from './ManifestForm';
 import {cancelSubscriptionAction} from './actions';
+import {Badge} from '@/components/ui/badge';
 import {Button} from '@/components/ui/button';
+import {Card, CardContent} from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,12 +22,30 @@ function eur(v: number): string {
   }).format(v);
 }
 
+/**
+ * Mosaico compacto: são oito lado a lado, por isso o rótulo é pequeno em caixa
+ * alta e o número é o que salta. Sem ícones — a esta densidade seriam ruído.
+ */
 function StatTile({label, value}: {label: string; value: string}) {
   return (
-    <div className="rounded-lg border border-neutral-200 p-4">
-      <p className="text-xs text-neutral-500">{label}</p>
-      <p className="mt-1 font-mono text-lg">{value}</p>
+    <div className="rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+      <p className="text-[0.6875rem] font-bold leading-tight tracking-[0.1em] text-ink-muted uppercase">
+        {label}
+      </p>
+      <p className="mt-2 text-xl font-extrabold tracking-tight text-ink tabular-nums">
+        {value}
+      </p>
     </div>
+  );
+}
+
+/** Cabeçalho de secção com filete de marca — decorativo, sem copy nova. */
+function SectionTitle({children}: {children: React.ReactNode}) {
+  return (
+    <h2 className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-ink">
+      <span aria-hidden className="h-4 w-1 rounded-full bg-brand-500" />
+      {children}
+    </h2>
   );
 }
 
@@ -78,16 +99,24 @@ export default async function ProjectDetailPage({
       ? Math.round((project.subscribed_amount / project.total_amount) * 100)
       : 0;
 
+  const th =
+    'px-5 py-3 text-xs font-bold tracking-[0.12em] text-ink-muted uppercase';
+
   return (
-    <main className="mx-auto max-w-4xl space-y-10 p-6">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">{project.name}</h1>
-        <p className="text-sm text-neutral-500">{project.location}</p>
-        <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-          {ts(project.status as 'preparacao')}
-        </span>
+    <main className="mx-auto max-w-4xl space-y-10 px-6 py-8">
+      <header className="space-y-3">
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">
+          {project.name}
+        </h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="flex items-center gap-1.5 text-sm text-ink-muted">
+            <MapPinIcon aria-hidden className="size-4 shrink-0" />
+            {project.location}
+          </p>
+          <Badge variant="secondary">{ts(project.status as 'preparacao')}</Badge>
+        </div>
         {project.description && (
-          <p className="pt-2 text-sm leading-relaxed text-neutral-700">
+          <p className="max-w-2xl pt-1 text-sm leading-relaxed text-ink-soft">
             {project.description}
           </p>
         )}
@@ -101,13 +130,13 @@ export default async function ProjectDetailPage({
               key={photo.id}
               src={`/api/projects/photo/${photo.id}`}
               alt={project.name}
-              className="aspect-video w-full rounded-lg object-cover"
+              className="aspect-video w-full rounded-[var(--radius-card)] object-cover shadow-[var(--shadow-card)]"
             />
           ))}
         </section>
       )}
 
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <StatTile label={t('amount')} value={eur(project.total_amount)} />
         <StatTile label={t('irr')} value={`${project.estimated_irr}%`} />
         <StatTile
@@ -124,121 +153,153 @@ export default async function ProjectDetailPage({
         <StatTile label={t('arv')} value={eur(project.arv)} />
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">{t('budgetTitle')}</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-neutral-200 text-left text-neutral-500">
-              <th className="py-2 font-medium">{t('line')}</th>
-              <th className="py-2 font-medium">{t('phase')}</th>
-              <th className="py-2 text-right font-medium">{t('budgetAmount')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {budgetLines.map((line) => (
-              <tr key={line.id} className="border-b border-neutral-100">
-                <td className="py-2">{line.name}</td>
-                <td className="py-2 text-neutral-500">{line.phase}</td>
-                <td className="py-2 text-right font-mono">
-                  {eur(line.budget_amount)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <section className="space-y-4">
+        <SectionTitle>{t('budgetTitle')}</SectionTitle>
+        <Card className="gap-0 overflow-hidden py-0">
+          <div className="overflow-x-auto scroll-soft">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-secondary text-left">
+                  <th className={th}>{t('line')}</th>
+                  <th className={th}>{t('phase')}</th>
+                  <th className={`${th} text-right`}>{t('budgetAmount')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {budgetLines.map((line) => (
+                  <tr key={line.id}>
+                    <td className="px-5 py-4 font-semibold text-ink">
+                      {line.name}
+                    </td>
+                    <td className="px-5 py-4 text-ink-muted">{line.phase}</td>
+                    <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">
+                      {eur(line.budget_amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">{t('docsTitle')}</h2>
-        <ul className="space-y-2 text-sm">
-          {documents.map((doc) => (
-            <li key={doc.id}>
-              <a
-                href={`/api/projects/document/${doc.id}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-neutral-800 underline underline-offset-2 hover:text-neutral-950"
-              >
-                {td(doc.doc_type as 'caderneta_predial')}
-              </a>
-            </li>
-          ))}
-        </ul>
+      <section className="space-y-4">
+        <SectionTitle>{t('docsTitle')}</SectionTitle>
+        <Card className="py-2">
+          <CardContent className="px-2">
+            <ul className="divide-y divide-border text-sm">
+              {documents.map((doc) => (
+                <li key={doc.id}>
+                  <a
+                    href={`/api/projects/document/${doc.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 font-semibold text-ink transition hover:bg-brand-50 hover:text-brand-700"
+                  >
+                    <span
+                      aria-hidden
+                      className="grid size-8 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-500"
+                    >
+                      <FileTextIcon className="size-4" />
+                    </span>
+                    {td(doc.doc_type as 'caderneta_predial')}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
       </section>
 
       {showProgress && (
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">{t('subscriptionTitle')}</h2>
-          <div className="h-2 w-full rounded bg-neutral-200">
-            <div
-              className="h-full rounded bg-neutral-800"
-              style={{width: `${Math.min(100, pct)}%`}}
-            />
-          </div>
-          <p className="font-mono text-xs text-neutral-500">
-            {t('subscribedOf', {pct})}
-          </p>
-          <p className="text-xs text-neutral-500">
-            {t('investorsCount', {
-              n: project.investor_count,
-              amount: eur(project.subscribed_amount)
-            })}
-          </p>
+        <section className="space-y-4">
+          <SectionTitle>{t('subscriptionTitle')}</SectionTitle>
+          <Card>
+            <CardContent className="space-y-3">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-brand-100">
+                <div
+                  className="h-full rounded-full bg-brand-500"
+                  style={{width: `${Math.min(100, pct)}%`}}
+                />
+              </div>
+              <p className="text-sm font-bold text-ink tabular-nums">
+                {t('subscribedOf', {pct})}
+              </p>
+              <p className="text-xs text-ink-muted">
+                {t('investorsCount', {
+                  n: project.investor_count,
+                  amount: eur(project.subscribed_amount)
+                })}
+              </p>
+            </CardContent>
+          </Card>
         </section>
       )}
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">{tsub('myPosition')}</h2>
+      <section className="space-y-4">
+        <SectionTitle>{tsub('myPosition')}</SectionTitle>
         {mine ? (
-          <div className="space-y-2 text-sm">
-            <p className="font-mono">{tsub('positionAmount', {amount: eur(mine.amount)})}</p>
-            <p>
-              <span className="inline-block rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-                {tsub(`status_${mine.status}` as 'status_interesse')}
-              </span>
-            </p>
-            {mine.status === 'interesse' && (
-              <>
-                <p className="text-xs text-neutral-500">{tsub('contractPending')}</p>
-                <form action={cancelSubscriptionAction.bind(null, loc, id, mine.id)}>
-                  <Button type="submit" variant="outline" size="sm">
-                    {tsub('cancel')}
-                  </Button>
-                </form>
-              </>
-            )}
-            {/* Acompanhamento de obra: aberto a qualquer subscrição ativa. */}
-            <p>
-              <a
-                href={`/${locale}/projetos/${id}/obra`}
-                className="text-neutral-800 underline underline-offset-2 hover:text-neutral-950"
-              >
-                {tw('title')}
-              </a>
-            </p>
-            {/* Extratos da conta dedicada: só com fundos confirmados. */}
-            {mine.status === 'fundos_confirmados' && (
-              <p>
-                <a
-                  href={`/${locale}/projetos/${id}/extratos`}
-                  className="text-neutral-800 underline underline-offset-2 hover:text-neutral-950"
-                >
-                  {te('title')}
-                </a>
+          <Card>
+            <CardContent className="space-y-4 text-sm">
+              <p className="text-2xl font-extrabold tracking-tight text-ink tabular-nums">
+                {tsub('positionAmount', {amount: eur(mine.amount)})}
               </p>
-            )}
-          </div>
+              <p>
+                <Badge variant="secondary">
+                  {tsub(`status_${mine.status}` as 'status_interesse')}
+                </Badge>
+              </p>
+              {mine.status === 'interesse' && (
+                <>
+                  <p className="text-xs text-ink-muted">
+                    {tsub('contractPending')}
+                  </p>
+                  <form
+                    action={cancelSubscriptionAction.bind(null, loc, id, mine.id)}
+                  >
+                    <Button type="submit" variant="outline" size="sm">
+                      {tsub('cancel')}
+                    </Button>
+                  </form>
+                </>
+              )}
+              <div className="flex flex-wrap gap-3 border-t border-border pt-4">
+                {/* Acompanhamento de obra: aberto a qualquer subscrição ativa. */}
+                <Button asChild variant="outline" size="sm">
+                  <a href={`/${locale}/projetos/${id}/obra`}>{tw('title')}</a>
+                </Button>
+                {/* Extratos da conta dedicada: só com fundos confirmados. */}
+                {mine.status === 'fundos_confirmados' && (
+                  <Button asChild variant="outline" size="sm">
+                    <a href={`/${locale}/projetos/${id}/extratos`}>
+                      {te('title')}
+                    </a>
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         ) : !staff && project.status === 'subscricao' ? (
-          <div className="max-w-md space-y-2">
-            <h3 className="text-sm font-medium">{tsub('manifestTitle')}</h3>
-            <ManifestForm locale={loc} projectId={id} min={minAmount} />
-          </div>
+          <Card className="max-w-md">
+            <CardContent className="space-y-4">
+              <h3 className="text-sm font-bold tracking-tight text-ink">
+                {tsub('manifestTitle')}
+              </h3>
+              <ManifestForm locale={loc} projectId={id} min={minAmount} />
+            </CardContent>
+          </Card>
         ) : (
-          <p className="text-sm text-neutral-500">{t('noPosition')}</p>
+          <Card className="py-8">
+            <CardContent>
+              <p className="text-center text-sm text-ink-muted">
+                {t('noPosition')}
+              </p>
+            </CardContent>
+          </Card>
         )}
       </section>
 
-      <p className="border-t border-neutral-200 pt-6 text-xs leading-relaxed text-neutral-400">
+      <p className="border-t border-border pt-6 text-xs leading-relaxed text-ink-muted">
         {t('riskNotice')}
       </p>
     </main>

@@ -68,7 +68,7 @@ export function MediaUploader({
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5 border-t border-border pt-4">
       <Input
         type="file"
         accept={ACCEPT}
@@ -77,10 +77,12 @@ export function MediaUploader({
         disabled={busy}
         className="max-w-md"
       />
-      <p className="text-xs text-neutral-500">{t('mediaHint')}</p>
-      {busy && <p className="text-xs text-neutral-500">{t('uploading')}</p>}
+      <p className="text-xs text-ink-muted">{t('mediaHint')}</p>
+      {busy && (
+        <p className="text-xs font-semibold text-brand-600">{t('uploading')}</p>
+      )}
       {failed && (
-        <p role="alert" className="text-xs text-red-600">
+        <p role="alert" className="text-xs font-semibold text-destructive">
           {t('uploadFailed')}
         </p>
       )}
