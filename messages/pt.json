@@ -57,7 +57,8 @@
     "challengeHint": "Introduza o código de 6 dígitos da sua app de autenticação.",
     "code": "Código",
     "verify": "Confirmar",
-    "error": "Código inválido. Tente novamente."
+    "error": "Código inválido. Tente novamente.",
+    "skip": "Configurar depois"
   },
   "Kyc": {
     "title": "Verificação de identidade",
@@ -441,6 +442,8 @@
     "changePassword": "Alterar palavra-passe",
     "passwordChanged": "Palavra-passe alterada.",
     "wrongPassword": "A palavra-passe atual está incorreta.",
-    "mfaOn": "Verificação em dois passos ativa."
+    "mfaOn": "Verificação em dois passos ativa.",
+    "mfaOff": "Verificação em dois passos desativada.",
+    "mfaEnable": "Ativar"
   }
 }

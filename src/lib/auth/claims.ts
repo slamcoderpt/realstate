@@ -11,6 +11,10 @@ export type AppClaims = {
   user_role?: string;
   kyc_status?: string;
   aal?: string;
+  /** Tem pelo menos um fator TOTP verificado. */
+  has_mfa?: boolean;
+  /** Já viu o ecrã de configuração de MFA (para não reincomodar). */
+  mfa_prompt_seen?: boolean;
 };
 
 export function decodeAccessToken(token: string | null | undefined): AppClaims {

@@ -22,6 +22,10 @@ export type Session = {
   role: string;
   /** Nível de asseguração (aal1/aal2) lido do JWT. */
   aal: string | null;
+  /** Tem um fator TOTP verificado. */
+  hasMfa: boolean;
+  /** Já viu o ecrã de configuração de MFA. */
+  mfaPromptSeen: boolean;
 };
 
 const STAFF_ROLES = ['admin', 'project_manager'];
@@ -54,7 +58,9 @@ export const getSession = cache(async (): Promise<Session | null> => {
     userId: user.id,
     email: user.email ?? '',
     role: role ?? 'investor',
-    aal: claims.aal ?? null
+    aal: claims.aal ?? null,
+    hasMfa: claims.has_mfa === true,
+    mfaPromptSeen: claims.mfa_prompt_seen === true
   };
 });
 

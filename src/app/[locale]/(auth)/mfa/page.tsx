@@ -9,6 +9,7 @@ import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Brand} from '@/components/Brand';
+import {dismissMfaPrompt} from './actions';
 
 type Mode = 'loading' | 'enroll' | 'challenge';
 
@@ -24,6 +25,7 @@ export default function MfaPage() {
   const [code, setCode] = useState('');
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [skipping, setSkipping] = useState(false);
   const started = useRef(false);
 
   const setup = useCallback(async () => {
@@ -86,6 +88,16 @@ export default function MfaPage() {
     }
     // Sessão sobe a aal2 — o middleware deixa passar.
     router.push('/');
+    router.refresh();
+  }
+
+  // Ignorar a configuração (MFA é opcional). Marca o prompt como visto e refresca
+  // a sessão para o claim ficar fresco, senão o middleware reincomodava de imediato.
+  async function onSkip() {
+    setSkipping(true);
+    await dismissMfaPrompt();
+    await supabase.auth.refreshSession();
+    router.replace('/');
     router.refresh();
   }
 
@@ -170,6 +182,20 @@ export default function MfaPage() {
                     {t('verify')}
                   </Button>
                 </form>
+
+                {/* MFA opcional: no ecrã de configuração pode-se adiar. No modo
+                    de desafio (já tem fator) não há como saltar. */}
+                {mode === 'enroll' && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={onSkip}
+                    disabled={skipping || busy}
+                  >
+                    {t('skip')}
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>

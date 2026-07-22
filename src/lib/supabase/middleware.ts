@@ -63,30 +63,36 @@ export async function updateSession(
   }
 
   if (user) {
-    // aal + role + kyc lidos do JWT (local); getUser() já validou o token.
+    // aal + role + kyc + estado de MFA lidos do JWT (local); getUser() já validou.
     const {
       data: {session}
     } = await supabase.auth.getSession();
     const claims = decodeAccessToken(session?.access_token);
-    const needsMfa = claims.aal === 'aal1';
+    const aal1 = claims.aal === 'aal1';
 
-    // MFA obrigatória: aal1 tem de completar o enrolment/challenge TOTP antes de
-    // aceder ao resto da app. A própria /mfa é a exceção (senão haveria loop).
-    if (needsMfa && !isMfaPage) {
-      if (isApi) {
-        return withStagedCookies(
-          response,
-          NextResponse.json({error: 'mfa_required'}, {status: 401})
-        );
+    // MFA opcional. Em aal1, encaminha para /mfa se:
+    //  - já tem um fator verificado (has_mfa) → DESAFIO obrigatório; ou
+    //  - ainda não viu o ecrã de configuração (mfa_prompt_seen != true) → PROMPT
+    //    de 1ª vez, com opção de ignorar (na própria página /mfa).
+    // Quem não tem fator e já dispensou o prompt entra normalmente em aal1.
+    if (aal1 && !isMfaPage) {
+      const mustResolveMfa =
+        claims.has_mfa === true || claims.mfa_prompt_seen !== true;
+      if (mustResolveMfa) {
+        if (isApi) {
+          return withStagedCookies(
+            response,
+            NextResponse.json({error: 'mfa_required'}, {status: 401})
+          );
+        }
+        return redirectTo('mfa');
       }
-      return redirectTo('mfa');
     }
 
-    // Gating de KYC: um investidor JÁ em aal2 (MFA resolvida) que ainda não
-    // tenha KYC aprovado é encaminhado para /kyc. Staff/auditor isentos. A
-    // própria /kyc é a exceção (senão haveria loop). Não se aplica a aal1 (o
-    // bloco acima trata disso primeiro) nem a /api (clientes fetch).
-    if (!needsMfa && !isKycPage && !isApi) {
+    // Gating de KYC: aplica-se a quem já passou a barreira de MFA — aal2 OU aal1
+    // que dispensou o prompt (chega aqui sem ter sido redirecionado acima). Um
+    // investidor sem KYC aprovado vai para /kyc. Staff/auditor isentos.
+    if (!isKycPage && !isMfaPage && !isApi) {
       // Role do claim; fallback à BD só para tokens antigos (sem o claim).
       let role = claims.user_role;
       if (role === undefined) {
