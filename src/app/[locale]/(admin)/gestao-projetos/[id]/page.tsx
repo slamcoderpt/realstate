@@ -7,6 +7,7 @@ import {
   updateProjectAction,
   transitionProjectAction,
   addBudgetLineAction,
+  uploadCoverAction,
   uploadPhotoAction,
   uploadDocAction
 } from '../actions';
@@ -79,6 +80,13 @@ const NAV_LINK =
   'inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-sm font-semibold text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-100';
 const SELECT =
   'h-11 rounded-xl border border-input bg-white px-3.5 text-sm text-ink shadow-[0_1px_2px_rgba(7,18,53,0.04)] outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
+/**
+ * Mesma pele dos controlos nativos do back-office (ver `obra/page.tsx`): a
+ * `<textarea>` não é um `<Input>`, por isso a altura fixa h-11 dá lugar a
+ * padding vertical equivalente.
+ */
+const TEXTAREA =
+  'w-full rounded-xl border border-input bg-white px-3.5 py-2.5 text-sm text-ink shadow-[0_1px_2px_rgba(7,18,53,0.04)] outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
 export default async function EditarProjetoPage({
   params
@@ -169,10 +177,12 @@ export default async function EditarProjetoPage({
               <Label htmlFor="description" className={FIELD_LABEL}>
                 {t('description')}
               </Label>
-              <Input
+              <textarea
                 id="description"
                 name="description"
+                rows={5}
                 defaultValue={project.description}
+                className={TEXTAREA}
               />
             </div>
             <div className="space-y-2">
@@ -363,6 +373,30 @@ export default async function EditarProjetoPage({
             </p>
           )}
         </div>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className={SECTION_TITLE}>{t('cover')}</h2>
+        {project.cover_path && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/api/projects/cover/${id}`}
+            alt={project.name}
+            className="aspect-video w-full max-w-md rounded-[var(--radius-card)] border border-border object-cover shadow-[var(--shadow-card)]"
+          />
+        )}
+        <form
+          action={uploadCoverAction.bind(null, loc, id)}
+          className="flex flex-wrap items-end gap-4 rounded-[var(--radius-card)] border border-border bg-card p-5 shadow-[var(--shadow-card)]"
+        >
+          <div className="flex-1 space-y-2" style={{minWidth: 220}}>
+            <Label htmlFor="cover" className={FIELD_LABEL}>
+              {t('cover')}
+            </Label>
+            <Input id="cover" type="file" name="cover" accept="image/*" />
+          </div>
+          <Button type="submit">{t('uploadCover')}</Button>
+        </form>
       </section>
 
       <section className="space-y-4">

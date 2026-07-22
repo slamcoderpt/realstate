@@ -125,6 +125,7 @@
   "ProjectAdmin": {
     "title": "Gestão de projetos",
     "new": "Novo projeto",
+    "newHint": "Depois de criar o projeto pode adicionar a capa, as imagens, os documentos e as rubricas de orçamento.",
     "name": "Nome",
     "location": "Localização",
     "description": "Descrição",
@@ -142,8 +143,10 @@
     "lineName": "Rubrica",
     "linePhase": "Fase",
     "lineAmount": "Orçamento (€)",
+    "cover": "Imagem de capa",
     "photos": "Imagens",
     "documents": "Documentos",
+    "uploadCover": "Carregar capa",
     "uploadPhoto": "Carregar imagem",
     "uploadDoc": "Carregar documento",
     "transition": "Mudar estado",

@@ -9,6 +9,7 @@ import {Badge} from '@/components/ui/badge';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
@@ -42,6 +43,14 @@ const TH =
   'h-12 px-5 text-xs font-bold uppercase tracking-[0.12em] text-ink-muted';
 const TD = 'px-5 py-4 text-ink-soft';
 const FIELD_LABEL = 'font-semibold text-ink';
+/**
+ * Mesma pele dos controlos nativos do back-office (ver `obra/page.tsx`): a
+ * `<textarea>` não é um `<Input>`, por isso a altura fixa h-11 dá lugar a
+ * padding vertical equivalente.
+ */
+const CONTROL_BASE =
+  'rounded-xl border border-input bg-white text-ink shadow-[0_1px_2px_rgba(7,18,53,0.04)] outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
+const TEXTAREA = `w-full px-3.5 py-2.5 text-sm ${CONTROL_BASE}`;
 
 export default async function GestaoProjetosPage({
   params
@@ -65,6 +74,12 @@ export default async function GestaoProjetosPage({
           <CardTitle className="text-xs font-bold uppercase tracking-[0.12em] text-ink-muted">
             {t('new')}
           </CardTitle>
+          {/* O resto da ficha (capa, imagens, documentos, rubricas) precisa do
+              id do projeto, logo só existe depois de criar. Dizê-lo aqui evita
+              que o formulário se leia como sendo tudo o que há. */}
+          <CardDescription className="text-sm text-ink-muted">
+            {t('newHint')}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -87,7 +102,12 @@ export default async function GestaoProjetosPage({
               <Label htmlFor="description" className={FIELD_LABEL}>
                 {t('description')}
               </Label>
-              <Input id="description" name="description" />
+              <textarea
+                id="description"
+                name="description"
+                rows={5}
+                className={TEXTAREA}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="acquisition_cost" className={FIELD_LABEL}>

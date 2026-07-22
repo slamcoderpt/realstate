@@ -104,6 +104,15 @@ export default async function ProjectDetailPage({
 
   return (
     <main className="mx-auto max-w-4xl space-y-10 px-6 py-8">
+      {project.cover_path && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/projects/cover/${id}`}
+          alt={project.name}
+          className="aspect-video w-full rounded-[var(--radius-card)] object-cover shadow-[var(--shadow-card)]"
+        />
+      )}
+
       <header className="space-y-3">
         <h1 className="text-3xl font-extrabold tracking-tight text-ink">
           {project.name}

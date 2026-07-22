@@ -125,6 +125,7 @@
   "ProjectAdmin": {
     "title": "Project management",
     "new": "New project",
+    "newHint": "Once the project is created you can add the cover, images, documents and budget lines.",
     "name": "Name",
     "location": "Location",
     "description": "Description",
@@ -142,8 +143,10 @@
     "lineName": "Line",
     "linePhase": "Phase",
     "lineAmount": "Budget (€)",
+    "cover": "Cover image",
     "photos": "Images",
     "documents": "Documents",
+    "uploadCover": "Upload cover",
     "uploadPhoto": "Upload image",
     "uploadDoc": "Upload document",
     "transition": "Change status",

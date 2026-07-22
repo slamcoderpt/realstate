@@ -104,6 +104,35 @@ export async function uploadPhotoAction(
   revalidatePath(`/${locale}/gestao-projetos/${projectId}`);
 }
 
+/**
+ * Capa do projeto — a imagem que o investidor vê no catálogo e no topo da
+ * ficha. Vive no mesmo bucket das restantes imagens (`project-photos`), mas o
+ * caminho é guardado em `projects.cover_path` e não numa linha de
+ * `project_photos`: a capa é UMA por projeto e é um atributo do projeto.
+ */
+export async function uploadCoverAction(
+  locale: Locale,
+  projectId: string,
+  formData: FormData
+): Promise<void> {
+  await requireStaff();
+  const file = formData.get('cover');
+  if (!(file instanceof File) || file.size === 0) return;
+  const db = createAdminClient();
+  const path = projectObjectPath(projectId, 'cover', file.name);
+  await uploadProjectFile(PHOTOS_BUCKET, path, file, db);
+  // Substituir a capa só troca o valor de `cover_path`: o objeto antigo fica no
+  // bucket, órfão. Não se apaga porque `storage.remove()` não funciona na stack
+  // local (desvio documentado em docs/desvios-fase-a.md, ponto 2) — a limpeza
+  // fica para quando a stack alinhar.
+  const {error} = await db
+    .from('projects')
+    .update({cover_path: path, updated_at: new Date().toISOString()})
+    .eq('id', projectId);
+  if (error) throw new Error(`guardar capa falhou: ${error.message}`);
+  revalidatePath(`/${locale}/gestao-projetos/${projectId}`);
+}
+
 export async function uploadDocAction(
   locale: Locale,
   projectId: string,

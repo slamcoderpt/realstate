@@ -1,6 +1,6 @@
 import {getTranslations, setRequestLocale} from 'next-intl/server';
 import Link from 'next/link';
-import {FolderOpenIcon, MapPinIcon} from 'lucide-react';
+import {FolderOpenIcon, ImageIcon, MapPinIcon} from 'lucide-react';
 import {listCatalogue} from '@/lib/projects/service';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
@@ -77,7 +77,24 @@ export default async function CatalogPage({
               : 0;
           return (
             <Link key={p.id} href={`/${locale}/projetos/${p.id}`} className="group">
-              <Card className="h-full gap-4 transition-all duration-200 group-hover:-translate-y-1 group-hover:border-brand-200 group-hover:shadow-[0_18px_40px_rgba(0,107,255,0.14)]">
+              <Card className="h-full gap-4 overflow-hidden pt-0 transition-all duration-200 group-hover:-translate-y-1 group-hover:border-brand-200 group-hover:shadow-[0_18px_40px_rgba(0,107,255,0.14)]">
+                {p.cover_path ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`/api/projects/cover/${p.id}`}
+                    alt={p.name}
+                    className="aspect-video w-full object-cover"
+                  />
+                ) : (
+                  // Sem capa a ficha mantém a mesma altura: o marcador ocupa
+                  // exatamente o mesmo `aspect-video`.
+                  <div
+                    aria-hidden
+                    className="grid aspect-video w-full place-items-center bg-gradient-to-br from-brand-50 to-brand-100 text-brand-300"
+                  >
+                    <ImageIcon className="size-7" />
+                  </div>
+                )}
                 <CardHeader>
                   <CardTitle className="text-base font-bold text-ink group-hover:text-brand-600">
                     {p.name}
