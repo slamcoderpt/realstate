@@ -125,6 +125,27 @@ Região alvo dos projetos cloud: **`eu-central-1`** (UE).
 - [ ] **Auth SMTP interno do Supabase** (opcional): apontar os emails do Supabase Auth
       (ex.: reset de password) ao SMTP 365 no dashboard, para coerência de remetente.
 
+### Performance — role/kyc no JWT (Custom Access Token Hook)
+
+Reduz idas à rede por navegação: o middleware e a casca leem `user_role`/
+`kyc_status` dos claims do JWT em vez de consultar `profiles` a cada clique. A app
+já funciona **sem** o hook (cai num fallback à BD); ativá-lo liga a otimização.
+
+- [x] **Migração `custom_access_token_hook` aplicada a prod** (via MCP
+      `apply_migration`). A função existe mas só é chamada depois de o hook ser
+      ativado no dashboard (passo abaixo).
+- [ ] **Ativar o hook no dashboard** (Dashboard → **Authentication → Hooks** →
+      **Custom Access Token**): *Enable* apontando para a função
+      `public.custom_access_token_hook` (schema `public`). **← passo manual**
+      Depois disto, os tokens novos (próximo login/refresh de cada utilizador)
+      trazem os claims; o middleware deixa de consultar a BD no caminho comum.
+      Nada quebra se demorar — o fallback à BD cobre os tokens sem o claim.
+- **Nota de segurança:** os claims só fazem gating de UI/redirect. A RLS e
+      `requireStaff`/`requireAdmin` continuam a ler o role **da BD** (fresco), pelo
+      que uma despromoção de role (rara) só afeta menus, nunca a autorização real.
+      Uma aprovação de KYC nunca fica bloqueante: o gate confirma na BD quando o
+      claim não é `approved`.
+
 ### Fatias 2–5 — KYC, Catálogo, Subscrição, Obra + Extratos
 
 - [x] **Migrações aplicadas a prod** (2026-07-21, via MCP `apply_migration`).
