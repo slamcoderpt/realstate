@@ -104,6 +104,24 @@ export default async function ProjectDetailPage({
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-8">
+      {/* Staff chega aqui pelo botão "Ver como investidor" do back-office, e vê
+          a ficha de qualquer projeto — inclusive fora de `subscricao`. Dizê-lo
+          explicitamente evita a leitura errada de que a plataforma está a
+          mostrar este projeto a investidores quando não está. */}
+      {staff && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] border border-brand-200 bg-brand-50 px-5 py-3.5">
+          <p className="text-sm font-semibold text-brand-700">
+            {t('staffPreview')}
+          </p>
+          <a
+            href={`/${locale}/gestao-projetos/${id}`}
+            className="text-sm font-bold text-brand-700 underline-offset-4 hover:underline"
+          >
+            {t('backToAdmin')}
+          </a>
+        </div>
+      )}
+
       {/* Duas colunas a partir de `lg`: a leitura do projeto à esquerda, a
           decisão à direita e fixa. Antes era uma coluna estreita ao centro —
           num ecrã de secretária ficava metade do espaço vazio e a posição do
@@ -233,70 +251,85 @@ export default async function ProjectDetailPage({
         </div>
 
         <aside className="space-y-6 lg:sticky lg:top-24">
-          <section className="space-y-4">
-            <SectionTitle>{tsub('myPosition')}</SectionTitle>
-            {mine ? (
-              <Card>
-                <CardContent className="space-y-4 text-sm">
-                  <p className="text-2xl font-extrabold tracking-tight text-ink tabular-nums">
-                    {tsub('positionAmount', {amount: eur(mine.amount)})}
-                  </p>
-                  <p>
-                    <Badge variant="secondary">
-                      {tsub(`status_${mine.status}` as 'status_interesse')}
-                    </Badge>
-                  </p>
-                  {mine.status === 'interesse' && (
-                    <>
-                      <p className="text-xs text-ink-muted">
-                        {tsub('contractPending')}
-                      </p>
-                      <form
-                        action={cancelSubscriptionAction.bind(null, loc, id, mine.id)}
-                      >
-                        <Button type="submit" variant="outline" size="sm">
-                          {tsub('cancel')}
-                        </Button>
-                      </form>
-                    </>
-                  )}
-                  <div className="flex flex-wrap gap-3 border-t border-border pt-4">
-                    {/* Acompanhamento de obra: aberto a qualquer subscrição ativa. */}
-                    <Button asChild variant="outline" size="sm">
-                      <a href={`/${locale}/projetos/${id}/obra`}>{tw('title')}</a>
-                    </Button>
-                    {/* Extratos da conta dedicada: só com fundos confirmados. */}
-                    {mine.status === 'fundos_confirmados' && (
+          {/* Staff nunca tem posição (só investidores subscrevem), pelo que a
+              secção seria sempre o cartão "ainda não subscreveu" — ruído numa
+              pré-visualização. Fica de fora e o lugar é do progresso. */}
+          {!staff && (
+            <section className="space-y-4">
+              <SectionTitle>{tsub('myPosition')}</SectionTitle>
+              {mine ? (
+                <Card>
+                  <CardContent className="space-y-4 text-sm">
+                    <p className="text-2xl font-extrabold tracking-tight text-ink tabular-nums">
+                      {tsub('positionAmount', {amount: eur(mine.amount)})}
+                    </p>
+                    <p>
+                      <Badge variant="secondary">
+                        {tsub(`status_${mine.status}` as 'status_interesse')}
+                      </Badge>
+                    </p>
+                    {mine.status === 'interesse' && (
+                      <>
+                        <p className="text-xs text-ink-muted">
+                          {tsub('contractPending')}
+                        </p>
+                        <form
+                          action={cancelSubscriptionAction.bind(
+                            null,
+                            loc,
+                            id,
+                            mine.id
+                          )}
+                        >
+                          <Button type="submit" variant="outline" size="sm">
+                            {tsub('cancel')}
+                          </Button>
+                        </form>
+                      </>
+                    )}
+                    <div className="flex flex-wrap gap-3 border-t border-border pt-4">
+                      {/* Acompanhamento de obra: aberto a qualquer subscrição ativa. */}
                       <Button asChild variant="outline" size="sm">
-                        <a href={`/${locale}/projetos/${id}/extratos`}>
-                          {te('title')}
+                        <a href={`/${locale}/projetos/${id}/obra`}>
+                          {tw('title')}
                         </a>
                       </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : !staff && project.status === 'subscricao' ? (
-              <Card className="max-w-md">
-                <CardContent className="space-y-4">
-                  <h3 className="text-sm font-bold tracking-tight text-ink">
-                    {tsub('manifestTitle')}
-                  </h3>
-                  <ManifestForm locale={loc} projectId={id} min={minAmount} />
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="py-8">
-                <CardContent>
-                  <p className="text-center text-sm text-ink-muted">
-                    {t('noPosition')}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </section>
+                      {/* Extratos da conta dedicada: só com fundos confirmados. */}
+                      {mine.status === 'fundos_confirmados' && (
+                        <Button asChild variant="outline" size="sm">
+                          <a href={`/${locale}/projetos/${id}/extratos`}>
+                            {te('title')}
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : project.status === 'subscricao' ? (
+                <Card className="max-w-md">
+                  <CardContent className="space-y-4">
+                    <h3 className="text-sm font-bold tracking-tight text-ink">
+                      {tsub('manifestTitle')}
+                    </h3>
+                    <ManifestForm locale={loc} projectId={id} min={minAmount} />
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="py-8">
+                  <CardContent>
+                    <p className="text-center text-sm text-ink-muted">
+                      {t('noPosition')}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </section>
+          )}
 
-          {showProgress && (
+          {/* A flag decide o que o INVESTIDOR vê (sinais de angariação); ao
+              staff mostra-se sempre — é o número que decide se o projeto muda
+              de estado, e o botão que o faz está do outro lado do link. */}
+          {(showProgress || staff) && (
             <section className="space-y-4">
               <SectionTitle>{t('subscriptionTitle')}</SectionTitle>
               <Card>

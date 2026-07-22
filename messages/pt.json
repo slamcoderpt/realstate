@@ -120,6 +120,8 @@
     "subscriptionTitle": "Subscrição",
     "subscribedOf": "{pct}% do montante subscrito",
     "investorsCount": "{n} investidores subscreveram {amount}",
+    "staffPreview": "Pré-visualização de staff: vê a ficha completa, sem o formulário de subscrição.",
+    "backToAdmin": "Gerir projeto",
     "riskNotice": "O investimento envolve risco de perda total do capital, é ilíquido e não beneficia de garantia de retorno. As rentabilidades apresentadas são estimativas."
   },
   "ProjectAdmin": {
@@ -150,7 +152,19 @@
     "uploadPhoto": "Carregar imagem",
     "uploadDoc": "Carregar documento",
     "transition": "Mudar estado",
-    "empty": "Sem projetos. Crie o primeiro."
+    "empty": "Sem projetos. Crie o primeiro.",
+    "details": "Dados do projeto",
+    "identification": "Identificação",
+    "numbers": "Números",
+    "mediaTitle": "Imagens e documentos",
+    "indicators": "Indicadores",
+    "subscriptionTitle": "Subscrição",
+    "subscribedLabel": "Subscrito",
+    "investorsCount": "{n, plural, =0 {sem investidores} one {# investidor} other {# investidores}}",
+    "viewAsInvestor": "Ver como investidor",
+    "noLines": "Ainda sem rubricas.",
+    "noPhotos": "Ainda sem imagens.",
+    "noDocs": "Ainda sem documentos."
   },
   "ProjectStatus": {
     "preparacao": "Em preparação",

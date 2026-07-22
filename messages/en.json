@@ -120,6 +120,8 @@
     "subscriptionTitle": "Subscription",
     "subscribedOf": "{pct}% of the amount subscribed",
     "investorsCount": "{n} investors subscribed {amount}",
+    "staffPreview": "Staff preview: you see the full page, without the subscription form.",
+    "backToAdmin": "Manage project",
     "riskNotice": "Investing involves the risk of total loss of capital, is illiquid and carries no guarantee of return. Figures shown are estimates."
   },
   "ProjectAdmin": {
@@ -150,7 +152,19 @@
     "uploadPhoto": "Upload image",
     "uploadDoc": "Upload document",
     "transition": "Change status",
-    "empty": "No projects. Create the first one."
+    "empty": "No projects. Create the first one.",
+    "details": "Project details",
+    "identification": "Identification",
+    "numbers": "Numbers",
+    "mediaTitle": "Images and documents",
+    "indicators": "Indicators",
+    "subscriptionTitle": "Subscription",
+    "subscribedLabel": "Subscribed",
+    "investorsCount": "{n, plural, =0 {no investors} one {# investor} other {# investors}}",
+    "viewAsInvestor": "View as investor",
+    "noLines": "No budget lines yet.",
+    "noPhotos": "No images yet.",
+    "noDocs": "No documents yet."
   },
   "ProjectStatus": {
     "preparacao": "In preparation",
