@@ -185,6 +185,16 @@ que a remoção funciona antes de assumir que a limpeza é efetiva.
 
 ---
 
+## Documentos relacionados
+
+- [`restauro-backup.md`](restauro-backup.md) — procedimento de recuperação de
+  `tilweni-prod`. **Escrito, não ensaiado**; a cobertura dos objetos de Storage
+  está por confirmar.
+- [`desvios-fase-a.md`](desvios-fase-a.md) — o que a spec promete e a Fase A
+  deliberadamente não faz, com a razão de cada decisão.
+
+---
+
 ## Notas
 
 - As migrações SQL em `supabase/migrations/` são a fonte de verdade do schema —
