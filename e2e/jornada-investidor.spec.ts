@@ -114,26 +114,20 @@ async function loginAndEnrolMfa(page: Page, email: string): Promise<void> {
   // navegação não avançou" poupa meia hora a quem vier a seguir.
   expect((await verified).status()).toBe(200);
 
-  // A página faz `router.push('/')` a seguir ao verify — e para staff essa
-  // navegação NÃO sai de /mfa. Defeito conhecido introduzido nesta fatia: a
-  // casca da app renderiza a navegação por papel já em /mfa e o prefetch de
-  // cada destino, ainda em aal1, devolve 307 → /mfa; a cache do router do
-  // cliente fica com todos os destinos a apontar para /mfa e o `push`
-  // seguinte resolve por lá. Sintoma para um humano: o staff tem de
-  // introduzir o código TOTP DUAS vezes em cada login.
-  //
-  // Uma navegação dura (não do router do cliente) ignora essa cache e deixa o
-  // middleware decidir o destino a partir do cookie, já em aal2 — investidor
-  // por aprovar vai parar a /kyc, staff a /. O teste não finge que o defeito
-  // não existe: contorna-o de forma explícita e nomeada.
+  // O `router.push('/')` que a página faz a seguir ao verify TEM de sair de
+  // /mfa sozinho — sem recarregar. Esta asserção guarda uma regressão real
+  // desta fatia: a casca da app chegou a renderizar a navegação por papel já
+  // em /mfa, o prefetch de cada destino (ainda em aal1) devolvia 307 → /mfa, e
+  // a cache do router do cliente ficava com TODOS os destinos a apontar para
+  // /mfa — o push seguinte resolvia por lá e o staff tinha de introduzir o
+  // código TOTP duas vezes por login. Corrigido em AppShell (a casca só
+  // aparece em aal2). Uma navegação dura mascararia o defeito, por isso não
+  // se usa aqui: deixa-se o router do cliente provar que funciona.
   await expect
-    .poll(
-      async () => {
-        await page.goto(`${APP}/pt`);
-        return new URL(page.url()).pathname;
-      },
-      {timeout: 15_000, message: 'sessão não subiu a aal2 depois do TOTP'}
-    )
+    .poll(() => new URL(page.url()).pathname, {
+      timeout: 15_000,
+      message: 'ficou preso em /mfa depois do TOTP (regressão da casca em aal1?)'
+    })
     .not.toBe('/pt/mfa');
 }
 
