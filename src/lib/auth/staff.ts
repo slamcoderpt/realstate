@@ -59,3 +59,16 @@ export async function requireStaff(): Promise<Session> {
   }
   return session;
 }
+
+/**
+ * Garante `admin`, não apenas staff. `requireStaff()` deixaria passar
+ * `project_manager`, que não deve mexer em parâmetros legais/operacionais
+ * (montante mínimo, limite de investidores, versões de termos aceites).
+ */
+export async function requireAdmin(): Promise<Session> {
+  const session = await getSession();
+  if (!session || session.role !== 'admin') {
+    throw new Error('acesso restrito a administradores');
+  }
+  return session;
+}
