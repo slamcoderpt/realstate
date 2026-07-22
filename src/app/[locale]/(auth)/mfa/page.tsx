@@ -104,12 +104,12 @@ export default function MfaPage() {
   return (
     // Esta página não tem casca (a AppShell só aparece em aal2), por isso a
     // tela de marca é também aqui a única âncora visual.
-    <main className="brand-canvas flex min-h-screen flex-col items-center justify-center px-4 py-10 sm:px-8">
+    <main className="brand-canvas flex min-h-screen flex-col items-center justify-center px-4 py-6 sm:px-8">
       {/* `relative` põe o conteúdo acima dos ::before/::after decorativos da
           tela de marca — sem isso, as formas pintam por cima do cartão. */}
-      <div className="relative flex w-full max-w-md flex-col items-center gap-7">
+      <div className="relative flex w-full max-w-md flex-col items-center gap-5">
         <Brand onDark />
-        <Card className="w-full max-w-md py-8">
+        <Card className="w-full max-w-md py-6">
           <CardHeader className="px-6 sm:px-8">
             <CardTitle className="text-xl font-bold tracking-tight text-ink">
               {t('title')}
@@ -121,9 +121,9 @@ export default function MfaPage() {
             )}
 
             {mode !== 'loading' && (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 {mode === 'enroll' && (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <p className="text-sm text-ink-soft">{t('enrollHint')}</p>
                     {qrCode && (
                       // qr_code é um data URI SVG gerado pelo Supabase.
@@ -131,7 +131,7 @@ export default function MfaPage() {
                       <img
                         src={qrCode}
                         alt="QR code"
-                        className="mx-auto size-48 rounded-2xl border border-border bg-white p-2"
+                        className="mx-auto size-36 rounded-2xl border border-border bg-white p-2"
                       />
                     )}
                     {secret && (
@@ -153,7 +153,7 @@ export default function MfaPage() {
                   <p className="text-sm text-ink-soft">{t('challengeHint')}</p>
                 )}
 
-                <form onSubmit={onVerify} className="space-y-5">
+                <form onSubmit={onVerify} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="code" className="text-ink">
                       {t('code')}
