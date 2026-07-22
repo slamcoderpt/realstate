@@ -4,6 +4,7 @@ import {setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
 import {routing} from '@/i18n/routing';
 import AppShell from '@/components/AppShell';
+import {NavProgress} from '@/components/NavProgress';
 import '../globals.css';
 
 export const metadata: Metadata = {
@@ -30,6 +31,7 @@ export default async function LocaleLayout({
     <html lang={locale}>
       <body className="antialiased">
         <NextIntlClientProvider>
+          <NavProgress />
           <AppShell locale={locale}>{children}</AppShell>
         </NextIntlClientProvider>
       </body>

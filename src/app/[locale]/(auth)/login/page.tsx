@@ -34,15 +34,17 @@ export default function LoginPage() {
       });
       if (signInError) {
         setError(true);
+        setLoading(false);
         return;
       }
       router.push('/');
       router.refresh();
+      // NÃO se repõe `loading` aqui: a navegação (middleware + render de /) pode
+      // demorar, e queremos o spinner até a página desmontar. Só se repõe no erro.
     } catch {
       // signInWithPassword pode lançar (ex.: falha de rede) em vez de resolver
       // com {error}. Sem isto, `loading` ficaria preso a true para sempre.
       setError(true);
-    } finally {
       setLoading(false);
     }
   }
@@ -93,7 +95,7 @@ export default function LoginPage() {
                   {t('error')}
                 </p>
               )}
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" loading={loading}>
                 {t('submit')}
               </Button>
 
