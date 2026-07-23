@@ -42,16 +42,17 @@ abrir a leitura da FICHA (não dos detalhes) a todos os estados != preparacao.
 **Falta / a fazer:** modelar partilha de lucro (parâmetro por projeto) + calcular e
 apresentar o **retorno do investidor** distinto da TIR do projeto.
 
-**Decisão (quase fechada):** o "50%" era exemplo; o retorno é **proporcional ao
-que cada investidor meteu**. Modelo proposto:
+**✅ Decisão (fechada):** o "50%" era exemplo; o retorno é **proporcional ao que
+cada investidor meteu**. Modelo:
 - Lucro estimado = ARV − custo total (aquisição + obra)
-- Pool dos investidores = lucro × **% configurável por projeto** (default 50%)
-- Retorno de cada investidor = pool × (montante investido ÷ total angariado)
+- **Fatia TILWENI** = lucro × **% configurável por projeto** (default **50%**)
+- **Pool dos investidores** = lucro × (1 − % TILWENI) — o restante
+- Retorno de cada investidor = pool investidores × (montante investido ÷ total angariado)
 - ROI do investidor % = retorno ÷ montante investido; a TIR fica como indicador do
   **projeto**, à parte.
 
-_(pendente confirmação: existe fatia para a TILWENI (parâmetro por projeto) ou os
-investidores repartem 100% do lucro na proporção do investido?)_
+Campo novo por projeto: `tilweni_profit_share_pct` (default 0.50). O que se mostra
+ao investidor é **o retorno dele** (após a fatia TILWENI), não o lucro bruto do projeto.
 
 ---
 
@@ -145,15 +146,17 @@ serve para enviar ao sócio. Melhorias adiadas.
 
 - **Rápidos:** 1 (badge + filtro), 6 (marcos p/ dentro da obra), 3-números (totais/%).
 - **Médios:** 3-gráficos (lib), 5 (faturas na obra + pasta unificada).
-- **De fundo:** 2 (ROI do investidor / partilha de lucro — precisa de regras).
+- **De fundo:** 2 (ROI do investidor / partilha de lucro — regras já definidas;
+  precisa de campo `tilweni_profit_share_pct` + cálculo + apresentação).
 
 ## Registo de decisões (2026-07-23)
 
 - **Ponto 1:** investidor vê todos os projetos lançados (estados != preparacao),
   incluindo 100% financiados; detalhes de obra/extratos só para quem investiu;
   badge + filtro.
-- **Ponto 2:** retorno proporcional ao investido; % do lucro p/ investidores
-  configurável por projeto (default 50%). _Falta confirmar se há fatia da TILWENI._
+- **Ponto 2:** lucro = ARV − custo total; **% configurável por projeto (default 50%)
+  é a fatia da TILWENI**; o restante é o pool dos investidores, distribuído na
+  proporção do investido. Mostra-se ao investidor o **retorno dele**, não o lucro bruto.
 - **Ponto 3:** totais + % execução + % acabamento (por marcos) + 2 gráficos (lib leve).
 - **Ponto 4:** sem alterações.
 - **Ponto 5:** faturas = documentos da obra; anexáveis a rubrica de custo real **e**
