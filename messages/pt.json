@@ -245,7 +245,12 @@
     "milestonesDone": "{done} de {total} marcos concluídos",
     "completionHint": "Percentagem de marcos concluídos",
     "total": "Total",
-    "budgetExecution": "Execução do orçamento"
+    "budgetExecution": "Execução do orçamento",
+    "documents": "Documentos e faturas",
+    "docAssocProject": "Projeto",
+    "docAssocLine": "Rubrica",
+    "docAssocUpdate": "Atualização",
+    "noDocuments": "Ainda não há documentos."
   },
   "WorksAdmin": {
     "title": "Gestão de obra",
@@ -266,7 +271,18 @@
     "addMedia": "Adicionar ficheiro",
     "uploading": "A carregar…",
     "uploadFailed": "Falha no carregamento.",
-    "mediaHint": "Imagens (JPEG/PNG/WebP) até 200 MB; vídeos MP4/MOV até 200 MB."
+    "mediaHint": "Imagens (JPEG/PNG/WebP) até 200 MB; vídeos MP4/MOV até 200 MB.",
+    "documentsTitle": "Documentos e faturas",
+    "addDocument": "Adicionar documento",
+    "docFile": "Ficheiro (PDF)",
+    "associateWith": "Associar a",
+    "associateProject": "Projeto (geral)",
+    "associateLineGroup": "Rubricas de custo",
+    "associateUpdateGroup": "Atualizações de obra",
+    "uploadDocument": "Carregar",
+    "docHint": "PDF até 20 MB.",
+    "deleteDocument": "Apagar",
+    "noDocuments": "Ainda não há documentos anexados."
   },
   "Statements": {
     "title": "Extratos da conta dedicada",

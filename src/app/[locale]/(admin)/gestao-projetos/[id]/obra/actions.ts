@@ -6,6 +6,8 @@ import {
   updateMilestone,
   setActualAmount,
   publishWorkUpdate,
+  publishWorkDocument,
+  deleteWorkDocument,
   type MilestoneStatus
 } from '@/lib/works/service';
 import {
@@ -130,5 +132,42 @@ export async function registerMediaAction(
     sort_order: (count ?? 0) + 1
   });
   if (error) throw new Error(`registar media falhou: ${error.message}`);
+  revalidatePath(`/${locale}/gestao-projetos/${projectId}/obra`);
+}
+
+/**
+ * Anexa um documento/fatura à obra. O PDF sobe pela própria Server Action
+ * (FormData) — o serviço valida os bytes por magic-bytes. A associação é
+ * opcional: `associate` vem como `line:<id>`, `update:<id>` ou vazio (documento
+ * do projeto, sem ligação a rubrica/atualização).
+ */
+export async function uploadWorkDocumentAction(
+  locale: Locale,
+  projectId: string,
+  formData: FormData
+): Promise<void> {
+  const s = await requireStaff();
+  const file = formData.get('file');
+  if (!(file instanceof File) || file.size === 0) return;
+  const assoc = String(formData.get('associate') ?? '');
+  const budgetLineId = assoc.startsWith('line:') ? assoc.slice(5) : null;
+  const workUpdateId = assoc.startsWith('update:') ? assoc.slice(7) : null;
+  await publishWorkDocument({
+    projectId,
+    file,
+    createdBy: s.userId,
+    budgetLineId,
+    workUpdateId
+  });
+  revalidatePath(`/${locale}/gestao-projetos/${projectId}/obra`);
+}
+
+export async function deleteWorkDocumentAction(
+  locale: Locale,
+  projectId: string,
+  docId: string
+): Promise<void> {
+  await requireStaff();
+  await deleteWorkDocument(docId);
   revalidatePath(`/${locale}/gestao-projetos/${projectId}/obra`);
 }

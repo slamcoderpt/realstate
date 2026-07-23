@@ -4,6 +4,15 @@ import {createAdminClient} from '@/lib/supabase/admin';
 import {sendEmail, type SendEmailDeps} from '@/lib/mail/outbox';
 import type {Locale} from '@/lib/mail/templates';
 import {notifyConfirmedInvestors} from '@/lib/notify/investors';
+import {detectMime} from '@/lib/kyc/filetype';
+import {
+  removeWorkDoc,
+  signedWorkDocUrl,
+  uploadWorkDoc,
+  workDocPath
+} from './documents-storage';
+
+export {signedWorkDocUrl};
 
 /**
  * Acompanhamento de obra (server-only, service role). Escrita só por aqui,
@@ -219,6 +228,109 @@ export async function setActualAmount(
       {db, transport: deps.transport}
     );
   }
+}
+
+// --- documentos/faturas da obra ---
+
+export type WorkDocumentRow = {
+  id: string;
+  project_id: string;
+  budget_line_id: string | null;
+  work_update_id: string | null;
+  storage_path: string;
+  original_filename: string;
+  mime_type: string;
+  size_bytes: number;
+  created_at: string;
+};
+
+export type PublishWorkDocumentInput = {
+  projectId: string;
+  file: File;
+  createdBy: string;
+  budgetLineId?: string | null;
+  workUpdateId?: string | null;
+};
+
+const DOC_ALLOWED_MIME = ['application/pdf'];
+
+/**
+ * Anexa um documento (fatura, PDF) à obra — opcionalmente ligado a uma rubrica
+ * de custo e/ou a uma atualização de obra. Mesma disciplina dos extratos: o
+ * upload passa pelo servidor, por isso valida-se o conteúdo REAL por
+ * magic-bytes (o tipo declarado pelo cliente é forjável). Em caso de insert
+ * falhado, o ficheiro já subido é removido (sem órfãos no bucket).
+ */
+export async function publishWorkDocument(
+  input: PublishWorkDocumentInput,
+  db: SupabaseClient = createAdminClient()
+): Promise<{id: string}> {
+  if (!DOC_ALLOWED_MIME.includes(input.file.type)) {
+    throw new Error(`tipo de ficheiro não permitido: ${input.file.type}`);
+  }
+  const head = new Uint8Array(await input.file.slice(0, 8).arrayBuffer());
+  if (detectMime(head) !== 'application/pdf') {
+    throw new Error('conteúdo do ficheiro não é um PDF válido');
+  }
+
+  const {data: project} = await db
+    .from('projects')
+    .select('id')
+    .eq('id', input.projectId)
+    .single();
+  if (!project) throw new Error('projeto não encontrado');
+
+  const path = workDocPath(input.projectId, Date.now(), input.file.name);
+  await uploadWorkDoc(path, input.file, db);
+
+  const {data, error} = await db
+    .from('work_documents')
+    .insert({
+      project_id: input.projectId,
+      budget_line_id: input.budgetLineId ?? null,
+      work_update_id: input.workUpdateId ?? null,
+      storage_path: path,
+      original_filename: input.file.name,
+      mime_type: input.file.type,
+      size_bytes: input.file.size,
+      created_by: input.createdBy
+    })
+    .select('id')
+    .single();
+  if (error || !data) {
+    await removeWorkDoc(path, db);
+    throw new Error(`anexar documento falhou: ${error?.message ?? 'sem linha'}`);
+  }
+  return {id: data.id};
+}
+
+export async function listWorkDocuments(
+  projectId: string,
+  db: SupabaseClient = createAdminClient()
+): Promise<WorkDocumentRow[]> {
+  const {data, error} = await db
+    .from('work_documents')
+    .select(
+      'id, project_id, budget_line_id, work_update_id, storage_path, original_filename, mime_type, size_bytes, created_at'
+    )
+    .eq('project_id', projectId)
+    .order('created_at', {ascending: false});
+  if (error) throw new Error(`listar documentos de obra falhou: ${error.message}`);
+  return (data ?? []) as WorkDocumentRow[];
+}
+
+export async function deleteWorkDocument(
+  id: string,
+  db: SupabaseClient = createAdminClient()
+): Promise<void> {
+  const {data: doc} = await db
+    .from('work_documents')
+    .select('storage_path')
+    .eq('id', id)
+    .single();
+  const {error} = await db.from('work_documents').delete().eq('id', id);
+  if (error) throw new Error(`apagar documento falhou: ${error.message}`);
+  if (doc?.storage_path) await removeWorkDoc(doc.storage_path, db);
 }
 
 // --- helpers ---

@@ -4,6 +4,7 @@ import {
   listMilestones,
   listWorkUpdates,
   listUpdateMedia,
+  listWorkDocuments,
   type MilestoneStatus
 } from '@/lib/works/service';
 import {createAdminClient} from '@/lib/supabase/admin';
@@ -11,9 +12,12 @@ import {
   addMilestoneAction,
   updateMilestoneAction,
   setActualAmountAction,
-  publishUpdateAction
+  publishUpdateAction,
+  uploadWorkDocumentAction,
+  deleteWorkDocumentAction
 } from './actions';
 import {MediaUploader} from './MediaUploader';
+import {FileTextIcon} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
@@ -95,6 +99,11 @@ export default async function GestaoObraPage({
     .eq('project_id', id)
     .order('sort_order', {ascending: true});
   const budgetLines = (lines ?? []) as BudgetLineRow[];
+
+  const documents = await listWorkDocuments(id);
+  // Rótulos para mostrar a que está ligado cada documento.
+  const lineName = new Map(budgetLines.map((l) => [l.id, l.name]));
+  const updateTitle = new Map(updates.map((u) => [u.id, u.title]));
 
   return (
     <main className="mx-auto max-w-5xl space-y-8 p-6">
@@ -364,6 +373,102 @@ export default async function GestaoObraPage({
             </TableBody>
           </Table>
         </div>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className={SECTION_TITLE}>{ta('documentsTitle')}</h2>
+
+        {/* Upload por Server Action (o PDF passa pelo servidor, que valida os
+            bytes). A associação é opcional: rubrica, atualização, ou nada. */}
+        <form
+          action={uploadWorkDocumentAction.bind(null, loc, id)}
+          className={`flex flex-wrap items-end gap-4 ${PANEL}`}
+        >
+          <div className="flex-1 space-y-2" style={{minWidth: 220}}>
+            <Label htmlFor="doc_file" className={FIELD_LABEL}>
+              {ta('docFile')}
+            </Label>
+            <Input
+              id="doc_file"
+              name="file"
+              type="file"
+              accept="application/pdf"
+              required
+            />
+          </div>
+          <div className="space-y-2" style={{minWidth: 200}}>
+            <Label htmlFor="doc_assoc" className={FIELD_LABEL}>
+              {ta('associateWith')}
+            </Label>
+            <select id="doc_assoc" name="associate" defaultValue="" className={SELECT}>
+              <option value="">{ta('associateProject')}</option>
+              {budgetLines.length > 0 && (
+                <optgroup label={ta('associateLineGroup')}>
+                  {budgetLines.map((l) => (
+                    <option key={l.id} value={`line:${l.id}`}>
+                      {l.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {updates.length > 0 && (
+                <optgroup label={ta('associateUpdateGroup')}>
+                  {updates.map((u) => (
+                    <option key={u.id} value={`update:${u.id}`}>
+                      {u.title}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+          </div>
+          <Button type="submit">{ta('uploadDocument')}</Button>
+          <p className="w-full text-xs text-ink-muted">{ta('docHint')}</p>
+        </form>
+
+        {documents.length === 0 ? (
+          <p className={EMPTY}>{ta('noDocuments')}</p>
+        ) : (
+          <ul className="space-y-2">
+            {documents.map((doc) => {
+              const assoc = doc.budget_line_id
+                ? `${tw('docAssocLine')}: ${lineName.get(doc.budget_line_id) ?? '—'}`
+                : doc.work_update_id
+                  ? `${tw('docAssocUpdate')}: ${updateTitle.get(doc.work_update_id) ?? '—'}`
+                  : tw('docAssocProject');
+              return (
+                <li
+                  key={doc.id}
+                  className={`flex flex-wrap items-center gap-3 ${PANEL}`}
+                >
+                  <span
+                    aria-hidden
+                    className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-500"
+                  >
+                    <FileTextIcon className="size-4" />
+                  </span>
+                  <a
+                    href={`/api/works/document/${doc.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-ink underline-offset-4 hover:text-brand-600 hover:underline"
+                  >
+                    {doc.original_filename}
+                  </a>
+                  <Badge variant="secondary">{assoc}</Badge>
+                  <form
+                    action={deleteWorkDocumentAction.bind(null, loc, id, doc.id)}
+                    className="ml-auto"
+                  >
+                    <Button type="submit" variant="outline" size="sm">
+                      {ta('deleteDocument')}
+                    </Button>
+                  </form>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
     </main>
   );

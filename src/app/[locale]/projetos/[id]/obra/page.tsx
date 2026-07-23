@@ -3,6 +3,7 @@ import {notFound} from 'next/navigation';
 import {
   ArrowLeftIcon,
   ClipboardListIcon,
+  FileTextIcon,
   HardHatIcon,
   type LucideIcon
 } from 'lucide-react';
@@ -12,6 +13,7 @@ import {
   listMilestones,
   listWorkUpdates,
   listUpdateMedia,
+  listWorkDocuments,
   type MilestoneStatus
 } from '@/lib/works/service';
 import {Badge} from '@/components/ui/badge';
@@ -156,6 +158,10 @@ export default async function ObraPage({
     totalBudget > 0 ? ((totalActual - totalBudget) / totalBudget) * 100 : null;
   const executionPct =
     totalBudget > 0 ? Math.round((totalActual / totalBudget) * 100) : 0;
+
+  const documents = await listWorkDocuments(id, db);
+  const lineName = new Map(budgetLines.map((l) => [l.id, l.name]));
+  const updateTitle = new Map(updates.map((u) => [u.id, u.title]));
 
   const th =
     'px-5 py-3 text-xs font-bold tracking-[0.12em] text-ink-muted uppercase';
@@ -393,6 +399,53 @@ export default async function ObraPage({
               </ul>
             )}
           </section>
+
+          {/* Documentos e faturas da obra: a "pasta do projeto" para quem
+              investiu. Cada documento diz a que se liga (rubrica, atualização,
+              ou projeto). Só aparece quando há documentos. */}
+          {documents.length > 0 && (
+            <section className="space-y-4">
+              <SectionTitle>{t('documents')}</SectionTitle>
+              <Card className="py-2">
+                <CardContent className="px-2">
+                  <ul className="divide-y divide-border text-sm">
+                    {documents.map((doc) => {
+                      const assoc = doc.budget_line_id
+                        ? `${t('docAssocLine')}: ${lineName.get(doc.budget_line_id) ?? '—'}`
+                        : doc.work_update_id
+                          ? `${t('docAssocUpdate')}: ${updateTitle.get(doc.work_update_id) ?? '—'}`
+                          : t('docAssocProject');
+                      return (
+                        <li key={doc.id}>
+                          <a
+                            href={`/api/works/document/${doc.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-brand-50"
+                          >
+                            <span
+                              aria-hidden
+                              className="grid size-8 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-500"
+                            >
+                              <FileTextIcon className="size-4" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate font-semibold text-ink">
+                                {doc.original_filename}
+                              </span>
+                              <span className="block text-xs text-ink-muted">
+                                {assoc}
+                              </span>
+                            </span>
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </CardContent>
+              </Card>
+            </section>
+          )}
         </div>
 
         <aside className="lg:sticky lg:top-24">
