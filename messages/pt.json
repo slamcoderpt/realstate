@@ -240,7 +240,10 @@
     "status_concluido": "Concluído",
     "backToProject": "Voltar ao projeto",
     "staffPreview": "Pré-visualização de staff: é isto que o investidor vê.",
-    "backToAdmin": "Gerir obra"
+    "backToAdmin": "Gerir obra",
+    "workProgress": "Progresso da obra",
+    "milestonesDone": "{done} de {total} marcos concluídos",
+    "completionHint": "Percentagem de marcos concluídos"
   },
   "WorksAdmin": {
     "title": "Gestão de obra",

@@ -11,7 +11,8 @@ import {createAdminClient} from '@/lib/supabase/admin';
 import {
   listMilestones,
   listWorkUpdates,
-  listUpdateMedia
+  listUpdateMedia,
+  type MilestoneStatus
 } from '@/lib/works/service';
 import {Badge} from '@/components/ui/badge';
 import {Card, CardContent} from '@/components/ui/card';
@@ -73,6 +74,14 @@ type BudgetLineRow = {
   actual_amount: number;
 };
 
+// Ponto do marco na timeline: concluído sólido, em curso a meio-tom, previsto
+// discreto — a cor conta a história sem depender do rótulo.
+const MILESTONE_DOT: Record<MilestoneStatus, string> = {
+  concluido: 'bg-brand-500',
+  em_curso: 'bg-brand-300',
+  previsto: 'bg-border'
+};
+
 export default async function ObraPage({
   params
 }: {
@@ -104,6 +113,14 @@ export default async function ObraPage({
   if (!allowed) notFound();
 
   const milestones = await listMilestones(id, db);
+  // % de acabamento da obra derivada dos marcos (concluídos ÷ total) — sem
+  // campo manual: é o próprio plano de marcos que dá o progresso.
+  const doneCount = milestones.filter((m) => m.status === 'concluido').length;
+  const completionPct =
+    milestones.length > 0
+      ? Math.round((doneCount / milestones.length) * 100)
+      : 0;
+
   const updates = await listWorkUpdates(id, db);
   const media = await listUpdateMedia(
     updates.map((u) => u.id),
@@ -157,6 +174,45 @@ export default async function ObraPage({
           {t('backToProject')}
         </a>
       </header>
+
+      {/* Destaque de progresso: os marcos deixam de viver só numa barra lateral
+          estreita — a % de acabamento abre a página, é a primeira leitura da
+          obra. Só aparece quando há marcos (sem eles não há progresso a medir). */}
+      {milestones.length > 0 && (
+        <Card>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-xs font-bold tracking-[0.12em] text-ink-muted uppercase">
+                {t('workProgress')}
+              </p>
+              <p className="text-4xl font-extrabold tracking-tight text-ink tabular-nums">
+                {completionPct}%
+              </p>
+              <p className="text-sm text-ink-muted">
+                {t('milestonesDone', {
+                  done: doneCount,
+                  total: milestones.length
+                })}
+              </p>
+            </div>
+            <div
+              className="w-full sm:max-w-xs"
+              role="progressbar"
+              aria-valuenow={completionPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={t('completionHint')}
+            >
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-brand-100">
+                <div
+                  className="h-full rounded-full bg-brand-500 transition-[width] duration-500"
+                  style={{width: `${completionPct}%`}}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Mesmo corte da ficha do projeto: a leitura à esquerda, a orientação à
           direita e fixa. Os marcos são o "onde vamos" — quer-se à vista
@@ -286,7 +342,7 @@ export default async function ObraPage({
                       <li key={m.id} className="relative space-y-1.5">
                         <span
                           aria-hidden
-                          className="absolute top-1.5 -left-[1.9375rem] size-3 rounded-full bg-brand-400 ring-4 ring-card"
+                          className={`absolute top-1.5 -left-[1.9375rem] size-3 rounded-full ring-4 ring-card ${MILESTONE_DOT[m.status]}`}
                         />
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-bold text-ink">{m.title}</span>

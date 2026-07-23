@@ -240,7 +240,10 @@
     "status_concluido": "Completed",
     "backToProject": "Back to project",
     "staffPreview": "Staff preview: this is what the investor sees.",
-    "backToAdmin": "Manage works"
+    "backToAdmin": "Manage works",
+    "workProgress": "Works progress",
+    "milestonesDone": "{done} of {total} milestones completed",
+    "completionHint": "Share of completed milestones"
   },
   "WorksAdmin": {
     "title": "Works management",
