@@ -243,7 +243,9 @@
     "backToAdmin": "Manage works",
     "workProgress": "Works progress",
     "milestonesDone": "{done} of {total} milestones completed",
-    "completionHint": "Share of completed milestones"
+    "completionHint": "Share of completed milestones",
+    "total": "Total",
+    "budgetExecution": "Budget execution"
   },
   "WorksAdmin": {
     "title": "Works management",
