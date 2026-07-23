@@ -33,7 +33,9 @@ export async function GET(
     return NextResponse.json({error: 'not_found'}, {status: 404});
   }
 
-  const visible = project.status === 'subscricao' || isStaff(session.role);
+  // A ficha (e a capa) é visível em todos os estados lançados; só `preparacao`
+  // fica reservado ao staff.
+  const visible = project.status !== 'preparacao' || isStaff(session.role);
   if (!visible) return NextResponse.json({error: 'forbidden'}, {status: 403});
 
   // O catálogo é gated por KYC aprovado. A middleware salta o gate de KYC nas

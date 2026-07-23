@@ -8,7 +8,16 @@ Data de início: 2026-07-23. Base: `main` pós-Fase A (Fatias 0-6).
 
 ---
 
-## 1. Catálogo com todos os estados + filtro — 🟡 parcial
+## 1. Catálogo com todos os estados + filtro — ✅ IMPLEMENTADO (2026-07-23)
+
+> **Feito:** `listCatalogue` passa a devolver todos os estados != `preparacao`;
+> `getProjectDetail` e as rotas `cover/photo/document` abrem a ficha a estados
+> lançados; RLS de `projects`+`budget_lines`+`photos`+`documents` alargada
+> (migração `20260723090000_catalogo_estados_lancados.sql`); catálogo com **badge
+> de estado** por card e **filtro** (Todos · Em subscrição · Em curso · Fechados)
+> no novo `CatalogueGrid` (client). Detalhes de obra/extratos continuam gated pela
+> subscrição. Testes de integração/RLS atualizados.
+
 
 **Estado atual:**
 - Estados existem: `preparacao, subscricao, subscrito, em_curso, concluido, liquidado`

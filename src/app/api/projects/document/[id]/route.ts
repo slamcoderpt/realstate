@@ -28,7 +28,7 @@ export async function GET(
     .eq('id', doc.project_id)
     .single();
   const visible =
-    project?.status === 'subscricao' || isStaff(session.role);
+    (project != null && project.status !== 'preparacao') || isStaff(session.role);
   if (!visible) return NextResponse.json({error: 'forbidden'}, {status: 403});
 
   // O catálogo é gated por KYC aprovado. A middleware salta o gate de KYC nas
