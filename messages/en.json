@@ -129,7 +129,12 @@
     "staffPreview": "Staff preview: you see the full page, without the subscription form.",
     "backToAdmin": "Manage project",
     "staffLinks": "Investor pages",
-    "riskNotice": "Investing involves the risk of total loss of capital, is illiquid and carries no guarantee of return. Figures shown are estimates."
+    "riskNotice": "Investing involves the risk of total loss of capital, is illiquid and carries no guarantee of return. Figures shown are estimates.",
+    "investorReturnTitle": "Your estimated return",
+    "investorReturn": "Estimated return",
+    "investorRoi": "Estimated ROI",
+    "profitShareNote": "Investors receive {pct}% of the project’s estimated profit, in proportion to invested capital. The stated IRR is the project’s; your return depends on what you invested.",
+    "returnDisclaimer": "Estimated figures, not guaranteed."
   },
   "ProjectAdmin": {
     "title": "Project management",
@@ -171,7 +176,9 @@
     "viewAsInvestor": "View as investor",
     "noLines": "No budget lines yet.",
     "noPhotos": "No images yet.",
-    "noDocs": "No documents yet."
+    "noDocs": "No documents yet.",
+    "profitShare": "Profit share — TILWENI (%)",
+    "profitShareHint": "TILWENI's cut of the profit. The remainder is split among investors in proportion to what they invested."
   },
   "ProjectStatus": {
     "preparacao": "In preparation",
@@ -339,7 +346,9 @@
     "recentDocuments": "Recent documents",
     "noDocuments": "No recent documents.",
     "riskNotice": "Investing involves the risk of total loss of capital, is illiquid and carries no guarantee of return. Figures shown are estimates.",
-    "portfolioTitle": "Portfolio breakdown"
+    "portfolioTitle": "Portfolio breakdown",
+    "estimatedReturn": "Estimated return",
+    "estimatedReturnHint": "Estimated, not guaranteed."
   },
   "Notifications": {
     "title": "Notifications",

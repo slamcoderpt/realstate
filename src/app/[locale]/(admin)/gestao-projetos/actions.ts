@@ -18,6 +18,14 @@ import type {ProjectStatus} from '@/lib/projects/states';
 import type {Locale} from '@/lib/mail/templates';
 import {revalidatePath} from 'next/cache';
 
+// A UI recebe a partilha em PERCENTAGEM (0–100, mais legível para o staff); a BD
+// guarda uma fração [0,1]. Converte e trava fora do intervalo.
+function parseSharePct(raw: FormDataEntryValue | null): number {
+  const pct = Number(raw ?? 50);
+  const clamped = Math.min(100, Math.max(0, Number.isFinite(pct) ? pct : 50));
+  return clamped / 100;
+}
+
 export async function createProjectAction(
   locale: Locale,
   formData: FormData
@@ -32,7 +40,8 @@ export async function createProjectAction(
     arv: Number(formData.get('arv') ?? 0),
     totalAmount: Number(formData.get('total_amount') ?? 0),
     estimatedIrr: Number(formData.get('estimated_irr') ?? 0),
-    termMonths: Number(formData.get('term_months') ?? 0)
+    termMonths: Number(formData.get('term_months') ?? 0),
+    tilweniProfitSharePct: parseSharePct(formData.get('profit_share_pct'))
   });
   revalidatePath(`/${locale}/gestao-projetos`);
 }
@@ -52,7 +61,8 @@ export async function updateProjectAction(
     arv: Number(formData.get('arv') ?? 0),
     totalAmount: Number(formData.get('total_amount') ?? 0),
     estimatedIrr: Number(formData.get('estimated_irr') ?? 0),
-    termMonths: Number(formData.get('term_months') ?? 0)
+    termMonths: Number(formData.get('term_months') ?? 0),
+    tilweniProfitSharePct: parseSharePct(formData.get('profit_share_pct'))
   });
   revalidatePath(`/${locale}/gestao-projetos/${id}`);
 }

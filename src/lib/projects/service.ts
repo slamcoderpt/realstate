@@ -20,6 +20,7 @@ export type CreateProjectInput = {
   totalAmount: number;
   estimatedIrr: number;
   termMonths: number;
+  tilweniProfitSharePct?: number;
 };
 
 export type ProjectRow = {
@@ -36,6 +37,7 @@ export type ProjectRow = {
   investor_count: number;
   estimated_irr: number;
   term_months: number;
+  tilweni_profit_share_pct: number;
   cover_path: string | null;
   published_at: string | null;
 };
@@ -75,7 +77,8 @@ function toProjectRow(raw: Record<string, unknown>): ProjectRow {
     arv: Number(raw.arv),
     total_amount: Number(raw.total_amount),
     subscribed_amount: Number(raw.subscribed_amount),
-    estimated_irr: Number(raw.estimated_irr)
+    estimated_irr: Number(raw.estimated_irr),
+    tilweni_profit_share_pct: Number(raw.tilweni_profit_share_pct)
   };
 }
 
@@ -107,7 +110,10 @@ export async function createProject(
       arv: input.arv,
       total_amount: input.totalAmount,
       estimated_irr: input.estimatedIrr,
-      term_months: input.termMonths
+      term_months: input.termMonths,
+      ...(input.tilweniProfitSharePct !== undefined
+        ? {tilweni_profit_share_pct: input.tilweniProfitSharePct}
+        : {})
     })
     .select('id')
     .single();
@@ -133,6 +139,8 @@ export async function updateProject(
   if (input.totalAmount !== undefined) patch.total_amount = input.totalAmount;
   if (input.estimatedIrr !== undefined) patch.estimated_irr = input.estimatedIrr;
   if (input.termMonths !== undefined) patch.term_months = input.termMonths;
+  if (input.tilweniProfitSharePct !== undefined)
+    patch.tilweni_profit_share_pct = input.tilweniProfitSharePct;
 
   const {error} = await db.from('projects').update(patch).eq('id', id);
   if (error) throw new Error(`atualizar projeto falhou: ${error.message}`);
