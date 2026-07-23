@@ -21,6 +21,7 @@ let milestoneId: string;
 let updateId: string;
 let mediaId: string;
 let statementId: string;
+let workDocId: string;
 let subscriptionId: string;
 
 async function sub(userId: string, status: string): Promise<string> {
@@ -111,6 +112,20 @@ beforeAll(async () => {
     .single();
   if (se) throw se;
   statementId = s.id;
+
+  const {data: wd, error: wde} = await admin
+    .from('work_documents')
+    .insert({
+      project_id: projectId,
+      storage_path: `${projectId}/fatura-1.pdf`,
+      original_filename: 'fatura.pdf',
+      mime_type: 'application/pdf',
+      size_bytes: 1234
+    })
+    .select('id')
+    .single();
+  if (wde) throw wde;
+  workDocId = wd.id;
 });
 
 describe('obra: marcos e diário', () => {
@@ -178,6 +193,59 @@ describe('obra: marcos e diário', () => {
       .select('id')
       .eq('id', mediaId);
     expect(media).toHaveLength(1);
+  });
+});
+
+describe('obra: documentos/faturas', () => {
+  it('investidor com subscrição ativa vê os documentos', async () => {
+    const c = await signInAs(interested);
+    const {data, error} = await c
+      .from('work_documents')
+      .select('id')
+      .eq('id', workDocId);
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+  });
+
+  it('investidor sem subscrição NÃO vê os documentos', async () => {
+    const c = await signInAs(outsider);
+    const {data, error} = await c
+      .from('work_documents')
+      .select('id')
+      .eq('id', workDocId);
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(0);
+  });
+
+  it('subscrição cancelada NÃO vê os documentos', async () => {
+    const c = await signInAs(cancelled);
+    const {data, error} = await c
+      .from('work_documents')
+      .select('id')
+      .eq('id', workDocId);
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(0);
+  });
+
+  it('staff vê os documentos', async () => {
+    const c = await signInAs(staff);
+    const {data} = await c.from('work_documents').select('id').eq('id', workDocId);
+    expect(data).toHaveLength(1);
+  });
+
+  it('investidor NÃO escreve documentos (sem grant/política)', async () => {
+    const c = await signInAs(interested);
+    await c.from('work_documents').update({original_filename: 'HACK'}).eq('id', workDocId);
+    const {data} = await admin
+      .from('work_documents')
+      .select('original_filename')
+      .eq('id', workDocId)
+      .single();
+    expect(data!.original_filename).toBe('fatura.pdf');
+  });
+
+  it('anónimo não vê documentos', async () => {
+    await expectAnonCannotRead('work_documents');
   });
 });
 

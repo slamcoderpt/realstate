@@ -245,7 +245,12 @@
     "milestonesDone": "{done} of {total} milestones completed",
     "completionHint": "Share of completed milestones",
     "total": "Total",
-    "budgetExecution": "Budget execution"
+    "budgetExecution": "Budget execution",
+    "documents": "Documents and invoices",
+    "docAssocProject": "Project",
+    "docAssocLine": "Line item",
+    "docAssocUpdate": "Update",
+    "noDocuments": "No documents yet."
   },
   "WorksAdmin": {
     "title": "Works management",
@@ -266,7 +271,18 @@
     "addMedia": "Add file",
     "uploading": "Uploading…",
     "uploadFailed": "Upload failed.",
-    "mediaHint": "Images (JPEG/PNG/WebP) up to 200 MB; MP4/MOV videos up to 200 MB."
+    "mediaHint": "Images (JPEG/PNG/WebP) up to 200 MB; MP4/MOV videos up to 200 MB.",
+    "documentsTitle": "Documents and invoices",
+    "addDocument": "Add document",
+    "docFile": "File (PDF)",
+    "associateWith": "Associate with",
+    "associateProject": "Project (general)",
+    "associateLineGroup": "Cost line items",
+    "associateUpdateGroup": "Work updates",
+    "uploadDocument": "Upload",
+    "docHint": "PDF up to 20 MB.",
+    "deleteDocument": "Delete",
+    "noDocuments": "No documents attached yet."
   },
   "Statements": {
     "title": "Dedicated account statements",

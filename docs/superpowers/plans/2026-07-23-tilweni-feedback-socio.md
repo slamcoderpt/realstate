@@ -103,7 +103,17 @@ Instalar uma lib de gráficos leve.
 
 ---
 
-## 5. Pasta por projeto (documentos + faturas + extratos) — 🟡 parcial · **DECIDIDO**
+## 5. Pasta por projeto (documentos + faturas + extratos) — ✅ IMPLEMENTADO (2026-07-23)
+
+> **Feito:** nova tabela `work_documents` (liga-se, opcionalmente, a uma rubrica
+> `budget_line_id` e/ou a uma atualização `work_update_id`), bucket privado
+> `work-docs` (só PDF), RLS igual à obra (staff + investidor com subscrição ativa),
+> auditoria. Upload por Server Action (valida magic-bytes), rota assinada
+> `/api/works/document/[id]` (auditada, fail-closed). Back-office: secção
+> "Documentos e faturas" com upload + associação + apagar. Investidor: secção de
+> documentos na página de obra. Testes de integração + RLS. **Migração
+> `20260723100000_work_documents.sql` → aplicar a produção após o merge.**
+
 
 **Enquadramento (sócio):** uma fatura é só um documento; o mecanismo seguro de
 documentos já existe (bucket privado + URL assinada + auditoria, usado nos
