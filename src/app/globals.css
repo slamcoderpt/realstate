@@ -119,6 +119,11 @@
   --chart-3: #8dccff;
   --chart-4: #0046bf;
   --chart-5: #ffd400;
+  /* Séries de gráficos (validadas com o dataviz em ambos os modos): azul da
+     marca p/ "executado"/carteira, laranja p/ "orçamento". Steps próprios no
+     bloco .dark abaixo. */
+  --chart-actual: #006bff;
+  --chart-budget: #eb6834;
   --sidebar: #ffffff;
   --sidebar-foreground: #071235;
   --sidebar-primary: #006bff;
@@ -153,6 +158,10 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
+  /* Steps para dark (validados): azul e laranja mais claros p/ contrastar com
+     a superfície escura. */
+  --chart-actual: #3987e5;
+  --chart-budget: #d95926;
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);

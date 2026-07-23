@@ -322,7 +322,8 @@
     "noUpdates": "Sem atualizações recentes.",
     "recentDocuments": "Documentos recentes",
     "noDocuments": "Sem documentos recentes.",
-    "riskNotice": "O investimento envolve risco de perda total do capital, é ilíquido e não beneficia de garantia de retorno. As rentabilidades apresentadas são estimativas."
+    "riskNotice": "O investimento envolve risco de perda total do capital, é ilíquido e não beneficia de garantia de retorno. As rentabilidades apresentadas são estimativas.",
+    "portfolioTitle": "Distribuição da carteira"
   },
   "Notifications": {
     "title": "Notificações",

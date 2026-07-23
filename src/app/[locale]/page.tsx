@@ -16,6 +16,7 @@ import {getInvestorDashboard} from '@/lib/dashboard/service';
 import {Badge} from '@/components/ui/badge';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {PortfolioChart} from '@/components/charts/PortfolioChart';
 import type {Locale} from '@/lib/mail/templates';
 
 export const dynamic = 'force-dynamic';
@@ -161,6 +162,25 @@ export default async function DashboardPage({
           icon={TrendingUpIcon}
         />
       </section>
+
+      {/* Distribuição da carteira: capital investido (fundos confirmados) por
+          projeto. Só aparece com pelo menos uma posição confirmada — sem capital
+          confirmado não há carteira a repartir. */}
+      {confirmed.length > 0 && (
+        <section className="space-y-4">
+          <SectionTitle>{t('portfolioTitle')}</SectionTitle>
+          <Card className="py-5">
+            <CardContent>
+              <PortfolioChart
+                data={confirmed.map((p) => ({
+                  name: p.projectName,
+                  amount: p.amount
+                }))}
+              />
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       <section className="space-y-4">
         <SectionTitle>{t('myPositions')}</SectionTitle>
