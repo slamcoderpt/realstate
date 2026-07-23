@@ -1,6 +1,7 @@
 import 'server-only';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {createAdminClient} from '@/lib/supabase/admin';
+import {computeInvestorReturn} from '@/lib/projects/indicators';
 
 /**
  * Área do investidor (spec 5.7): posições próprias, marcos, atualizações de
@@ -27,6 +28,7 @@ const FEED_LIMIT = 5;
 
 export type DashboardData = {
   investedTotal: number;
+  estimatedReturnTotal: number;
   positions: Array<{
     projectId: string;
     projectName: string;
@@ -34,6 +36,7 @@ export type DashboardData = {
     amount: number;
     status: string;
     estimatedIrr: number;
+    estimatedReturn: number;
   }>;
   upcomingMilestones: Array<{
     projectId: string;
@@ -58,6 +61,7 @@ export type DashboardData = {
 
 const EMPTY: DashboardData = {
   investedTotal: 0,
+  estimatedReturnTotal: 0,
   positions: [],
   upcomingMilestones: [],
   latestUpdates: [],
@@ -72,6 +76,11 @@ type SubscriptionWithProject = {
     name: string;
     status: string;
     estimated_irr: number | string;
+    arv: number | string;
+    acquisition_cost: number | string;
+    works_budget: number | string;
+    subscribed_amount: number | string;
+    tilweni_profit_share_pct: number | string;
   } | null;
 };
 
@@ -82,7 +91,9 @@ export async function getInvestorDashboard(
   // Uma query para as posições (projeto embebido) e uma por feed — não N+1.
   const {data: subs, error} = await db
     .from('subscriptions')
-    .select('project_id, amount, status, projects (name, status, estimated_irr)')
+    .select(
+      'project_id, amount, status, projects (name, status, estimated_irr, arv, acquisition_cost, works_budget, subscribed_amount, tilweni_profit_share_pct)'
+    )
     .eq('user_id', userId)
     .neq('status', 'cancelada')
     .order('created_at', {ascending: true});
@@ -91,15 +102,38 @@ export async function getInvestorDashboard(
   const rows = (subs ?? []) as unknown as SubscriptionWithProject[];
   if (rows.length === 0) return {...EMPTY};
 
-  const positions = rows.map((r) => ({
-    projectId: r.project_id,
-    projectName: r.projects?.name ?? '',
-    projectStatus: r.projects?.status ?? '',
+  const positions = rows.map((r) => {
     // `numeric` chega como string do PostgREST — normalizar aqui, não na UI.
-    amount: Number(r.amount),
-    status: r.status,
-    estimatedIrr: Number(r.projects?.estimated_irr ?? 0)
-  }));
+    const amount = Number(r.amount);
+    const p = r.projects;
+    // Retorno estimado do investidor (distinto da TIR do projeto) — só com
+    // fundos confirmados, quando o capital já entra no total angariado.
+    const estimatedReturn =
+      p && r.status === 'fundos_confirmados'
+        ? computeInvestorReturn({
+            grossMargin:
+              Number(p.arv) -
+              (Number(p.acquisition_cost) + Number(p.works_budget)),
+            sharePct: Number(p.tilweni_profit_share_pct),
+            invested: amount,
+            totalRaised: Number(p.subscribed_amount)
+          }).amount
+        : 0;
+    return {
+      projectId: r.project_id,
+      projectName: p?.name ?? '',
+      projectStatus: p?.status ?? '',
+      amount,
+      status: r.status,
+      estimatedIrr: Number(p?.estimated_irr ?? 0),
+      estimatedReturn
+    };
+  });
+
+  const estimatedReturnTotal = positions.reduce(
+    (sum, p) => sum + p.estimatedReturn,
+    0
+  );
 
   const investedTotal = positions
     .filter((p) => p.status === 'fundos_confirmados')
@@ -119,6 +153,7 @@ export async function getInvestorDashboard(
 
   return {
     investedTotal,
+    estimatedReturnTotal,
     positions,
     upcomingMilestones: milestones.map((m) => ({
       projectId: m.project_id,

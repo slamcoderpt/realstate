@@ -40,7 +40,16 @@ abrir a leitura da FICHA (não dos detalhes) a todos os estados != preparacao.
 
 ---
 
-## 2. ROI do investidor vs TIR do projeto (partilha de lucro) — 🟡 conceito em falta
+## 2. ROI do investidor vs TIR do projeto (partilha de lucro) — ✅ IMPLEMENTADO (2026-07-23)
+
+> **Feito:** novo parâmetro por projeto `tilweni_profit_share_pct` (fração [0,1],
+> default 0.50), editável no back-office (em %). Cálculo puro `computeInvestorReturn`
+> (pool = lucro × (1 − fatia); retorno = pool × investido/angariado; prejuízo →
+> pool 0). Apresentação: na **ficha** (cartão da posição do investidor com fundos
+> confirmados — retorno € + ROI % + nota da partilha, distinto da TIR do projeto)
+> e no **dashboard** (stat "Retorno estimado" + coluna por posição). Testes unitários
+> + integração. **Migração `20260723110000_profit_share.sql` → aplicar após o merge.**
+
 
 **Estado atual:**
 - Mostram-se **TIR** (inserida à mão) e **ROI do projeto** ((ARV − investimento)/

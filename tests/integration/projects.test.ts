@@ -1,6 +1,7 @@
 import {describe, it, expect} from 'vitest';
 import {
   createProject,
+  updateProject,
   transitionProject,
   addBudgetLine,
   listCatalogue,
@@ -25,6 +26,22 @@ describe('createProject / updateProject', () => {
     expect(detail!.project.status).toBe('preparacao');
     expect(detail!.indicators.totalInvestment).toBe(168000);
     expect(detail!.indicators.grossMargin).toBe(77000);
+  });
+});
+
+describe('partilha de lucro (tilweni_profit_share_pct)', () => {
+  it('usa 50% por default e persiste um valor personalizado', async () => {
+    const {id} = await createProject({
+      name: 'Share', location: 'Y', description: '',
+      acquisitionCost: 1, worksBudget: 1, arv: 3, totalAmount: 2,
+      estimatedIrr: 10, termMonths: 6
+    });
+    const created = await getProjectDetail(id, {staff: true});
+    expect(created!.project.tilweni_profit_share_pct).toBe(0.5);
+
+    await updateProject(id, {tilweniProfitSharePct: 0.4});
+    const updated = await getProjectDetail(id, {staff: true});
+    expect(updated!.project.tilweni_profit_share_pct).toBe(0.4);
   });
 });
 

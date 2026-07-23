@@ -308,6 +308,26 @@ export default async function EditarProjetoPage({
                           defaultValue={project.term_months}
                         />
                       </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="profit_share_pct" className={FIELD_LABEL}>
+                          {t('profitShare')}
+                        </Label>
+                        <Input
+                          id="profit_share_pct"
+                          name="profit_share_pct"
+                          type="number"
+                          step="0.1"
+                          min={0}
+                          max={100}
+                          className="tabular-nums"
+                          defaultValue={Math.round(
+                            project.tilweni_profit_share_pct * 1000
+                          ) / 10}
+                        />
+                        <p className="text-xs text-ink-muted">
+                          {t('profitShareHint')}
+                        </p>
+                      </div>
                     </div>
                   </div>
 

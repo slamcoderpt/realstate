@@ -2,6 +2,7 @@ import {getTranslations, setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
 import {FileTextIcon, MapPinIcon} from 'lucide-react';
 import {getProjectDetail} from '@/lib/projects/service';
+import {computeInvestorReturn} from '@/lib/projects/indicators';
 import {getMySubscription} from '@/lib/subscriptions/service';
 import {getSession, isStaff} from '@/lib/auth/staff';
 import {createAdminClient} from '@/lib/supabase/admin';
@@ -98,6 +99,22 @@ export default async function ProjectDetailPage({
     project.total_amount > 0
       ? Math.round((project.subscribed_amount / project.total_amount) * 100)
       : 0;
+
+  // Partilha do investidor = o que sobra depois da fatia da TILWENI.
+  const investorSharePct = Math.round(
+    (1 - project.tilweni_profit_share_pct) * 100
+  );
+  // Retorno estimado só faz sentido para quem tem fundos confirmados — o seu
+  // capital já entra no total angariado (denominador da repartição).
+  const investorReturn =
+    mine && mine.status === 'fundos_confirmados'
+      ? computeInvestorReturn({
+          grossMargin: indicators.grossMargin,
+          sharePct: project.tilweni_profit_share_pct,
+          invested: mine.amount,
+          totalRaised: project.subscribed_amount
+        })
+      : null;
 
   const th =
     'px-5 py-3 text-xs font-bold tracking-[0.12em] text-ink-muted uppercase';
@@ -290,6 +307,25 @@ export default async function ProjectDetailPage({
                         {tsub(`status_${mine.status}` as 'status_interesse')}
                       </Badge>
                     </p>
+                    {investorReturn && (
+                      <div className="space-y-1 rounded-xl border border-brand-100 bg-brand-50 p-4">
+                        <p className="text-xs font-bold tracking-[0.1em] text-brand-700 uppercase">
+                          {t('investorReturnTitle')}
+                        </p>
+                        <p className="text-2xl font-extrabold tracking-tight text-ink tabular-nums">
+                          {eur(investorReturn.amount)}
+                        </p>
+                        <p className="text-xs font-semibold text-ink-muted tabular-nums">
+                          {t('investorRoi')}: {investorReturn.roiPct.toFixed(1)}%
+                        </p>
+                        <p className="pt-1 text-xs leading-relaxed text-ink-muted">
+                          {t('profitShareNote', {pct: investorSharePct})}
+                        </p>
+                        <p className="text-xs text-ink-muted">
+                          {t('returnDisclaimer')}
+                        </p>
+                      </div>
+                    )}
                     {mine.status === 'interesse' && (
                       <>
                         <p className="text-xs text-ink-muted">

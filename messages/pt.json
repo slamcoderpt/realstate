@@ -129,7 +129,12 @@
     "staffPreview": "Pré-visualização de staff: vê a ficha completa, sem o formulário de subscrição.",
     "backToAdmin": "Gerir projeto",
     "staffLinks": "Páginas do investidor",
-    "riskNotice": "O investimento envolve risco de perda total do capital, é ilíquido e não beneficia de garantia de retorno. As rentabilidades apresentadas são estimativas."
+    "riskNotice": "O investimento envolve risco de perda total do capital, é ilíquido e não beneficia de garantia de retorno. As rentabilidades apresentadas são estimativas.",
+    "investorReturnTitle": "O seu retorno estimado",
+    "investorReturn": "Retorno estimado",
+    "investorRoi": "ROI estimado",
+    "profitShareNote": "Os investidores recebem {pct}% do lucro estimado do projeto, na proporção do capital investido. A TIR indicada é do projeto; o seu retorno depende do que investiu.",
+    "returnDisclaimer": "Valores estimados, não garantidos."
   },
   "ProjectAdmin": {
     "title": "Gestão de projetos",
@@ -171,7 +176,9 @@
     "viewAsInvestor": "Ver como investidor",
     "noLines": "Ainda sem rubricas.",
     "noPhotos": "Ainda sem imagens.",
-    "noDocs": "Ainda sem documentos."
+    "noDocs": "Ainda sem documentos.",
+    "profitShare": "Partilha de lucro — TILWENI (%)",
+    "profitShareHint": "Fatia do lucro para a TILWENI. O restante é repartido pelos investidores na proporção do investido."
   },
   "ProjectStatus": {
     "preparacao": "Em preparação",
@@ -339,7 +346,9 @@
     "recentDocuments": "Documentos recentes",
     "noDocuments": "Sem documentos recentes.",
     "riskNotice": "O investimento envolve risco de perda total do capital, é ilíquido e não beneficia de garantia de retorno. As rentabilidades apresentadas são estimativas.",
-    "portfolioTitle": "Distribuição da carteira"
+    "portfolioTitle": "Distribuição da carteira",
+    "estimatedReturn": "Retorno estimado",
+    "estimatedReturnHint": "Estimado, não garantido."
   },
   "Notifications": {
     "title": "Notificações",

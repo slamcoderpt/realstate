@@ -2,6 +2,7 @@ import {getTranslations, setRequestLocale} from 'next-intl/server';
 import Link from 'next/link';
 import {
   CalendarClockIcon,
+  CoinsIcon,
   FolderOpenIcon,
   HardHatIcon,
   LayersIcon,
@@ -145,7 +146,7 @@ export default async function DashboardPage({
         {t('title')}
       </h1>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
           label={t('invested')}
           value={eur(dash.investedTotal)}
@@ -160,6 +161,15 @@ export default async function DashboardPage({
           label={t('expectedReturn')}
           value={expectedReturn}
           icon={TrendingUpIcon}
+        />
+        <StatTile
+          label={t('estimatedReturn')}
+          value={
+            dash.estimatedReturnTotal > 0
+              ? eur(dash.estimatedReturnTotal)
+              : '—'
+          }
+          icon={CoinsIcon}
         />
       </section>
 
@@ -211,6 +221,7 @@ export default async function DashboardPage({
                     <th className={`${th} text-right`}>{t('amount')}</th>
                     <th className={th}>{t('status')}</th>
                     <th className={`${th} text-right`}>{t('irr')}</th>
+                    <th className={`${th} text-right`}>{t('estimatedReturn')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -237,6 +248,9 @@ export default async function DashboardPage({
                       </td>
                       <td className="px-5 py-4 text-right font-semibold text-ink-soft tabular-nums">
                         {p.estimatedIrr}%
+                      </td>
+                      <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">
+                        {p.estimatedReturn > 0 ? eur(p.estimatedReturn) : '—'}
                       </td>
                     </tr>
                   ))}
