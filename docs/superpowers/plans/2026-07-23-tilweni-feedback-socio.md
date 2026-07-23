@@ -192,6 +192,49 @@ serve para enviar ao sócio. Melhorias adiadas.
 - **De fundo:** 2 (ROI do investidor / partilha de lucro — regras já definidas;
   precisa de campo `tilweni_profit_share_pct` + cálculo + apresentação).
 
+---
+
+# Ronda 2 — Feedback do outro sócio (2026-07-23, tarde)
+
+## R2.1. Projetos fechados: TIR concretizada + prazo real — ❌ falta
+
+**Estado atual:** só existem `estimated_irr` e `term_months` (estimados, inseridos
+pelo gestor). Não há campos de resultado real nem data de fecho; nos projetos
+`concluido`/`liquidado` continua a mostrar-se a estimativa.
+
+**Proposta:** campos novos por projeto `realized_irr` e `actual_term_months`
+(anuláveis; o staff preenche ao concluir/liquidar). Na ficha e no card do
+catálogo, projetos fechados mostram os valores concretizados (com rótulo próprio)
+em vez dos estimados.
+
+**Decisão:** _pendente._
+
+## R2.2. ROI e TIR: de projeto E anualizadas (destaque nas anualizadas) — 🟡 parcial
+
+**Estado atual:** ROI apresentado é o do PROJETO (período inteiro, não
+anualizado). A TIR estimada é inserida à mão pelo gestor — sem convenção
+registada de ser anual ou do período.
+
+**Proposta:** derivar o **ROI anualizado** = (1 + ROI)^(12 ÷ prazo) − 1 e
+mostrá-lo com destaque, com o ROI de projeto em segundo plano. Para a TIR:
+assumir/rotular a TIR inserida como **anualizada** (é a definição de TIR) e
+derivar a "TIR do período" para consistência visual.
+
+**Decisão:** _pendente (confirmar a convenção da TIR inserida)._
+
+## R2.3. Primeira página = catálogo de projetos — ❌ falta (mudança simples)
+
+**Estado atual:** após login (e após saltar o MFA), o utilizador cai em `/`
+("A minha área" — dashboard). O catálogo está em `/projetos`.
+
+**Proposta:** após autenticação, aterrar em `/projetos`; o dashboard mantém-se
+em `/` acessível pela navegação. (Alternativa: só para investidores; staff
+continua a aterrar na área de gestão.)
+
+**Decisão:** _pendente._
+
+---
+
 ## Registo de decisões (2026-07-23)
 
 - **Ponto 1:** investidor vê todos os projetos lançados (estados != preparacao),
