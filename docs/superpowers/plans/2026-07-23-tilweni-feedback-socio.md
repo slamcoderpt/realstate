@@ -19,9 +19,15 @@ Data de início: 2026-07-23. Base: `main` pós-Fase A (Fatias 0-6).
   mas **sem filtro**.
 
 **Falta / a fazer:** badge de estado nos cards; filtro por estado (tabs/dropdown)
-no catálogo e no back-office; decidir que estados o investidor vê.
+no catálogo e no back-office.
 
-**Decisão:** _(pendente — rever)_
+**✅ Decisão:** o investidor vê **TODOS os projetos lançados** — todos os estados
+**exceto `preparacao`** —, **incluindo os já 100% financiados** (mais quantidade na
+listagem, dá noção de escala). Os **detalhes de obra e os extratos continuam
+reservados a quem investiu** (RLS atual mantém-se). Badge de estado em cada card +
+filtro **Todos · Em subscrição · Em curso · Fechado** (fechado = concluído/liquidado).
+Requer alterar `listCatalogue` e a RLS `"projects: investidor lê subscricao"` para
+abrir a leitura da FICHA (não dos detalhes) a todos os estados != preparacao.
 
 ---
 
@@ -33,11 +39,19 @@ no catálogo e no back-office; decidir que estados o investidor vê.
 - **Não existe** ROI do investidor nem partilha de lucro (50% proporcional ao
   capital). Não há campo/cálculo disso.
 
-**Falta / a fazer:** modelar partilha de lucro (campo por projeto) + calcular e
+**Falta / a fazer:** modelar partilha de lucro (parâmetro por projeto) + calcular e
 apresentar o **retorno do investidor** distinto da TIR do projeto.
 
-**Decisão:** _(pendente — precisa das regras exatas: % fixa 50/50? sempre
-proporcional ao capital? como entra a TIR?)_
+**Decisão (quase fechada):** o "50%" era exemplo; o retorno é **proporcional ao
+que cada investidor meteu**. Modelo proposto:
+- Lucro estimado = ARV − custo total (aquisição + obra)
+- Pool dos investidores = lucro × **% configurável por projeto** (default 50%)
+- Retorno de cada investidor = pool × (montante investido ÷ total angariado)
+- ROI do investidor % = retorno ÷ montante investido; a TIR fica como indicador do
+  **projeto**, à parte.
+
+_(pendente confirmação: existe fatia para a TILWENI (parâmetro por projeto) ou os
+investidores repartem 100% do lucro na proporção do investido?)_
 
 ---
 
@@ -53,7 +67,11 @@ proporcional ao capital? como entra a TIR?)_
 **Falta / a fazer:** linha de total + % de execução; % de progresso da obra;
 gráficos no dashboard (instalar lib).
 
-**Decisão:** _(pendente — rever âmbito e que gráficos)_
+**✅ Decisão:** (i) linha de **total** (Σ orçamento vs Σ executado + desvio global) e
+**% de execução do orçamento**; (ii) **% de acabamento da obra derivada dos marcos**
+(concluídos ÷ total) — sem campo manual novo; (iii) **gráficos**: um da **carteira**
+(capital por projeto/estado) no dashboard e um de **orçamento vs executado** na obra.
+Instalar uma lib de gráficos leve.
 
 ---
 
@@ -63,8 +81,7 @@ gráficos no dashboard (instalar lib).
 - Obra: fotos e vídeos por atualização de diário, visíveis ao investidor com
   subscrição ativa.
 
-**Extras opcionais:** legendas por imagem, reordenar/apagar pela UI. _(baixa
-prioridade, a confirmar)_
+**✅ Decisão:** deixar como está — **sem extras** (legendas/reordenar ficam de fora).
 
 ---
 
@@ -99,10 +116,12 @@ upload no back-office da obra, visualização na página da obra + vista unifica
 "Próximos marcos" que **agrega marcos de todas as obras** (top 5) — fora das páginas
 de obra.
 
-**Falta / a fazer:** tirar os marcos do dashboard (ou reduzir a resumo) e reforçá-los
-**dentro de cada obra**, que é onde fazem sentido.
+**Falta / a fazer:** reforçar os marcos **dentro de cada obra**; manter também um
+resumo no dashboard.
 
-**Decisão:** _(pendente — confirmar: remover do dashboard vs. manter só um resumo)_
+**✅ Decisão:** marcos **destacados dentro de cada obra** (com a % de acabamento do
+ponto 3) **E** manter um **resumo no dashboard** (é importante ter lá também). Não
+remover do dashboard.
 
 ---
 
@@ -114,11 +133,11 @@ fundos_confirmados` (+ `cancelada`). A plataforma gere o processo e os acessos;
 avançar cada estado, carrega o PDF do contrato, mete a referência da transferência
 e confirma os fundos. Sem assinatura digital nem pagamentos integrados.
 
-**Possíveis melhorias (a decidir se entram):** assinatura digital do contrato na
-plataforma; o investidor **rever/aceitar o contrato** in-app antes de "contrato
-assinado"; comprovativo/integração de pagamento.
+**Possíveis melhorias (sugeridas por mim, não pelo sócio):** assinatura digital do
+contrato; rever/aceitar contrato in-app; comprovativo de pagamento.
 
-**Decisão:** _(pendente — decidir se alguma melhoria entra no âmbito)_
+**✅ Decisão:** **não mexer agora.** O fluxo fica como está; a explicação do fluxo
+serve para enviar ao sócio. Melhorias adiadas.
 
 ---
 
@@ -128,7 +147,16 @@ assinado"; comprovativo/integração de pagamento.
 - **Médios:** 3-gráficos (lib), 5 (faturas na obra + pasta unificada).
 - **De fundo:** 2 (ROI do investidor / partilha de lucro — precisa de regras).
 
-## Registo de decisões
+## Registo de decisões (2026-07-23)
 
+- **Ponto 1:** investidor vê todos os projetos lançados (estados != preparacao),
+  incluindo 100% financiados; detalhes de obra/extratos só para quem investiu;
+  badge + filtro.
+- **Ponto 2:** retorno proporcional ao investido; % do lucro p/ investidores
+  configurável por projeto (default 50%). _Falta confirmar se há fatia da TILWENI._
+- **Ponto 3:** totais + % execução + % acabamento (por marcos) + 2 gráficos (lib leve).
+- **Ponto 4:** sem alterações.
 - **Ponto 5:** faturas = documentos da obra; anexáveis a rubrica de custo real **e**
-  a atualização de obra (ambos). (2026-07-23)
+  a atualização de obra.
+- **Ponto 6:** marcos dentro de cada obra **e** resumo no dashboard.
+- **Ponto 7:** não mexer agora (melhorias adiadas).
