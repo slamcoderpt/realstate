@@ -322,7 +322,8 @@
     "noUpdates": "No recent updates.",
     "recentDocuments": "Recent documents",
     "noDocuments": "No recent documents.",
-    "riskNotice": "Investing involves the risk of total loss of capital, is illiquid and carries no guarantee of return. Figures shown are estimates."
+    "riskNotice": "Investing involves the risk of total loss of capital, is illiquid and carries no guarantee of return. Figures shown are estimates.",
+    "portfolioTitle": "Portfolio breakdown"
   },
   "Notifications": {
     "title": "Notifications",

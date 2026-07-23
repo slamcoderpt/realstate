@@ -16,6 +16,7 @@ import {
 } from '@/lib/works/service';
 import {Badge} from '@/components/ui/badge';
 import {Card, CardContent} from '@/components/ui/card';
+import {BudgetChart} from '@/components/charts/BudgetChart';
 import type {Locale} from '@/lib/mail/templates';
 
 export const dynamic = 'force-dynamic';
@@ -245,6 +246,21 @@ export default async function ObraPage({
                 </p>
               )}
             </div>
+            {/* Gráfico de conjunto (orçado vs executado por rubrica) antes da
+                tabela: a leitura visual primeiro, o detalhe ao cêntimo depois. */}
+            {budgetLines.length > 0 && (
+              <Card className="py-5">
+                <CardContent>
+                  <BudgetChart
+                    data={budgetLines.map((l) => ({
+                      name: l.name,
+                      budget: Number(l.budget_amount),
+                      actual: Number(l.actual_amount)
+                    }))}
+                  />
+                </CardContent>
+              </Card>
+            )}
             <Card className="gap-0 overflow-hidden py-0">
               <div className="overflow-x-auto scroll-soft">
                 <table className="w-full text-sm">
