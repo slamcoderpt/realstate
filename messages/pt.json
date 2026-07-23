@@ -243,7 +243,9 @@
     "backToAdmin": "Gerir obra",
     "workProgress": "Progresso da obra",
     "milestonesDone": "{done} de {total} marcos concluídos",
-    "completionHint": "Percentagem de marcos concluídos"
+    "completionHint": "Percentagem de marcos concluídos",
+    "total": "Total",
+    "budgetExecution": "Execução do orçamento"
   },
   "WorksAdmin": {
     "title": "Gestão de obra",

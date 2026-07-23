@@ -65,7 +65,14 @@ ao investidor é **o retorno dele** (após a fatia TILWENI), não o lucro bruto 
 
 ---
 
-## 3. Obra: totais, % de acabamento, gráficos — 🟡 parcial
+## 3. Obra: totais, % de acabamento, gráficos — 🟡 NÚMEROS FEITOS · gráficos pendentes
+
+> **Feito (2026-07-23):** (i) linha de **total** na tabela orçamento-vs-executado
+> da obra (Σ orçamento, Σ executado, **desvio global**) + **% de execução do
+> orçamento** no cabeçalho da secção; (ii) **% de acabamento por marcos** já
+> entregue no ponto 6. **Falta:** os **gráficos** (3b) — carteira no dashboard +
+> orçado-vs-executado na obra (instalar lib leve).
+
 
 **Estado atual:**
 - Existe orçamento vs custo real **por rubrica**, com desvio % por linha + alerta

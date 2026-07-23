@@ -140,6 +140,22 @@ export default async function ObraPage({
     .order('sort_order', {ascending: true});
   const budgetLines = (lines ?? []) as BudgetLineRow[];
 
+  // Totais agregados da obra: Σ orçamento vs Σ executado, desvio global e % de
+  // execução (quanto do orçamento já foi gasto). Dá a leitura de conjunto que
+  // as linhas por rubrica, sozinhas, não davam.
+  const totalBudget = budgetLines.reduce(
+    (sum, l) => sum + Number(l.budget_amount),
+    0
+  );
+  const totalActual = budgetLines.reduce(
+    (sum, l) => sum + Number(l.actual_amount),
+    0
+  );
+  const globalDeviationPct =
+    totalBudget > 0 ? ((totalActual - totalBudget) / totalBudget) * 100 : null;
+  const executionPct =
+    totalBudget > 0 ? Math.round((totalActual / totalBudget) * 100) : 0;
+
   const th =
     'px-5 py-3 text-xs font-bold tracking-[0.12em] text-ink-muted uppercase';
 
@@ -220,7 +236,15 @@ export default async function ObraPage({
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
         <div className="min-w-0 space-y-10">
           <section className="space-y-4">
-            <SectionTitle>{t('budgetVsActual')}</SectionTitle>
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+              <SectionTitle>{t('budgetVsActual')}</SectionTitle>
+              {totalBudget > 0 && (
+                <p className="text-sm font-semibold text-ink-muted">
+                  {t('budgetExecution')}:{' '}
+                  <span className="text-ink tabular-nums">{executionPct}%</span>
+                </p>
+              )}
+            </div>
             <Card className="gap-0 overflow-hidden py-0">
               <div className="overflow-x-auto scroll-soft">
                 <table className="w-full text-sm">
@@ -267,6 +291,32 @@ export default async function ObraPage({
                       );
                     })}
                   </tbody>
+                  {budgetLines.length > 0 && (
+                    <tfoot>
+                      <tr className="border-t-2 border-border bg-secondary">
+                        <td className="px-5 py-4 text-xs font-bold tracking-[0.1em] text-ink uppercase">
+                          {t('total')}
+                        </td>
+                        <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">
+                          {eur(totalBudget)}
+                        </td>
+                        <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">
+                          {eur(totalActual)}
+                        </td>
+                        <td
+                          className={`px-5 py-4 text-right font-bold tabular-nums ${
+                            globalDeviationPct !== null && globalDeviationPct > 0
+                              ? 'text-destructive'
+                              : 'text-ink-muted'
+                          }`}
+                        >
+                          {globalDeviationPct === null
+                            ? '—'
+                            : `${globalDeviationPct > 0 ? '+' : ''}${globalDeviationPct.toFixed(1)}%`}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
                 </table>
               </div>
             </Card>
