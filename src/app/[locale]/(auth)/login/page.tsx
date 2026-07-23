@@ -37,7 +37,10 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      router.push('/');
+      // Aterra-se no catálogo (decisão dos sócios): a primeira coisa a ver são
+      // os projetos, não a área pessoal. O middleware ainda pode desviar para
+      // /mfa ou /kyc conforme o estado da sessão.
+      router.push('/projetos');
       router.refresh();
       // NÃO se repõe `loading` aqui: a navegação (middleware + render de /) pode
       // demorar, e queremos o spinner até a página desmontar. Só se repõe no erro.

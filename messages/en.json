@@ -102,7 +102,9 @@
     "filterSubscription": "Open for subscription",
     "filterOngoing": "In progress",
     "filterClosed": "Closed",
-    "emptyFiltered": "No projects in this state."
+    "emptyFiltered": "No projects in this state.",
+    "irrRealized": "Realised IRR",
+    "termReal": "Actual term"
   },
   "ProjectDetail": {
     "location": "Location",
@@ -134,7 +136,14 @@
     "investorReturn": "Estimated return",
     "investorRoi": "Estimated ROI",
     "profitShareNote": "Investors receive {pct}% of the project’s estimated profit, in proportion to invested capital. The stated IRR is the project’s; your return depends on what you invested.",
-    "returnDisclaimer": "Estimated figures, not guaranteed."
+    "returnDisclaimer": "Estimated figures, not guaranteed.",
+    "irrAnnual": "Annualised IRR (est.)",
+    "irrRealized": "Realised IRR",
+    "irrPeriod": "Over the period",
+    "roiAnnual": "Annualised ROI",
+    "roiProject": "Project",
+    "termReal": "Actual term",
+    "termPlanned": "Planned"
   },
   "ProjectAdmin": {
     "title": "Project management",
@@ -178,7 +187,10 @@
     "noPhotos": "No images yet.",
     "noDocs": "No documents yet.",
     "profitShare": "Profit share — TILWENI (%)",
-    "profitShareHint": "TILWENI's cut of the profit. The remainder is split among investors in proportion to what they invested."
+    "profitShareHint": "TILWENI's cut of the profit. The remainder is split among investors in proportion to what they invested.",
+    "realizedIrr": "Realised IRR (%)",
+    "realizedHint": "Fill in on completion/liquidation. Empty = estimate is shown.",
+    "actualTerm": "Actual term (months)"
   },
   "ProjectStatus": {
     "preparacao": "In preparation",

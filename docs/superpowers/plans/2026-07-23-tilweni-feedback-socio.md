@@ -196,42 +196,27 @@ serve para enviar ao sócio. Melhorias adiadas.
 
 # Ronda 2 — Feedback do outro sócio (2026-07-23, tarde)
 
-## R2.1. Projetos fechados: TIR concretizada + prazo real — ❌ falta
+## R2.1. Projetos fechados: TIR concretizada + prazo real — ✅ IMPLEMENTADO
 
-**Estado atual:** só existem `estimated_irr` e `term_months` (estimados, inseridos
-pelo gestor). Não há campos de resultado real nem data de fecho; nos projetos
-`concluido`/`liquidado` continua a mostrar-se a estimativa.
+**✅ Decisão + feito:** campos `realized_irr` + `actual_term_months` (anuláveis;
+staff preenche ao concluir/liquidar, no formulário do back-office). Card do
+catálogo e ficha de projetos fechados mostram o **concretizado** com rótulo
+próprio (estimativa passa a leitura acessória); enquanto null, mantêm-se as
+estimativas. Migração `20260723140000_realized_metrics.sql`.
 
-**Proposta:** campos novos por projeto `realized_irr` e `actual_term_months`
-(anuláveis; o staff preenche ao concluir/liquidar). Na ficha e no card do
-catálogo, projetos fechados mostram os valores concretizados (com rótulo próprio)
-em vez dos estimados.
+## R2.2. ROI e TIR: de projeto E anualizadas (destaque nas anualizadas) — ✅ IMPLEMENTADO
 
-**Decisão:** _pendente._
+**✅ Decisão + feito:** a TIR inserida trata-se como **anual** (definição de TIR)
+— rotulada "TIR anualizada (est.)" com a taxa do período em leitura acessória.
+O **ROI anualizado** deriva-se por fórmula ((1+ROI)^(12÷prazo) − 1) e é o valor
+em destaque; o ROI do projeto fica em segundo plano no mesmo mosaico. Funções
+puras `annualizeRate`/`deannualizeRate` + testes.
 
-## R2.2. ROI e TIR: de projeto E anualizadas (destaque nas anualizadas) — 🟡 parcial
+## R2.3. Primeira página = catálogo de projetos — ✅ IMPLEMENTADO
 
-**Estado atual:** ROI apresentado é o do PROJETO (período inteiro, não
-anualizado). A TIR estimada é inserida à mão pelo gestor — sem convenção
-registada de ser anual ou do período.
-
-**Proposta:** derivar o **ROI anualizado** = (1 + ROI)^(12 ÷ prazo) − 1 e
-mostrá-lo com destaque, com o ROI de projeto em segundo plano. Para a TIR:
-assumir/rotular a TIR inserida como **anualizada** (é a definição de TIR) e
-derivar a "TIR do período" para consistência visual.
-
-**Decisão:** _pendente (confirmar a convenção da TIR inserida)._
-
-## R2.3. Primeira página = catálogo de projetos — ❌ falta (mudança simples)
-
-**Estado atual:** após login (e após saltar o MFA), o utilizador cai em `/`
-("A minha área" — dashboard). O catálogo está em `/projetos`.
-
-**Proposta:** após autenticação, aterrar em `/projetos`; o dashboard mantém-se
-em `/` acessível pela navegação. (Alternativa: só para investidores; staff
-continua a aterrar na área de gestão.)
-
-**Decisão:** _pendente._
+**✅ Decisão + feito:** após login (e após verificar/saltar o MFA), **todos**
+aterram em `/projetos`; o dashboard mantém-se em `/`, acessível pela navegação.
+O middleware continua a poder desviar para /mfa ou /kyc conforme o estado.
 
 ---
 

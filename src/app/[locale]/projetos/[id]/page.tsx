@@ -2,7 +2,11 @@ import {getTranslations, setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
 import {FileTextIcon, MapPinIcon} from 'lucide-react';
 import {getProjectDetail} from '@/lib/projects/service';
-import {computeInvestorReturn} from '@/lib/projects/indicators';
+import {
+  annualizeRate,
+  computeInvestorReturn,
+  deannualizeRate
+} from '@/lib/projects/indicators';
 import {getMySubscription} from '@/lib/subscriptions/service';
 import {getSession, isStaff} from '@/lib/auth/staff';
 import {createAdminClient} from '@/lib/supabase/admin';
@@ -27,7 +31,17 @@ function eur(v: number): string {
  * Mosaico compacto: são oito lado a lado, por isso o rótulo é pequeno em caixa
  * alta e o número é o que salta. Sem ícones — a esta densidade seriam ruído.
  */
-function StatTile({label, value}: {label: string; value: string}) {
+function StatTile({
+  label,
+  value,
+  secondary
+}: {
+  label: string;
+  value: string;
+  // Leitura acessória em corpo pequeno (ex.: "ROI do projeto: 45,8%") — o
+  // destaque fica no valor anualizado/concretizado, o resto não desaparece.
+  secondary?: string;
+}) {
   return (
     <div className="rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-[var(--shadow-card)]">
       <p className="text-[0.6875rem] font-bold leading-tight tracking-[0.1em] text-ink-muted uppercase">
@@ -36,6 +50,11 @@ function StatTile({label, value}: {label: string; value: string}) {
       <p className="mt-2 text-xl font-extrabold tracking-tight text-ink tabular-nums">
         {value}
       </p>
+      {secondary && (
+        <p className="mt-1 text-xs font-medium text-ink-muted tabular-nums">
+          {secondary}
+        </p>
+      )}
     </div>
   );
 }
@@ -99,6 +118,9 @@ export default async function ProjectDetailPage({
     project.total_amount > 0
       ? Math.round((project.subscribed_amount / project.total_amount) * 100)
       : 0;
+
+  const isClosed =
+    project.status === 'concluido' || project.status === 'liquidado';
 
   // Partilha do investidor = o que sobra depois da fatia da TILWENI.
   const investorSharePct = Math.round(
@@ -173,14 +195,43 @@ export default async function ProjectDetailPage({
             )}
           </header>
 
+          {/* Destaque nas taxas ANUALIZADAS (decisão dos sócios): a TIR inserida
+              é anual por definição; o ROI anualizado deriva-se do prazo. As de
+              projeto ficam em segundo plano no mesmo mosaico. Em projetos
+              FECHADOS com resultado preenchido, mostra-se o CONCRETIZADO e a
+              estimativa passa a leitura acessória. */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             <StatTile label={t('amount')} value={eur(project.total_amount)} />
-            <StatTile label={t('irr')} value={`${project.estimated_irr}%`} />
+            {isClosed && project.realized_irr !== null ? (
+              <StatTile
+                label={t('irrRealized')}
+                value={`${project.realized_irr}%`}
+                secondary={`${t('irr')}: ${project.estimated_irr}%`}
+              />
+            ) : (
+              <StatTile
+                label={t('irrAnnual')}
+                value={`${project.estimated_irr}%`}
+                secondary={`${t('irrPeriod')}: ${deannualizeRate(project.estimated_irr, project.term_months).toFixed(1)}%`}
+              />
+            )}
+            {isClosed && project.actual_term_months !== null ? (
+              <StatTile
+                label={t('termReal')}
+                value={t('months', {n: project.actual_term_months})}
+                secondary={`${t('termPlanned')}: ${t('months', {n: project.term_months})}`}
+              />
+            ) : (
+              <StatTile
+                label={t('term')}
+                value={t('months', {n: project.term_months})}
+              />
+            )}
             <StatTile
-              label={t('term')}
-              value={t('months', {n: project.term_months})}
+              label={t('roiAnnual')}
+              value={`${annualizeRate(indicators.roiPct, project.term_months).toFixed(1)}%`}
+              secondary={`${t('roiProject')}: ${indicators.roiPct.toFixed(1)}%`}
             />
-            <StatTile label={t('roi')} value={`${indicators.roiPct.toFixed(1)}%`} />
             <StatTile label={t('margin')} value={eur(indicators.grossMargin)} />
             <StatTile
               label={t('acquisition')}

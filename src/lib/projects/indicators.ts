@@ -26,6 +26,26 @@ export function computeIndicators(input: IndicatorInput): Indicators {
 }
 
 /**
+ * Anualiza uma taxa do período do projeto: (1 + taxa)^(12 ÷ meses) − 1.
+ * Recebe e devolve PERCENTAGENS (ex.: 45.8 → 63.2). Com prazo 0 (ainda por
+ * definir) devolve a própria taxa — não há base temporal para anualizar.
+ * A conversão inversa (anual → período) é `deannualizeRate`.
+ */
+export function annualizeRate(ratePct: number, termMonths: number): number {
+  if (termMonths <= 0) return ratePct;
+  return (Math.pow(1 + ratePct / 100, 12 / termMonths) - 1) * 100;
+}
+
+/** Converte uma taxa ANUAL na taxa do período do projeto (inverso de annualizeRate). */
+export function deannualizeRate(
+  annualPct: number,
+  termMonths: number
+): number {
+  if (termMonths <= 0) return annualPct;
+  return (Math.pow(1 + annualPct / 100, termMonths / 12) - 1) * 100;
+}
+
+/**
  * Retorno estimado de UM investidor — distinto da TIR/ROI do PROJETO. Uma fatia
  * do lucro fica para a TILWENI (`sharePct`, fração por projeto); o restante é o
  * pool dos investidores, repartido na proporção do investido.

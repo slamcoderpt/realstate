@@ -328,6 +328,40 @@ export default async function EditarProjetoPage({
                           {t('profitShareHint')}
                         </p>
                       </div>
+                      {/* Resultado concretizado — preencher ao concluir/liquidar.
+                          Vazio = ainda sem resultado (a app mostra estimativas). */}
+                      <div className="space-y-2">
+                        <Label htmlFor="realized_irr" className={FIELD_LABEL}>
+                          {t('realizedIrr')}
+                        </Label>
+                        <Input
+                          id="realized_irr"
+                          name="realized_irr"
+                          type="number"
+                          step="0.01"
+                          className="tabular-nums"
+                          defaultValue={project.realized_irr ?? ''}
+                        />
+                        <p className="text-xs text-ink-muted">
+                          {t('realizedHint')}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="actual_term_months"
+                          className={FIELD_LABEL}
+                        >
+                          {t('actualTerm')}
+                        </Label>
+                        <Input
+                          id="actual_term_months"
+                          name="actual_term_months"
+                          type="number"
+                          min={0}
+                          className="tabular-nums"
+                          defaultValue={project.actual_term_months ?? ''}
+                        />
+                      </div>
                     </div>
                   </div>
 
