@@ -97,7 +97,12 @@
     "irr": "TIR estimada",
     "amount": "Montante do projeto",
     "subscribed": "{pct}% subscrito",
-    "investorsCount": "{n} investidores subscreveram {amount}"
+    "investorsCount": "{n} investidores subscreveram {amount}",
+    "filterAll": "Todos",
+    "filterSubscription": "Em subscrição",
+    "filterOngoing": "Em curso",
+    "filterClosed": "Fechados",
+    "emptyFiltered": "Nenhum projeto neste estado."
   },
   "ProjectDetail": {
     "location": "Localização",

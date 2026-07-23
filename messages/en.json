@@ -97,7 +97,12 @@
     "irr": "Estimated IRR",
     "amount": "Project amount",
     "subscribed": "{pct}% subscribed",
-    "investorsCount": "{n} investors subscribed {amount}"
+    "investorsCount": "{n} investors subscribed {amount}",
+    "filterAll": "All",
+    "filterSubscription": "Open for subscription",
+    "filterOngoing": "In progress",
+    "filterClosed": "Closed",
+    "emptyFiltered": "No projects in this state."
   },
   "ProjectDetail": {
     "location": "Location",

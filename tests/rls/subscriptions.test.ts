@@ -111,11 +111,15 @@ describe('projects RLS alargada por subscrição', () => {
       .eq('id', projectId);
   });
 
-  it('investidor SEM subscrição não vê um projeto em em_curso', async () => {
+  it('investidor SEM subscrição vê a ficha de um projeto lançado (em_curso)', async () => {
+    // Ponto 1 do feedback do sócio: o investidor vê a FICHA de todos os projetos
+    // lançados (estados != preparacao), incl. os já financiados, mesmo sem ter
+    // subscrição. Os detalhes de obra/extratos continuam gated (ver
+    // tests/rls/obra-extratos.test.ts).
     await admin.from('projects').update({status: 'em_curso'}).eq('id', projectId);
     const c = await signInAs(invB);
     const {data} = await c.from('projects').select('id').eq('id', projectId);
-    expect(data ?? []).toHaveLength(0);
+    expect(data ?? []).toHaveLength(1);
     await admin
       .from('projects')
       .update({status: 'subscricao'})

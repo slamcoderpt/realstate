@@ -196,12 +196,16 @@ export type CatalogueRow = {
 export async function listCatalogue(
   db: SupabaseClient = createAdminClient()
 ): Promise<CatalogueRow[]> {
+  // O investidor vê TODOS os projetos lançados (todos os estados exceto
+  // `preparacao`), incluindo os já financiados a 100% — dá noção de escala do
+  // portefólio. Os detalhes de OBRA e os EXTRATOS continuam reservados a quem
+  // investiu (gate próprio em cada página/tabela); aqui abre-se só a ficha.
   const {data, error} = await db
     .from('projects')
     .select(
       'id, name, location, status, total_amount, subscribed_amount, investor_count, estimated_irr, term_months, cover_path'
     )
-    .eq('status', 'subscricao')
+    .neq('status', 'preparacao')
     .order('published_at', {ascending: false});
   if (error) throw new Error(`listar catálogo falhou: ${error.message}`);
   return (data ?? []).map((r) => toCatalogueRow(r as Record<string, unknown>));
@@ -229,22 +233,11 @@ export async function getProjectDetail(
     .eq('id', id)
     .single();
   if (!project) return null;
-  // Investidor só acede a projetos em subscricao (a RLS já protege as leituras
-  // de investidor; aqui, chamado com service role, aplicamos a mesma regra).
-  if (!opts.staff && project.status !== 'subscricao') {
-    // Um investidor com subscrição ativa vê a ficha mesmo fora de 'subscricao'.
-    let hasSub = false;
-    if (opts.viewerId) {
-      const {count} = await db
-        .from('subscriptions')
-        .select('id', {count: 'exact', head: true})
-        .eq('project_id', id)
-        .eq('user_id', opts.viewerId)
-        .neq('status', 'cancelada');
-      hasSub = (count ?? 0) > 0;
-    }
-    if (!hasSub) return null;
-  }
+  // A FICHA do projeto (fotos do imóvel, orçamento, documentos) é visível a
+  // qualquer investidor para todos os estados lançados — só `preparacao` fica
+  // reservado ao staff. Os DETALHES (obra e extratos) têm gate próprio, ligado
+  // à subscrição do investidor, nas respetivas páginas/tabelas.
+  if (!opts.staff && project.status === 'preparacao') return null;
 
   const {data: rawBudgetLines} = await db
     .from('project_budget_lines')

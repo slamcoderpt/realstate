@@ -52,16 +52,37 @@ describe('transitionProject', () => {
 });
 
 describe('listCatalogue', () => {
-  it('devolve apenas projetos em subscricao', async () => {
-    const {id} = await createProject({
-      name: 'Cat', location: 'Z', description: '',
+  it('devolve todos os projetos lançados (exceto preparacao)', async () => {
+    // Um projeto que fica em preparacao: NÃO deve aparecer no catálogo.
+    const {id: prepId} = await createProject({
+      name: 'CatPrep', location: 'Z', description: '',
       acquisitionCost: 10, worksBudget: 10, arv: 30, totalAmount: 20,
       estimatedIrr: 12, termMonths: 8
     });
-    await transitionProject(id, 'subscricao');
+
+    // Um projeto em subscricao: aparece.
+    const {id: subId} = await createProject({
+      name: 'CatSub', location: 'Z', description: '',
+      acquisitionCost: 10, worksBudget: 10, arv: 30, totalAmount: 20,
+      estimatedIrr: 12, termMonths: 8
+    });
+    await transitionProject(subId, 'subscricao');
+
+    // Um projeto já financiado/em curso: também aparece (dá noção de escala).
+    const {id: curId} = await createProject({
+      name: 'CatCurso', location: 'Z', description: '',
+      acquisitionCost: 10, worksBudget: 10, arv: 30, totalAmount: 20,
+      estimatedIrr: 12, termMonths: 8
+    });
+    await transitionProject(curId, 'subscricao');
+    await transitionProject(curId, 'subscrito');
+    await transitionProject(curId, 'em_curso');
+
     const rows = await listCatalogue();
-    expect(rows.every((r) => r.status === 'subscricao')).toBe(true);
-    expect(rows.some((r) => r.id === id)).toBe(true);
+    expect(rows.every((r) => r.status !== 'preparacao')).toBe(true);
+    expect(rows.some((r) => r.id === subId)).toBe(true);
+    expect(rows.some((r) => r.id === curId)).toBe(true);
+    expect(rows.some((r) => r.id === prepId)).toBe(false);
   });
 });
 
