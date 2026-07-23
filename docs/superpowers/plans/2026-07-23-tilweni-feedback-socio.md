@@ -120,7 +120,14 @@ upload no back-office da obra, visualização na página da obra + vista unifica
 
 ---
 
-## 6. Dashboard: marcos de obra fora do sítio — 🟡 concordar com o sócio
+## 6. Dashboard: marcos de obra fora do sítio — ✅ IMPLEMENTADO (2026-07-23)
+
+> **Feito:** a página de obra passa a abrir com um **destaque de progresso** — %
+> de acabamento derivada dos marcos (concluídos ÷ total) + barra + contagem "X de
+> Y marcos concluídos"; os pontos da timeline de marcos passam a ter **cor por
+> estado** (concluído sólido, em curso meio-tom, previsto discreto). O painel
+> "Próximos marcos" do **dashboard mantém-se** (resumo transversal).
+
 
 **Estado atual:** dashboard mostra posições por projeto (bom) e, à parte, um painel
 "Próximos marcos" que **agrega marcos de todas as obras** (top 5) — fora das páginas
