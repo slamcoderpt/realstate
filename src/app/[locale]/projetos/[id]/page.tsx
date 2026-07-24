@@ -200,7 +200,8 @@ export default async function ProjectDetailPage({
               projeto ficam em segundo plano no mesmo mosaico. Em projetos
               FECHADOS com resultado preenchido, mostra-se o CONCRETIZADO e a
               estimativa passa a leitura acessória. */}
-          <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <section className="space-y-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             <StatTile label={t('amount')} value={eur(project.total_amount)} />
             {isClosed && project.realized_irr !== null ? (
               <StatTile
@@ -215,6 +216,13 @@ export default async function ProjectDetailPage({
                 secondary={`${t('irrPeriod')}: ${deannualizeRate(project.estimated_irr, project.term_months).toFixed(1)}%`}
               />
             )}
+            {/* ROI logo a seguir à TIR — as duas taxas leem-se em par; o prazo
+                vem depois. */}
+            <StatTile
+              label={t('roiAnnual')}
+              value={`${annualizeRate(indicators.roiPct, project.term_months).toFixed(1)}%`}
+              secondary={`${t('roiProject')}: ${indicators.roiPct.toFixed(1)}%`}
+            />
             {isClosed && project.actual_term_months !== null ? (
               <StatTile
                 label={t('termReal')}
@@ -227,11 +235,6 @@ export default async function ProjectDetailPage({
                 value={t('months', {n: project.term_months})}
               />
             )}
-            <StatTile
-              label={t('roiAnnual')}
-              value={`${annualizeRate(indicators.roiPct, project.term_months).toFixed(1)}%`}
-              secondary={`${t('roiProject')}: ${indicators.roiPct.toFixed(1)}%`}
-            />
             <StatTile label={t('margin')} value={eur(indicators.grossMargin)} />
             <StatTile
               label={t('acquisition')}
@@ -239,6 +242,14 @@ export default async function ProjectDetailPage({
             />
             <StatTile label={t('works')} value={eur(project.works_budget)} />
             <StatTile label={t('arv')} value={eur(project.arv)} />
+            </div>
+            {/* Porque é que a TIR e o ROI anualizados divergem: o ROI é uma
+                razão bruta, a TIR desconta o calendário de fluxos e os custos
+                de saída. Sem esta linha, a discrepância entre os dois mosaicos
+                gera desconfiança — é a pergunta nº 1 de um investidor atento. */}
+            <p className="text-xs leading-relaxed text-ink-muted">
+              {t('ratesNote')}
+            </p>
           </section>
 
           {photos.length > 0 && (
@@ -420,6 +431,12 @@ export default async function ProjectDetailPage({
                     <h3 className="text-sm font-bold tracking-tight text-ink">
                       {tsub('manifestTitle')}
                     </h3>
+                    {/* A regra da partilha aparece ONDE a decisão se toma: sem
+                        isto, quem ainda não investiu lê o ROI/margem brutos do
+                        projeto e assume que são os dele. */}
+                    <p className="text-xs leading-relaxed text-ink-muted">
+                      {t('profitShareNote', {pct: investorSharePct})}
+                    </p>
                     <ManifestForm locale={loc} projectId={id} min={minAmount} />
                   </CardContent>
                 </Card>

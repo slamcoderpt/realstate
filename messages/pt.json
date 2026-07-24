@@ -143,7 +143,8 @@
     "roiAnnual": "ROI anualizado",
     "roiProject": "Do projeto",
     "termReal": "Prazo real",
-    "termPlanned": "Previsto"
+    "termPlanned": "Previsto",
+    "ratesNote": "O ROI é uma razão bruta (margem ÷ investimento); a TIR desconta o calendário dos fluxos e os custos de saída — por isso os dois valores anualizados diferem. Valores do projeto, antes da partilha de lucro."
   },
   "ProjectAdmin": {
     "title": "Gestão de projetos",
