@@ -143,7 +143,8 @@
     "roiAnnual": "Annualised ROI",
     "roiProject": "Project",
     "termReal": "Actual term",
-    "termPlanned": "Planned"
+    "termPlanned": "Planned",
+    "ratesNote": "ROI is a gross ratio (margin ÷ investment); IRR discounts cash-flow timing and exit costs — hence the two annualised figures differ. Project-level figures, before profit share."
   },
   "ProjectAdmin": {
     "title": "Project management",
