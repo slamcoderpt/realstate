@@ -102,7 +102,9 @@
     "filterSubscription": "Em subscrição",
     "filterOngoing": "Em curso",
     "filterClosed": "Fechados",
-    "emptyFiltered": "Nenhum projeto neste estado."
+    "emptyFiltered": "Nenhum projeto neste estado.",
+    "irrRealized": "TIR concretizada",
+    "termReal": "Prazo real"
   },
   "ProjectDetail": {
     "location": "Localização",
@@ -134,7 +136,14 @@
     "investorReturn": "Retorno estimado",
     "investorRoi": "ROI estimado",
     "profitShareNote": "Os investidores recebem {pct}% do lucro estimado do projeto, na proporção do capital investido. A TIR indicada é do projeto; o seu retorno depende do que investiu.",
-    "returnDisclaimer": "Valores estimados, não garantidos."
+    "returnDisclaimer": "Valores estimados, não garantidos.",
+    "irrAnnual": "TIR anualizada (est.)",
+    "irrRealized": "TIR concretizada",
+    "irrPeriod": "No período",
+    "roiAnnual": "ROI anualizado",
+    "roiProject": "Do projeto",
+    "termReal": "Prazo real",
+    "termPlanned": "Previsto"
   },
   "ProjectAdmin": {
     "title": "Gestão de projetos",
@@ -178,7 +187,10 @@
     "noPhotos": "Ainda sem imagens.",
     "noDocs": "Ainda sem documentos.",
     "profitShare": "Partilha de lucro — TILWENI (%)",
-    "profitShareHint": "Fatia do lucro para a TILWENI. O restante é repartido pelos investidores na proporção do investido."
+    "profitShareHint": "Fatia do lucro para a TILWENI. O restante é repartido pelos investidores na proporção do investido.",
+    "realizedIrr": "TIR concretizada (%)",
+    "realizedHint": "Preencher ao concluir/liquidar. Vazio = mostra-se a estimativa.",
+    "actualTerm": "Prazo real (meses)"
   },
   "ProjectStatus": {
     "preparacao": "Em preparação",

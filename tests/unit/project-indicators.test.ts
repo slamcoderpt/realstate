@@ -1,7 +1,9 @@
 import {describe, it, expect} from 'vitest';
 import {
+  annualizeRate,
   computeIndicators,
-  computeInvestorReturn
+  computeInvestorReturn,
+  deannualizeRate
 } from '@/lib/projects/indicators';
 
 describe('computeIndicators', () => {
@@ -33,6 +35,28 @@ describe('computeIndicators', () => {
     });
     expect(r.grossMargin).toBe(-10000);
     expect(r.roiPct).toBeCloseTo(-6.67, 1);
+  });
+});
+
+describe('annualizeRate / deannualizeRate', () => {
+  it('anualiza uma taxa do período: 45.8% em 9 meses ≈ 65.3% ao ano', () => {
+    // (1.458)^(12/9) − 1 ≈ 0.6533
+    expect(annualizeRate(45.8, 9)).toBeCloseTo(65.33, 1);
+  });
+
+  it('12 meses é neutro (taxa do período = taxa anual)', () => {
+    expect(annualizeRate(21, 12)).toBeCloseTo(21, 6);
+    expect(deannualizeRate(21, 12)).toBeCloseTo(21, 6);
+  });
+
+  it('deannualize é o inverso de annualize', () => {
+    const period = deannualizeRate(annualizeRate(45.8, 9), 9);
+    expect(period).toBeCloseTo(45.8, 6);
+  });
+
+  it('prazo 0 devolve a própria taxa (sem base para anualizar)', () => {
+    expect(annualizeRate(30, 0)).toBe(30);
+    expect(deannualizeRate(30, 0)).toBe(30);
   });
 });
 

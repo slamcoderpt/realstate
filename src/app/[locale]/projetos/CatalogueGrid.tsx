@@ -28,6 +28,8 @@ export type CatalogueCard = {
   investor_count: number;
   estimated_irr: number;
   term_months: number;
+  realized_irr: number | null;
+  actual_term_months: number | null;
   cover_path: string | null;
 };
 
@@ -151,6 +153,12 @@ export function CatalogueGrid({
               p.total_amount > 0
                 ? Math.round((p.subscribed_amount / p.total_amount) * 100)
                 : 0;
+            // Projetos fechados mostram o RESULTADO (TIR concretizada + prazo
+            // real) quando preenchido — é o histórico que dá credibilidade ao
+            // catálogo; sem resultado preenchido mantêm-se as estimativas.
+            const closed = bucketOf(p.status) === 'closed';
+            const showRealized = closed && p.realized_irr !== null;
+            const showRealTerm = closed && p.actual_term_months !== null;
             return (
               <Link
                 key={p.id}
@@ -194,12 +202,26 @@ export function CatalogueGrid({
                   </CardHeader>
                   <CardContent className="text-sm">
                     <div className="divide-y divide-border">
-                      <Row label={t('irr')} value={`${p.estimated_irr}%`} />
+                      {showRealized ? (
+                        <Row
+                          label={t('irrRealized')}
+                          value={`${p.realized_irr}%`}
+                        />
+                      ) : (
+                        <Row label={t('irr')} value={`${p.estimated_irr}%`} />
+                      )}
                       <Row label={t('amount')} value={eur(p.total_amount)} />
-                      <Row
-                        label={t('term')}
-                        value={t('months', {n: p.term_months})}
-                      />
+                      {showRealTerm ? (
+                        <Row
+                          label={t('termReal')}
+                          value={t('months', {n: p.actual_term_months ?? 0})}
+                        />
+                      ) : (
+                        <Row
+                          label={t('term')}
+                          value={t('months', {n: p.term_months})}
+                        />
+                      )}
                     </div>
                     {showProgress && (
                       <div className="pt-4">

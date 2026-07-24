@@ -48,8 +48,9 @@ test('MFA opcional: staff ignora a configuração, entra e não é reincomodado'
   // Ignorar.
   await page.getByRole('button', {name: 'Configurar depois'}).click();
 
-  // Entra na app: a casca aparece (staff em aal1 que dispensou o prompt).
-  await page.waitForURL((u) => /\/pt(\/?$|\?)/.test(u.pathname + u.search));
+  // Entra na app, a aterrar no catálogo (decisão dos sócios): a casca aparece
+  // (staff em aal1 que dispensou o prompt).
+  await page.waitForURL('**/pt/projetos**');
   await expect(
     page.getByRole('link', {name: 'Projetos', exact: true})
   ).toBeVisible();

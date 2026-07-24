@@ -192,6 +192,34 @@ serve para enviar ao sócio. Melhorias adiadas.
 - **De fundo:** 2 (ROI do investidor / partilha de lucro — regras já definidas;
   precisa de campo `tilweni_profit_share_pct` + cálculo + apresentação).
 
+---
+
+# Ronda 2 — Feedback do outro sócio (2026-07-23, tarde)
+
+## R2.1. Projetos fechados: TIR concretizada + prazo real — ✅ IMPLEMENTADO
+
+**✅ Decisão + feito:** campos `realized_irr` + `actual_term_months` (anuláveis;
+staff preenche ao concluir/liquidar, no formulário do back-office). Card do
+catálogo e ficha de projetos fechados mostram o **concretizado** com rótulo
+próprio (estimativa passa a leitura acessória); enquanto null, mantêm-se as
+estimativas. Migração `20260723140000_realized_metrics.sql`.
+
+## R2.2. ROI e TIR: de projeto E anualizadas (destaque nas anualizadas) — ✅ IMPLEMENTADO
+
+**✅ Decisão + feito:** a TIR inserida trata-se como **anual** (definição de TIR)
+— rotulada "TIR anualizada (est.)" com a taxa do período em leitura acessória.
+O **ROI anualizado** deriva-se por fórmula ((1+ROI)^(12÷prazo) − 1) e é o valor
+em destaque; o ROI do projeto fica em segundo plano no mesmo mosaico. Funções
+puras `annualizeRate`/`deannualizeRate` + testes.
+
+## R2.3. Primeira página = catálogo de projetos — ✅ IMPLEMENTADO
+
+**✅ Decisão + feito:** após login (e após verificar/saltar o MFA), **todos**
+aterram em `/projetos`; o dashboard mantém-se em `/`, acessível pela navegação.
+O middleware continua a poder desviar para /mfa ou /kyc conforme o estado.
+
+---
+
 ## Registo de decisões (2026-07-23)
 
 - **Ponto 1:** investidor vê todos os projetos lançados (estados != preparacao),

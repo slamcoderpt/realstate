@@ -21,6 +21,9 @@ export type CreateProjectInput = {
   estimatedIrr: number;
   termMonths: number;
   tilweniProfitSharePct?: number;
+  // Resultados concretizados (projetos fechados). `null` limpa o valor.
+  realizedIrr?: number | null;
+  actualTermMonths?: number | null;
 };
 
 export type ProjectRow = {
@@ -38,6 +41,8 @@ export type ProjectRow = {
   estimated_irr: number;
   term_months: number;
   tilweni_profit_share_pct: number;
+  realized_irr: number | null;
+  actual_term_months: number | null;
   cover_path: string | null;
   published_at: string | null;
 };
@@ -78,7 +83,10 @@ function toProjectRow(raw: Record<string, unknown>): ProjectRow {
     total_amount: Number(raw.total_amount),
     subscribed_amount: Number(raw.subscribed_amount),
     estimated_irr: Number(raw.estimated_irr),
-    tilweni_profit_share_pct: Number(raw.tilweni_profit_share_pct)
+    tilweni_profit_share_pct: Number(raw.tilweni_profit_share_pct),
+    realized_irr: raw.realized_irr == null ? null : Number(raw.realized_irr),
+    actual_term_months:
+      raw.actual_term_months == null ? null : Number(raw.actual_term_months)
   };
 }
 
@@ -91,7 +99,10 @@ function toCatalogueRow(raw: Record<string, unknown>): CatalogueRow {
     ...(raw as CatalogueRow),
     total_amount: Number(raw.total_amount),
     subscribed_amount: Number(raw.subscribed_amount),
-    estimated_irr: Number(raw.estimated_irr)
+    estimated_irr: Number(raw.estimated_irr),
+    realized_irr: raw.realized_irr == null ? null : Number(raw.realized_irr),
+    actual_term_months:
+      raw.actual_term_months == null ? null : Number(raw.actual_term_months)
   };
 }
 
@@ -141,6 +152,9 @@ export async function updateProject(
   if (input.termMonths !== undefined) patch.term_months = input.termMonths;
   if (input.tilweniProfitSharePct !== undefined)
     patch.tilweni_profit_share_pct = input.tilweniProfitSharePct;
+  if (input.realizedIrr !== undefined) patch.realized_irr = input.realizedIrr;
+  if (input.actualTermMonths !== undefined)
+    patch.actual_term_months = input.actualTermMonths;
 
   const {error} = await db.from('projects').update(patch).eq('id', id);
   if (error) throw new Error(`atualizar projeto falhou: ${error.message}`);
@@ -198,6 +212,8 @@ export type CatalogueRow = {
   investor_count: number;
   estimated_irr: number;
   term_months: number;
+  realized_irr: number | null;
+  actual_term_months: number | null;
   cover_path: string | null;
 };
 
@@ -211,7 +227,7 @@ export async function listCatalogue(
   const {data, error} = await db
     .from('projects')
     .select(
-      'id, name, location, status, total_amount, subscribed_amount, investor_count, estimated_irr, term_months, cover_path'
+      'id, name, location, status, total_amount, subscribed_amount, investor_count, estimated_irr, term_months, realized_irr, actual_term_months, cover_path'
     )
     .neq('status', 'preparacao')
     .order('published_at', {ascending: false});

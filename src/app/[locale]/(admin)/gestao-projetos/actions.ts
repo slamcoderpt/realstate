@@ -26,6 +26,15 @@ function parseSharePct(raw: FormDataEntryValue | null): number {
   return clamped / 100;
 }
 
+// Campos de resultado concretizado: vazio = "ainda sem resultado" → null
+// (limpa o valor na BD), número = valor preenchido pelo staff.
+function parseNullableNumber(raw: FormDataEntryValue | null): number | null {
+  const s = String(raw ?? '').trim();
+  if (s === '') return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
 export async function createProjectAction(
   locale: Locale,
   formData: FormData
@@ -62,7 +71,9 @@ export async function updateProjectAction(
     totalAmount: Number(formData.get('total_amount') ?? 0),
     estimatedIrr: Number(formData.get('estimated_irr') ?? 0),
     termMonths: Number(formData.get('term_months') ?? 0),
-    tilweniProfitSharePct: parseSharePct(formData.get('profit_share_pct'))
+    tilweniProfitSharePct: parseSharePct(formData.get('profit_share_pct')),
+    realizedIrr: parseNullableNumber(formData.get('realized_irr')),
+    actualTermMonths: parseNullableNumber(formData.get('actual_term_months'))
   });
   revalidatePath(`/${locale}/gestao-projetos/${id}`);
 }

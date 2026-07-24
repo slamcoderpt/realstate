@@ -86,8 +86,8 @@ export default function MfaPage() {
       setError(true);
       return;
     }
-    // Sessão sobe a aal2 — o middleware deixa passar.
-    router.push('/');
+    // Sessão sobe a aal2 — o middleware deixa passar. Aterra no catálogo.
+    router.push('/projetos');
     router.refresh();
   }
 
@@ -97,7 +97,7 @@ export default function MfaPage() {
     setSkipping(true);
     await dismissMfaPrompt();
     await supabase.auth.refreshSession();
-    router.replace('/');
+    router.replace('/projetos');
     router.refresh();
   }
 
