@@ -122,6 +122,14 @@ export default async function ProjectDetailPage({
   const isClosed =
     project.status === 'concluido' || project.status === 'liquidado';
 
+  // Prazo a usar para anualizar: num projeto fechado com prazo REAL preenchido é
+  // esse que conta. Anualizar pelo previsto quando o projeto correu noutro prazo
+  // dá um número que contradiz o mosaico "Prazo real" mesmo ao lado.
+  const termForRates =
+    isClosed && project.actual_term_months !== null
+      ? project.actual_term_months
+      : project.term_months;
+
   // Partilha do investidor = o que sobra depois da fatia da TILWENI.
   const investorSharePct = Math.round(
     (1 - project.tilweni_profit_share_pct) * 100
@@ -213,14 +221,14 @@ export default async function ProjectDetailPage({
               <StatTile
                 label={t('irrAnnual')}
                 value={`${project.estimated_irr}%`}
-                secondary={`${t('irrPeriod')}: ${deannualizeRate(project.estimated_irr, project.term_months).toFixed(1)}%`}
+                secondary={`${t('irrPeriod')}: ${deannualizeRate(project.estimated_irr, termForRates).toFixed(1)}%`}
               />
             )}
             {/* ROI logo a seguir à TIR — as duas taxas leem-se em par; o prazo
                 vem depois. */}
             <StatTile
               label={t('roiAnnual')}
-              value={`${annualizeRate(indicators.roiPct, project.term_months).toFixed(1)}%`}
+              value={`${annualizeRate(indicators.roiPct, termForRates).toFixed(1)}%`}
               secondary={`${t('roiProject')}: ${indicators.roiPct.toFixed(1)}%`}
             />
             {isClosed && project.actual_term_months !== null ? (

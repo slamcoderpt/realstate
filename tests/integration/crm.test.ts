@@ -14,6 +14,7 @@ import {
   markActivityDone
 } from '@/lib/crm/service';
 import {admin} from '../rls/helpers';
+import {acceptInvite} from '@/lib/invites/accept';
 
 let staffId: string;
 const noop = {transport: {sendMail: async () => ({})}};
@@ -220,6 +221,52 @@ describe('convertLeadToInvite', () => {
       noop
     );
     expect(again.status).toBe('already_converted');
+  });
+});
+
+/**
+ * O elo mais frágil da Fatia B: `acceptInvite` chama `linkConvertedInvite` dentro
+ * de um try/catch que engole erros (para nunca falhar a criação de conta). Sem
+ * este teste, uma regressão aí seria SILENCIOSA — o convite era aceite, a conta
+ * criada, e o lead ficava eternamente em "Convite enviado" sem ninguém dar por isso.
+ */
+describe('ciclo completo: converter → aceitar convite → lead convertido', () => {
+  it('o lead passa a convertido e liga-se à conta criada', async () => {
+    const mail = `crm-ciclo-${randomUUID().slice(0, 8)}@test.local`;
+    const {id: leadId} = await createLead({
+      fullName: 'Ciclo Completo',
+      email: mail,
+      createdBy: staffId
+    });
+
+    // Converter capturando o email, para extrair o token do convite.
+    const sent: string[] = [];
+    const transport = {
+      async sendMail({html}: {html: string}) {
+        sent.push(html);
+        return {ok: true};
+      }
+    };
+    const res = await convertLeadToInvite(
+      leadId,
+      {locale: 'pt' as const, actorId: staffId, appUrl: 'https://app'},
+      {transport}
+    );
+    expect(res.status).toBe('invited');
+
+    const token = sent[0].match(/aceitar-convite\/([A-Za-z0-9_-]+)/)![1];
+    const accepted = await acceptInvite(
+      {token, password: 'ciclo-12345', locale: 'pt', appUrl: 'https://app'},
+      {transport: {async sendMail() {return {ok: true};}}}
+    );
+    expect(accepted.ok).toBe(true);
+
+    const detail = await getLeadDetail(leadId);
+    expect(detail!.lead.stage).toBe('convertido');
+    expect(detail!.lead.converted_user_id).toBeTruthy();
+    expect(
+      detail!.activities.some((a) => a.body.includes('Convite aceite'))
+    ).toBe(true);
   });
 });
 

@@ -116,6 +116,44 @@ Só para **staff** (admin / project_manager). Nada exposto a investidores.
 
 ---
 
+---
+
+## Verificação com a app a correr (2026-07-29)
+
+Até aqui o CRM tinha testes de dados (integração + RLS) mas **nunca tinha sido
+usado**. Correu-se o stack local + a app e percorreu-se o fluxo no browser. O que
+isso apanhou — e que nenhum teste de dados apanharia:
+
+1. **ROI anualizado pelo prazo errado nos projetos fechados.** A ficha mostrava
+   "Prazo real: 12 meses" e, ao lado, um ROI anualizado calculado sobre o prazo
+   *previsto* (14) — 26,6% em vez de 31,7%. Subvalorizava o desempenho e
+   contradizia o mosaico do lado. Corrigido: anualiza-se pelo prazo efetivo.
+2. **Arrastar dependia só de estado React.** O id do cartão não viajava no
+   `dataTransfer`; passou a viajar (contrato do HTML5 DnD, sem corrida com o
+   `dragend`).
+3. **Filtros e campos do formulário partilhavam rótulos** ("Origem" duas vezes na
+   mesma página) — ambíguo para leitores de ecrã. Filtros passaram a ter rótulos
+   próprios ("Filtrar por origem", …).
+4. **`sendMail` sem timeouts.** Um SMTP que aceite a ligação e não responda
+   pendurava a Server Action até o pedido morrer — observou-se um **convite
+   criado sem o lead ficar ligado**. Com timeouts, o envio falha depressa, a
+   entrada fica `failed` e o fluxo segue. (A deduplicação já auto-corrigia o lead
+   na tentativa seguinte — confirmado no browser.)
+
+**Verificado ponta a ponta no browser:** criar lead → arrastar → follow-up →
+converter → aceitar o convite → lead "Convertido" ligado à conta, **sem convite
+duplicado**.
+
+## 9. Cobertura de testes
+
+- **Integração** (16): serviço completo, conversão com deduplicação em 3 níveis,
+  idempotência, follow-ups, tags e o **ciclo completo** (converter → aceitar →
+  lead convertido) — este último fecha o `try/catch` silencioso do `acceptInvite`,
+  onde uma regressão passaria despercebida.
+- **RLS** (7): staff lê; investidor não lê nem escreve; anónimo não vê.
+- **E2E** (`e2e/crm-flow.spec.ts`): o kanban no browser, incluindo o **arrastar**
+  — a única interação que nenhum teste de dados alcança.
+
 ## 8. Questões para validar (sócio)
 
 1. **Stages** — ok `Novo → Contactado → Qualificado → Reunião → Convite enviado
