@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import {NextIntlClientProvider, hasLocale} from 'next-intl';
 import {setRequestLocale} from 'next-intl/server';
 import {notFound} from 'next/navigation';
+import {SpeedInsights} from '@vercel/speed-insights/next';
 import {routing} from '@/i18n/routing';
 import AppShell from '@/components/AppShell';
 import {NavProgress} from '@/components/NavProgress';
@@ -34,6 +35,9 @@ export default async function LocaleLayout({
           <NavProgress />
           <AppShell locale={locale}>{children}</AppShell>
         </NextIntlClientProvider>
+        {/* Métricas de desempenho reais (Vercel Speed Insights). Só recolhe em
+            produção — em dev o componente não faz pedido nenhum. */}
+        <SpeedInsights />
       </body>
     </html>
   );
