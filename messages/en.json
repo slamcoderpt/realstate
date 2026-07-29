@@ -544,6 +544,11 @@
     "type_chamada": "Call",
     "type_email": "Email",
     "type_reuniao": "Meeting",
-    "type_mudanca_estado": "Stage change"
+    "type_mudanca_estado": "Stage change",
+    "convert": "Convert to invite",
+    "convertHint": "Creates and sends a registration invite for this lead (reuses a pending invite or links to an existing account).",
+    "converted": "Converted",
+    "convertedInvite": "Invite sent",
+    "convertedUser": "Account created"
   }
 }

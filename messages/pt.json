@@ -544,6 +544,11 @@
     "type_chamada": "Chamada",
     "type_email": "Email",
     "type_reuniao": "Reunião",
-    "type_mudanca_estado": "Mudança de estado"
+    "type_mudanca_estado": "Mudança de estado",
+    "convert": "Converter em convite",
+    "convertHint": "Cria e envia um convite de registo para este lead (reutiliza um convite pendente ou liga a uma conta já existente).",
+    "converted": "Convertido",
+    "convertedInvite": "Convite enviado",
+    "convertedUser": "Conta criada"
   }
 }

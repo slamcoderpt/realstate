@@ -1,6 +1,9 @@
 import 'server-only';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {createAdminClient} from '@/lib/supabase/admin';
+import {createInvite} from '@/lib/invites/service';
+import type {SendEmailDeps} from '@/lib/mail/outbox';
+import type {Locale} from '@/lib/mail/templates';
 
 /**
  * CRM de investidores (server-only, service role). Escrita só por aqui, chamada
@@ -68,6 +71,8 @@ export type LeadRow = {
   estimated_ticket: number | null;
   notes: string;
   tags: string[];
+  converted_invite_id: string | null;
+  converted_user_id: string | null;
   last_activity_at: string;
   created_at: string;
 };
@@ -84,7 +89,7 @@ export type ActivityRow = {
 };
 
 const LEAD_COLUMNS =
-  'id, full_name, email, phone, source, stage, owner_id, investor_profile, estimated_ticket, notes, tags, last_activity_at, created_at';
+  'id, full_name, email, phone, source, stage, owner_id, investor_profile, estimated_ticket, notes, tags, converted_invite_id, converted_user_id, last_activity_at, created_at';
 
 function toLead(raw: Record<string, unknown>): LeadRow {
   return {
@@ -239,6 +244,185 @@ export async function listLeads(
     .order('last_activity_at', {ascending: false});
   if (error) throw new Error(`listar leads falhou: ${error.message}`);
   return (data ?? []).map((r) => toLead(r as Record<string, unknown>));
+}
+
+// --- conversão em convite (Fatia B) ---
+
+const USERS_PER_PAGE = 1000;
+
+/**
+ * Procura um utilizador pelo email percorrendo TODAS as páginas de
+ * `auth.admin.listUsers` (a API é paginada — ler só a 1ª truncava). Mesmo padrão
+ * de `lib/auth/password-reset.ts`.
+ */
+async function findUserByEmail(
+  db: SupabaseClient,
+  email: string
+): Promise<{id: string} | null> {
+  const target = email.trim().toLowerCase();
+  let found: {id: string} | null = null;
+  for (let page = 1; ; page++) {
+    const {data, error} = await db.auth.admin.listUsers({
+      page,
+      perPage: USERS_PER_PAGE
+    });
+    if (error) throw error;
+    const users = data?.users ?? [];
+    for (const u of users) {
+      if (u.email && u.email.trim().toLowerCase() === target) found = {id: u.id};
+    }
+    if (users.length < USERS_PER_PAGE) return found;
+  }
+}
+
+export type ConvertLeadResult =
+  | {status: 'invited'; inviteId: string; emailSent: boolean}
+  | {status: 'reused_invite'; inviteId: string}
+  | {status: 'already_user'; userId: string}
+  | {status: 'already_converted'};
+
+/**
+ * Converte um lead num convite, reaproveitando o mecanismo de convites que já
+ * existe. Deduplicação em três níveis, para nunca criar um convite a mais:
+ *  1. lead já convertido (tem utilizador) → no-op idempotente;
+ *  2. email já é utilizador registado → liga ao utilizador e marca `convertido`;
+ *  3. já existe convite PENDENTE para o email → reaproveita-o.
+ * Só quando nada disto se aplica é que se cria um convite novo.
+ */
+export async function convertLeadToInvite(
+  leadId: string,
+  opts: {locale: Locale; actorId: string; appUrl: string},
+  deps: SendEmailDeps = {}
+): Promise<ConvertLeadResult> {
+  const db = deps.db ?? createAdminClient();
+  const {data: lead} = await db
+    .from('crm_leads')
+    .select('id, full_name, email, converted_invite_id, converted_user_id')
+    .eq('id', leadId)
+    .single();
+  if (!lead) throw new Error('lead não encontrado');
+  const email = String(lead.email).trim().toLowerCase();
+
+  if (lead.converted_user_id) return {status: 'already_converted'};
+
+  const now = new Date().toISOString();
+
+  // (2) já é utilizador registado.
+  const existingUser = await findUserByEmail(db, email);
+  if (existingUser) {
+    await db
+      .from('crm_leads')
+      .update({
+        converted_user_id: existingUser.id,
+        stage: 'convertido',
+        updated_at: now,
+        last_activity_at: now
+      })
+      .eq('id', leadId);
+    await addActivity(
+      leadId,
+      {type: 'mudanca_estado', body: 'Já registado — ligado ao utilizador existente'},
+      opts.actorId,
+      db
+    );
+    return {status: 'already_user', userId: existingUser.id};
+  }
+
+  // (1b) lead já tem convite associado → nada a recriar.
+  if (lead.converted_invite_id) {
+    return {status: 'reused_invite', inviteId: lead.converted_invite_id};
+  }
+
+  // (3) convite pendente já existente para o email.
+  const {data: pending} = await db
+    .from('invites')
+    .select('id')
+    .eq('email', email)
+    .eq('status', 'pending')
+    .order('created_at', {ascending: false})
+    .limit(1)
+    .maybeSingle();
+  if (pending) {
+    await db
+      .from('crm_leads')
+      .update({
+        converted_invite_id: pending.id,
+        stage: 'convite_enviado',
+        updated_at: now,
+        last_activity_at: now
+      })
+      .eq('id', leadId);
+    await addActivity(
+      leadId,
+      {type: 'mudanca_estado', body: 'Convite pendente existente reutilizado'},
+      opts.actorId,
+      db
+    );
+    return {status: 'reused_invite', inviteId: pending.id};
+  }
+
+  // Caso base: criar convite novo.
+  const res = await createInvite(
+    {
+      fullName: String(lead.full_name),
+      email,
+      locale: opts.locale,
+      actorId: opts.actorId,
+      appUrl: opts.appUrl
+    },
+    deps
+  );
+  await db
+    .from('crm_leads')
+    .update({
+      converted_invite_id: res.id,
+      stage: 'convite_enviado',
+      updated_at: now,
+      last_activity_at: now
+    })
+    .eq('id', leadId);
+  await addActivity(
+    leadId,
+    {type: 'email', body: 'Convite enviado'},
+    opts.actorId,
+    db
+  );
+  return {status: 'invited', inviteId: res.id, emailSent: res.emailSent};
+}
+
+/**
+ * Fecha o ciclo: chamado quando um convite é ACEITE. Liga os leads que geraram
+ * este convite ao utilizador criado e move-os para `convertido`. Best-effort —
+ * quem chama (aceitação de convite) não deve falhar por causa do CRM.
+ */
+export async function linkConvertedInvite(
+  inviteId: string,
+  userId: string,
+  db: SupabaseClient = createAdminClient()
+): Promise<void> {
+  const {data: leads} = await db
+    .from('crm_leads')
+    .select('id')
+    .eq('converted_invite_id', inviteId)
+    .is('converted_user_id', null);
+  const now = new Date().toISOString();
+  for (const l of leads ?? []) {
+    await db
+      .from('crm_leads')
+      .update({
+        converted_user_id: userId,
+        stage: 'convertido',
+        updated_at: now,
+        last_activity_at: now
+      })
+      .eq('id', l.id);
+    await db.from('crm_activities').insert({
+      lead_id: l.id,
+      author_id: null,
+      type: 'mudanca_estado',
+      body: 'Convite aceite — conta criada'
+    });
+  }
 }
 
 export type LeadDetail = {lead: LeadRow; activities: ActivityRow[]};
