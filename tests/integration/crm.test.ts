@@ -8,6 +8,7 @@ import {
   addActivity,
   listLeads,
   getLeadDetail,
+  deleteLead,
   convertLeadToInvite,
   linkConvertedInvite,
   listPendingFollowups,
@@ -287,5 +288,55 @@ describe('linkConvertedInvite', () => {
     const detail = await getLeadDetail(id);
     expect(detail!.lead.stage).toBe('convertido');
     expect(detail!.lead.converted_user_id).toBe(fakeUserId);
+  });
+});
+
+describe('deleteLead', () => {
+  it('elimina o lead e leva as atividades atrás (cascade)', async () => {
+    const {id} = await createLead({
+      fullName: 'Para apagar',
+      email: email(),
+      createdBy: staffId
+    });
+    await addActivity(id, {type: 'nota', body: 'fica sem dono'}, staffId);
+    const {count: antes} = await admin
+      .from('crm_activities')
+      .select('id', {count: 'exact', head: true})
+      .eq('lead_id', id);
+    expect(antes).toBe(1);
+
+    await deleteLead(id);
+
+    expect(await getLeadDetail(id)).toBeNull();
+    expect((await listLeads()).some((l) => l.id === id)).toBe(false);
+    const {count: depois} = await admin
+      .from('crm_activities')
+      .select('id', {count: 'exact', head: true})
+      .eq('lead_id', id);
+    expect(depois).toBe(0);
+  });
+
+  it('não arrasta o convite de um lead já convertido', async () => {
+    const mail = email();
+    const {id} = await createLead({
+      fullName: 'Convertido e apagado',
+      email: mail,
+      createdBy: staffId
+    });
+    const res = await convertLeadToInvite(
+      id,
+      {locale: 'pt', actorId: staffId, appUrl: APP_URL},
+      noop
+    );
+    expect(res.status).toBe('invited');
+
+    await deleteLead(id);
+
+    // O convite emitido sobrevive: a FK é `on delete set null` do lado do lead.
+    const {count} = await admin
+      .from('invites')
+      .select('id', {count: 'exact', head: true})
+      .eq('email', mail);
+    expect(count).toBe(1);
   });
 });

@@ -2,7 +2,8 @@
 
 import {useState} from 'react';
 import {useTranslations} from 'next-intl';
-import {SendIcon, UserCheckIcon} from 'lucide-react';
+import {useRouter} from '@/i18n/navigation';
+import {SendIcon, Trash2Icon, UserCheckIcon} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Spinner} from '@/components/ui/spinner';
@@ -12,6 +13,7 @@ import type {Locale} from '@/lib/mail/templates';
 import {
   addActivityAction,
   convertLeadToInviteAction,
+  deleteLeadAction,
   moveLeadStageAction,
   updateLeadAction
 } from './actions';
@@ -51,7 +53,7 @@ const PANEL = 'rounded-xl border border-border bg-card p-4';
 const SECTION_TITLE =
   'text-[0.6875rem] font-bold tracking-[0.1em] text-ink-muted uppercase';
 
-type Busy = 'stage' | 'convert' | 'activity' | 'details' | null;
+type Busy = 'stage' | 'convert' | 'activity' | 'details' | 'delete' | null;
 
 function eur(v: number): string {
   return new Intl.NumberFormat('pt-PT', {
@@ -65,17 +67,24 @@ export function LeadDetail({
   locale,
   view,
   variant = 'page',
-  onChanged
+  onChanged,
+  onDeleted
 }: {
   locale: Locale;
   view: LeadDetailView;
   /** No modal o nome já está no título do diálogo e não há coluna fixa. */
   variant?: 'page' | 'dialog';
   onChanged?: () => void;
+  /** O que fazer depois de eliminar. Por omissão, volta ao pipeline. */
+  onDeleted?: () => void;
 }) {
   const t = useTranslations('Crm');
+  const router = useRouter();
   // Qual das ações está a decorrer (para o indicador ficar no sítio certo).
   const [busy, setBusy] = useState<Busy>(null);
+  // Eliminar pede confirmação: o botão dá lugar à pergunta, ali mesmo. Um
+  // diálogo dentro do diálogo do detalhe seria pior de usar do que isto.
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const pending = busy !== null;
   const {lead, activities} = view;
   const isPage = variant === 'page';
@@ -89,6 +98,20 @@ export function LeadDetail({
       await fn();
       onChanged?.();
     } finally {
+      setBusy(null);
+    }
+  }
+
+  // Eliminar não passa pelo `run`: depois de apagar não há detalhe para
+  // recarregar — fecha-se o modal ou volta-se ao pipeline.
+  async function onDelete() {
+    setBusy('delete');
+    try {
+      await deleteLeadAction(locale, lead.id);
+      if (onDeleted) onDeleted();
+      else router.push('/crm');
+    } catch {
+      // Falhou: devolve o controlo com a confirmação ainda aberta.
       setBusy(null);
     }
   }
@@ -384,6 +407,46 @@ export function LeadDetail({
             {t('save')}
           </Button>
         </form>
+      </div>
+
+      {/* Eliminar. Fora dos formulários acima (não se aninham) e no fim, atrás
+          de uma confirmação — é a única ação daqui que não se desfaz. */}
+      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border pt-4">
+        {confirmDelete ? (
+          <>
+            <p className="mr-auto text-sm text-ink-soft">{t('deleteConfirm')}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={pending}
+              onClick={() => setConfirmDelete(false)}
+            >
+              {t('cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              loading={busy === 'delete'}
+              disabled={pending}
+              onClick={onDelete}
+            >
+              <Trash2Icon aria-hidden className="size-4" />
+              {t('deleteLead')}
+            </Button>
+          </>
+        ) : (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => setConfirmDelete(true)}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition hover:text-destructive disabled:opacity-50"
+          >
+            <Trash2Icon aria-hidden className="size-4" />
+            {t('deleteLead')}
+          </button>
+        )}
       </div>
     </div>
   );
