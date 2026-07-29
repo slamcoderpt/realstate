@@ -2,7 +2,7 @@
 
 import {revalidatePath} from 'next/cache';
 import {headers} from 'next/headers';
-import {requireStaff} from '@/lib/auth/staff';
+import {asStaff} from '@/lib/auth/staff';
 import type {Locale} from '@/lib/mail/templates';
 import {createInvite, revokeInvite, resendInvite} from '@/lib/invites/service';
 
@@ -20,34 +20,37 @@ async function appUrl(): Promise<string> {
 }
 
 export async function createInviteAction(formData: FormData): Promise<void> {
-  const session = await requireStaff();
-  const fullName = String(formData.get('fullName') ?? '').trim();
-  const email = String(formData.get('email') ?? '').trim();
-  const locale = localeFrom(formData);
-  if (!fullName || !email) throw new Error('nome e email são obrigatórios');
+  return asStaff(async (session) => {
+    const fullName = String(formData.get('fullName') ?? '').trim();
+    const email = String(formData.get('email') ?? '').trim();
+    const locale = localeFrom(formData);
+    if (!fullName || !email) throw new Error('nome e email são obrigatórios');
 
-  await createInvite({
-    fullName,
-    email,
-    locale,
-    actorId: session.userId,
-    appUrl: await appUrl()
+    await createInvite({
+      fullName,
+      email,
+      locale,
+      actorId: session.userId,
+      appUrl: await appUrl()
+    });
+    revalidatePath(`/${locale}/convites`);
   });
-  revalidatePath(`/${locale}/convites`);
 }
 
 export async function revokeInviteAction(formData: FormData): Promise<void> {
-  await requireStaff();
-  const id = String(formData.get('id') ?? '');
-  const locale = localeFrom(formData);
-  if (id) await revokeInvite(id);
-  revalidatePath(`/${locale}/convites`);
+  return asStaff(async () => {
+    const id = String(formData.get('id') ?? '');
+    const locale = localeFrom(formData);
+    if (id) await revokeInvite(id);
+    revalidatePath(`/${locale}/convites`);
+  });
 }
 
 export async function resendInviteAction(formData: FormData): Promise<void> {
-  await requireStaff();
-  const id = String(formData.get('id') ?? '');
-  const locale = localeFrom(formData);
-  if (id) await resendInvite({id, locale, appUrl: await appUrl()});
-  revalidatePath(`/${locale}/convites`);
+  return asStaff(async () => {
+    const id = String(formData.get('id') ?? '');
+    const locale = localeFrom(formData);
+    if (id) await resendInvite({id, locale, appUrl: await appUrl()});
+    revalidatePath(`/${locale}/convites`);
+  });
 }

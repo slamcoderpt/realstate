@@ -1,6 +1,6 @@
 'use server';
 
-import {requireStaff} from '@/lib/auth/staff';
+import {asStaff} from '@/lib/auth/staff';
 import {
   transitionSubscription,
   cancelSubscription,
@@ -19,19 +19,20 @@ export async function advanceSubscriptionAction(
   to: SubscriptionStatus,
   formData: FormData
 ): Promise<void> {
-  const s = await requireStaff();
-  const confirmedRef =
-    to === 'fundos_confirmados'
-      ? String(formData.get('confirmed_ref') ?? '')
-      : undefined;
-  await transitionSubscription({
-    id: subscriptionId,
-    to,
-    reviewerId: s.userId,
-    locale,
-    confirmedRef
+  return asStaff(async (s) => {
+    const confirmedRef =
+      to === 'fundos_confirmados'
+        ? String(formData.get('confirmed_ref') ?? '')
+        : undefined;
+    await transitionSubscription({
+      id: subscriptionId,
+      to,
+      reviewerId: s.userId,
+      locale,
+      confirmedRef
+    });
+    revalidatePath(`/${locale}/gestao-projetos/${projectId}/subscricoes`);
   });
-  revalidatePath(`/${locale}/gestao-projetos/${projectId}/subscricoes`);
 }
 
 export async function cancelSubscriptionAdminAction(
@@ -39,9 +40,10 @@ export async function cancelSubscriptionAdminAction(
   projectId: string,
   subscriptionId: string
 ): Promise<void> {
-  const s = await requireStaff();
-  await cancelSubscription({id: subscriptionId, byUserId: s.userId, isStaff: true});
-  revalidatePath(`/${locale}/gestao-projetos/${projectId}/subscricoes`);
+  return asStaff(async (s) => {
+    await cancelSubscription({id: subscriptionId, byUserId: s.userId, isStaff: true});
+    revalidatePath(`/${locale}/gestao-projetos/${projectId}/subscricoes`);
+  });
 }
 
 export async function uploadContractAction(
@@ -50,12 +52,13 @@ export async function uploadContractAction(
   subscriptionId: string,
   formData: FormData
 ): Promise<void> {
-  await requireStaff();
-  const file = formData.get('contract');
-  if (!(file instanceof File) || file.size === 0) return;
-  const db = createAdminClient();
-  const path = contractPath(subscriptionId, file.name);
-  await uploadContract(path, file, db);
-  await attachContract(subscriptionId, path, db);
-  revalidatePath(`/${locale}/gestao-projetos/${projectId}/subscricoes`);
+  return asStaff(async () => {
+    const file = formData.get('contract');
+    if (!(file instanceof File) || file.size === 0) return;
+    const db = createAdminClient();
+    const path = contractPath(subscriptionId, file.name);
+    await uploadContract(path, file, db);
+    await attachContract(subscriptionId, path, db);
+    revalidatePath(`/${locale}/gestao-projetos/${projectId}/subscricoes`);
+  });
 }

@@ -2,6 +2,7 @@
 
 import {headers} from 'next/headers';
 import {getSession} from '@/lib/auth/staff';
+import {withAuditActor} from '@/lib/audit/actor';
 import {clientIpFromHeaders} from '@/lib/auth/request';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {submitKyc, type CitizenType, type KycDocType} from '@/lib/kyc/service';
@@ -19,45 +20,47 @@ export async function submitKycAction(
   const session = await getSession();
   if (!session) return {ok: false, error: 'sessão inválida'};
 
-  const citizenType = formData.get('citizen_type') as CitizenType;
-  if (citizenType !== 'pt' && citizenType !== 'foreign') {
-    return {ok: false, error: 'invalid_citizen_type'};
-  }
-  const nif = String(formData.get('nif') ?? '');
-  const fullName = String(formData.get('full_name') ?? '');
-  const consent = formData.get('consent') === 'on';
-  if (!consent) return {ok: false, error: 'consent_required'};
+  return withAuditActor(session.userId, async () => {
+    const citizenType = formData.get('citizen_type') as CitizenType;
+    if (citizenType !== 'pt' && citizenType !== 'foreign') {
+      return {ok: false, error: 'invalid_citizen_type'};
+    }
+    const nif = String(formData.get('nif') ?? '');
+    const fullName = String(formData.get('full_name') ?? '');
+    const consent = formData.get('consent') === 'on';
+    if (!consent) return {ok: false, error: 'consent_required'};
 
-  const documents = DOC_FIELDS.flatMap((docType) => {
-    const file = formData.get(docType);
-    return file instanceof File && file.size > 0 ? [{docType, file}] : [];
-  });
-
-  const db = createAdminClient();
-  const {data: setting} = await db
-    .from('platform_settings')
-    .select('value')
-    .eq('key', 'kyc_consent_version')
-    .single();
-  const consentVersion =
-    typeof setting?.value === 'string' ? setting.value : 'v1';
-
-  const ip = clientIpFromHeaders(await headers()) ?? undefined;
-
-  try {
-    await submitKyc({
-      userId: session.userId,
-      citizenType,
-      nif,
-      fullName,
-      consentVersion,
-      submittedIp: ip,
-      locale,
-      documents
+    const documents = DOC_FIELDS.flatMap((docType) => {
+      const file = formData.get(docType);
+      return file instanceof File && file.size > 0 ? [{docType, file}] : [];
     });
-    return {ok: true};
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'erro';
-    return {ok: false, error: msg};
-  }
+
+    const db = createAdminClient();
+    const {data: setting} = await db
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'kyc_consent_version')
+      .single();
+    const consentVersion =
+      typeof setting?.value === 'string' ? setting.value : 'v1';
+
+    const ip = clientIpFromHeaders(await headers()) ?? undefined;
+
+    try {
+      await submitKyc({
+        userId: session.userId,
+        citizenType,
+        nif,
+        fullName,
+        consentVersion,
+        submittedIp: ip,
+        locale,
+        documents
+      });
+      return {ok: true};
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'erro';
+      return {ok: false, error: msg};
+    }
+  });
 }

@@ -3,6 +3,7 @@ import {cache} from 'react';
 import {createClient} from '@/lib/supabase/server';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {decodeAccessToken} from '@/lib/auth/claims';
+import {withAuditActor} from '@/lib/audit/actor';
 
 /**
  * Autorização server-side. O role vem do claim `user_role` do JWT (injetado pelo
@@ -112,4 +113,23 @@ export async function requireAdmin(): Promise<Session> {
     throw new Error('acesso restrito a administradores');
   }
   return session;
+}
+
+/**
+ * Envelope das Server Actions de staff: autoriza e corre o trabalho com o ator
+ * marcado, para que as escritas lá dentro cheguem ao `audit_log` com autor.
+ *
+ * Serve para não haver duas coisas a lembrar. Quem chamar `requireStaff()` à
+ * mão continua a autorizar bem, mas a escrita fica sem autor — por isso as
+ * ações usam este.
+ */
+export async function asStaff<T>(fn: (session: Session) => Promise<T>): Promise<T> {
+  const session = await requireStaff();
+  return withAuditActor(session.userId, () => fn(session));
+}
+
+/** O mesmo, mas só para `admin`. Ver `requireAdmin`. */
+export async function asAdmin<T>(fn: (session: Session) => Promise<T>): Promise<T> {
+  const session = await requireAdmin();
+  return withAuditActor(session.userId, () => fn(session));
 }

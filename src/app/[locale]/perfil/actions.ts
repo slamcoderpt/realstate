@@ -3,6 +3,7 @@
 import {createClient} from '@supabase/supabase-js';
 import {revalidatePath} from 'next/cache';
 import {getSession} from '@/lib/auth/staff';
+import {withAuditActor} from '@/lib/audit/actor';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {MIN_PASSWORD_LENGTH} from '@/lib/invites/accept';
 
@@ -41,28 +42,30 @@ export async function updateProfileAction(
   const session = await getSession();
   if (!session) return {ok: false, error: 'saveError'};
 
-  const fullName = String(formData.get('fullName') ?? '')
-    .trim()
-    .slice(0, FULL_NAME_MAX);
-  // O idioma é fechado à lista da coluna (`check (preferred_locale in
-  // ('pt','en'))`): qualquer outro valor rebentaria o UPDATE com um erro de
-  // constraint em vez de uma recusa legível.
-  const preferredLocale = formData.get('language') === 'en' ? 'en' : 'pt';
+  return withAuditActor(session.userId, async () => {
+    const fullName = String(formData.get('fullName') ?? '')
+      .trim()
+      .slice(0, FULL_NAME_MAX);
+    // O idioma é fechado à lista da coluna (`check (preferred_locale in
+    // ('pt','en'))`): qualquer outro valor rebentaria o UPDATE com um erro de
+    // constraint em vez de uma recusa legível.
+    const preferredLocale = formData.get('language') === 'en' ? 'en' : 'pt';
 
-  // Nome vazio apagaria a identificação do utilizador em todo o back-office
-  // (listagens, auditoria) sem que ninguém tivesse pedido isso.
-  if (!fullName) return {ok: false, error: 'saveError'};
+    // Nome vazio apagaria a identificação do utilizador em todo o back-office
+    // (listagens, auditoria) sem que ninguém tivesse pedido isso.
+    if (!fullName) return {ok: false, error: 'saveError'};
 
-  const db = createAdminClient();
-  const {error} = await db
-    .from('profiles')
-    .update({full_name: fullName, preferred_locale: preferredLocale})
-    .eq('id', session.userId);
-  if (error) return {ok: false, error: 'saveError'};
+    const db = createAdminClient();
+    const {error} = await db
+      .from('profiles')
+      .update({full_name: fullName, preferred_locale: preferredLocale})
+      .eq('id', session.userId);
+    if (error) return {ok: false, error: 'saveError'};
 
-  // Rota dinâmica: o caminho concreto é no-op, o padrão do segmento é que conta.
-  revalidatePath('/[locale]/perfil', 'page');
-  return {ok: true};
+    // Rota dinâmica: o caminho concreto é no-op, o padrão do segmento é que conta.
+    revalidatePath('/[locale]/perfil', 'page');
+    return {ok: true};
+  });
 }
 
 /**

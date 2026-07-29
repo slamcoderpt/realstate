@@ -2,6 +2,7 @@
 
 import {createClient} from '@/lib/supabase/server';
 import {createAdminClient} from '@/lib/supabase/admin';
+import {withAuditActor} from '@/lib/audit/actor';
 
 /**
  * Marca que o utilizador já viu o ecrã de configuração de MFA — para não voltar
@@ -15,9 +16,14 @@ export async function dismissMfaPrompt(): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  const admin = createAdminClient();
-  await admin
-    .from('profiles')
-    .update({mfa_prompt_seen: true})
-    .eq('id', user.id);
+  // Esta ação resolve o utilizador à mão (não é de staff, não passa por
+  // `asStaff`), por isso põe o envelope ela própria — senão a escrita ia parar
+  // ao log sem autor.
+  await withAuditActor(user.id, async () => {
+    const admin = createAdminClient();
+    await admin
+      .from('profiles')
+      .update({mfa_prompt_seen: true})
+      .eq('id', user.id);
+  });
 }
