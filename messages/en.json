@@ -561,6 +561,9 @@
     "filterAllTags": "All tags",
     "clearFilters": "Clear filters",
     "tags": "Tags",
-    "tagsHint": "Comma-separated."
+    "tagsHint": "Comma-separated.",
+    "filterByOwner": "Filter by owner",
+    "filterBySource": "Filter by source",
+    "filterByTag": "Filter by tag"
   }
 }

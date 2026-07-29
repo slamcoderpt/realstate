@@ -561,6 +561,9 @@
     "filterAllTags": "Todas as tags",
     "clearFilters": "Limpar filtros",
     "tags": "Tags",
-    "tagsHint": "Separadas por vírgula."
+    "tagsHint": "Separadas por vírgula.",
+    "filterByOwner": "Filtrar por responsável",
+    "filterBySource": "Filtrar por origem",
+    "filterByTag": "Filtrar por tag"
   }
 }

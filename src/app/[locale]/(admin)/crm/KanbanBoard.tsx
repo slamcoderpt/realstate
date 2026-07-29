@@ -73,8 +73,13 @@ export function KanbanBoard({
     return true;
   }
 
-  function onDrop(stage: CrmStage) {
-    const id = dragging;
+  // O id do cartão viaja no `dataTransfer` (e não apenas no estado React): é o
+  // canal que o próprio HTML5 drag-and-drop garante entre o início e o largar.
+  // Depender só do estado deixava o largar sujeito a uma corrida com o
+  // `dragend`, e alguns browsers nem iniciam o arrasto sem dados definidos.
+  function onDrop(e: React.DragEvent, stage: CrmStage) {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text/plain') || dragging;
     setDragOver(null);
     setDragging(null);
     if (!id) return;
@@ -88,7 +93,7 @@ export function KanbanBoard({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <select
-          aria-label={t('ownerLabel')}
+          aria-label={t('filterByOwner')}
           value={owner}
           onChange={(e) => setOwner(e.target.value)}
           className={CONTROL}
@@ -101,7 +106,7 @@ export function KanbanBoard({
           ))}
         </select>
         <select
-          aria-label={t('source')}
+          aria-label={t('filterBySource')}
           value={source}
           onChange={(e) => setSource(e.target.value)}
           className={CONTROL}
@@ -115,7 +120,7 @@ export function KanbanBoard({
         </select>
         {tags.length > 0 && (
           <select
-            aria-label="tag"
+            aria-label={t('filterByTag')}
             value={tag}
             onChange={(e) => setTag(e.target.value)}
             className={CONTROL}
@@ -153,12 +158,13 @@ export function KanbanBoard({
               key={col.stage}
               onDragOver={(e) => {
                 e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
                 setDragOver(col.stage);
               }}
               onDragLeave={() =>
                 setDragOver((s) => (s === col.stage ? null : s))
               }
-              onDrop={() => onDrop(col.stage)}
+              onDrop={(e) => onDrop(e, col.stage)}
               className={`flex w-72 shrink-0 flex-col rounded-[var(--radius-card)] border bg-secondary/50 ${
                 dragOver === col.stage
                   ? 'border-brand-400 bg-brand-50'
@@ -184,7 +190,11 @@ export function KanbanBoard({
                     <article
                       key={lead.id}
                       draggable
-                      onDragStart={() => setDragging(lead.id)}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', lead.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                        setDragging(lead.id);
+                      }}
                       onDragEnd={() => setDragging(null)}
                       onClick={() => router.push(`/crm/${lead.id}`)}
                       className={`cursor-pointer rounded-xl border border-border bg-card p-3 shadow-[var(--shadow-card)] transition hover:border-brand-200 hover:shadow-[0_10px_24px_rgba(0,107,255,0.12)] ${
