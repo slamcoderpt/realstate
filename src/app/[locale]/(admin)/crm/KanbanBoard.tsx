@@ -1,7 +1,6 @@
 'use client';
 
-import {useMemo, useState, useTransition} from 'react';
-import {useRouter} from '@/i18n/navigation';
+import {useEffect, useMemo, useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {UserRoundIcon} from 'lucide-react';
 import type {Locale} from '@/lib/mail/templates';
@@ -42,12 +41,14 @@ export function KanbanBoard({
   columns: Column[];
 }) {
   const t = useTranslations('Crm');
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
   const [dragOver, setDragOver] = useState<CrmStage | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   // Lead aberta em modal (null = fechado). O detalhe abre por cima do board.
   const [openLead, setOpenLead] = useState<string | null>(null);
+  // Estado otimista do arrastar: id do cartão → coluna onde já o largámos. O
+  // cartão muda de sítio no instante do largar e a gravação segue em pano de
+  // fundo; esperar pela ida ao servidor dava 2-3 s de cartão parado.
+  const [moved, setMoved] = useState<Record<string, CrmStage>>({});
 
   // Filtros (client-side, sobre os cartões já carregados).
   const [owner, setOwner] = useState('');
@@ -69,6 +70,35 @@ export function KanbanBoard({
     [columns]
   );
 
+  // Colunas com o movimento otimista já aplicado.
+  const board = useMemo(() => {
+    if (Object.keys(moved).length === 0) return columns;
+    const placed = columns.flatMap((c) =>
+      c.leads.map((l) => ({lead: l, stage: moved[l.id] ?? c.stage}))
+    );
+    return columns.map((c) => ({
+      ...c,
+      leads: placed.filter((p) => p.stage === c.stage).map((p) => p.lead)
+    }));
+  }, [columns, moved]);
+
+  // Quando o servidor confirma (as props já trazem o cartão na coluna certa), o
+  // otimismo deixa de ser preciso — largá-lo aqui evita ficar a mascarar dados.
+  useEffect(() => {
+    setMoved((prev) => {
+      if (Object.keys(prev).length === 0) return prev;
+      const next = {...prev};
+      let changed = false;
+      for (const c of columns)
+        for (const l of c.leads)
+          if (next[l.id] === c.stage) {
+            delete next[l.id];
+            changed = true;
+          }
+      return changed ? next : prev;
+    });
+  }, [columns]);
+
   function keep(l: LeadCard): boolean {
     if (owner && l.ownerName !== owner) return false;
     if (source && l.source !== source) return false;
@@ -86,9 +116,18 @@ export function KanbanBoard({
     setDragOver(null);
     setDragging(null);
     if (!id) return;
-    startTransition(async () => {
-      await moveLeadStageAction(locale, id, stage);
-      router.refresh();
+    // Largado na coluna onde já estava: nada a gravar.
+    const from = board.find((c) => c.leads.some((l) => l.id === id));
+    if (!from || from.stage === stage) return;
+    setMoved((m) => ({...m, [id]: stage}));
+    // Sem `await`: a ação revalida `/crm` e as props chegam sozinhas. Se falhar,
+    // desfaz-se o movimento para não mentir sobre o estado gravado.
+    moveLeadStageAction(locale, id, stage).catch(() => {
+      setMoved((m) => {
+        const next = {...m};
+        delete next[id];
+        return next;
+      });
     });
   }
 
@@ -151,10 +190,8 @@ export function KanbanBoard({
         )}
       </div>
 
-      <div
-        className={`flex gap-4 overflow-x-auto scroll-soft pb-3 ${pending ? 'opacity-70' : ''}`}
-      >
-        {columns.map((col) => {
+      <div className="flex gap-4 overflow-x-auto scroll-soft pb-3">
+        {board.map((col) => {
           const visible = col.leads.filter(keep);
           return (
             <section
@@ -256,14 +293,12 @@ export function KanbanBoard({
         })}
       </div>
 
+      {/* O board por trás é atualizado pelo `revalidatePath` das próprias ações
+          do modal — não é preciso refrescar ao fechar. */}
       <LeadDialog
         locale={locale}
         leadId={openLead}
-        onClose={() => {
-          setOpenLead(null);
-          // O board pode ter mudado com o que se fez no modal.
-          router.refresh();
-        }}
+        onClose={() => setOpenLead(null)}
       />
     </div>
   );
