@@ -13,6 +13,7 @@ import {
   type CrmInvestorProfile,
   type CrmActivityType
 } from '@/lib/crm/service';
+import {getLeadDetailView, type LeadDetailView} from '@/lib/crm/detail-dto';
 import type {Locale} from '@/lib/mail/templates';
 import {revalidatePath} from 'next/cache';
 import {headers} from 'next/headers';
@@ -64,6 +65,18 @@ export async function createLeadAction(
     createdBy: s.userId
   });
   revalidatePath(`/${locale}/crm`);
+}
+
+/**
+ * Detalhe de uma lead para o modal do kanban (o único sítio que o busca a
+ * partir do cliente). Devolve já formatado — ver `getLeadDetailView`.
+ */
+export async function loadLeadDetailAction(
+  locale: Locale,
+  id: string
+): Promise<LeadDetailView | null> {
+  await requireStaff();
+  return getLeadDetailView(id, locale);
 }
 
 export async function updateLeadAction(

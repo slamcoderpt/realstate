@@ -564,6 +564,9 @@
     "tagsHint": "Comma-separated.",
     "filterByOwner": "Filter by owner",
     "filterBySource": "Filter by source",
-    "filterByTag": "Filter by tag"
+    "filterByTag": "Filter by tag",
+    "close": "Close",
+    "loading": "Loading…",
+    "openFullPage": "Open full page"
   }
 }
