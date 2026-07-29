@@ -7,6 +7,7 @@ import {UserRoundIcon} from 'lucide-react';
 import type {Locale} from '@/lib/mail/templates';
 import type {CrmStage} from '@/lib/crm/service';
 import {moveLeadStageAction} from './actions';
+import {LeadDialog} from './LeadDialog';
 
 export type LeadCard = {
   id: string;
@@ -45,6 +46,8 @@ export function KanbanBoard({
   const [pending, startTransition] = useTransition();
   const [dragOver, setDragOver] = useState<CrmStage | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
+  // Lead aberta em modal (null = fechado). O detalhe abre por cima do board.
+  const [openLead, setOpenLead] = useState<string | null>(null);
 
   // Filtros (client-side, sobre os cartões já carregados).
   const [owner, setOwner] = useState('');
@@ -196,7 +199,17 @@ export function KanbanBoard({
                         setDragging(lead.id);
                       }}
                       onDragEnd={() => setDragging(null)}
-                      onClick={() => router.push(`/crm/${lead.id}`)}
+                      // Abre o detalhe em modal (sem sair do board). O teclado
+                      // chega ao cartão como a um botão — é a mesma ação.
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setOpenLead(lead.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setOpenLead(lead.id);
+                        }
+                      }}
                       className={`cursor-pointer rounded-xl border border-border bg-card p-3 shadow-[var(--shadow-card)] transition hover:border-brand-200 hover:shadow-[0_10px_24px_rgba(0,107,255,0.12)] ${
                         dragging === lead.id ? 'opacity-40' : ''
                       }`}
@@ -242,6 +255,16 @@ export function KanbanBoard({
           );
         })}
       </div>
+
+      <LeadDialog
+        locale={locale}
+        leadId={openLead}
+        onClose={() => {
+          setOpenLead(null);
+          // O board pode ter mudado com o que se fez no modal.
+          router.refresh();
+        }}
+      />
     </div>
   );
 }

@@ -6,7 +6,15 @@ import {PlusIcon} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Label} from '@/components/ui/label';
-import {Card, CardContent} from '@/components/ui/card';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
 import type {Locale} from '@/lib/mail/templates';
 import {createLeadAction} from './actions';
 
@@ -17,22 +25,29 @@ const PROFILES = ['retail', 'qualificado', 'institucional'];
 const CONTROL =
   'h-11 w-full rounded-xl border border-input bg-white px-3.5 text-sm text-ink outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
+/** Criação de lead em janela modal — o board fica visível por trás. */
 export function NewLeadForm({locale}: {locale: Locale}) {
   const t = useTranslations('Crm');
   const [open, setOpen] = useState(false);
 
-  if (!open) {
-    return (
-      <Button onClick={() => setOpen(true)}>
-        <PlusIcon aria-hidden className="size-4" />
-        {t('newLead')}
-      </Button>
-    );
-  }
-
   return (
-    <Card className="w-full max-w-xl">
-      <CardContent>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <PlusIcon aria-hidden className="size-4" />
+          {t('newLead')}
+        </Button>
+      </DialogTrigger>
+      <DialogContent
+        showCloseButton={false}
+        className="max-h-[90vh] overflow-y-auto scroll-soft rounded-[var(--radius-card)] sm:max-w-2xl"
+      >
+        <DialogHeader>
+          <DialogTitle className="text-xl font-extrabold tracking-tight text-ink">
+            {t('newLead')}
+          </DialogTitle>
+          <DialogDescription>{t('subtitle')}</DialogDescription>
+        </DialogHeader>
         <form
           action={async (fd) => {
             await createLeadAction(locale, fd);
@@ -108,12 +123,14 @@ export function NewLeadForm({locale}: {locale: Locale}) {
           </div>
           <div className="flex gap-3 sm:col-span-2">
             <Button type="submit">{t('save')}</Button>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              {t('cancel')}
-            </Button>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                {t('cancel')}
+              </Button>
+            </DialogClose>
           </div>
         </form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -114,20 +114,28 @@ test('CRM: criar lead, arrastar no kanban, follow-up e converter', async ({
   await expect(colOf('Novo').locator('article', {hasText: leadName})).toHaveCount(0);
 
   // O arrastar tem de deixar rasto na timeline — é o que garante que não se
-  // perde informação sobre COMO o lead avançou.
+  // perde informação sobre COMO o lead avançou. O detalhe abre em MODAL, por
+  // cima do board (sem navegação).
   await card.first().click();
-  await page.waitForURL('**/pt/crm/**');
-  await expect(page.getByText('novo → qualificado')).toBeVisible();
+  const modal = page.getByRole('dialog');
+  await expect(modal.getByRole('heading', {name: leadName})).toBeVisible();
+  expect(page.url()).toContain('/pt/crm');
+  expect(page.url()).not.toMatch(/\/pt\/crm\/.+/);
+  await expect(modal.getByText('novo → qualificado')).toBeVisible();
 
-  // --- Registar follow-up ---------------------------------------------------
-  const actForm = page
+  // --- Registar follow-up (dentro do modal) ---------------------------------
+  const actForm = modal
     .locator('form')
     .filter({has: page.locator('textarea[name="body"]')});
   await actForm.locator('select[name="type"]').selectOption('chamada');
   await actForm.locator('input[name="due_at"]').fill('2026-08-05');
   await actForm.locator('textarea[name="body"]').fill('Ligar para agendar.');
   await actForm.getByRole('button', {name: 'Guardar'}).click();
-  await expect(page.getByText('Ligar para agendar.')).toBeVisible();
+  await expect(modal.getByText('Ligar para agendar.')).toBeVisible();
+
+  // Fechar devolve ao board, com o cartão no sítio onde ficou.
+  await modal.getByRole('button', {name: 'Fechar'}).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 
   // Aparece no painel de follow-ups do board.
   await page.goto('/pt/crm');
@@ -151,14 +159,26 @@ test('CRM: criar lead, arrastar no kanban, follow-up e converter', async ({
     .getByLabel('Filtrar por responsável')
     .selectOption(`CRM Staff ${run}`);
   await page.locator('article', {hasText: leadName}).first().click();
-  await page.waitForURL('**/pt/crm/**');
-  await page.getByRole('button', {name: 'Converter em convite'}).click();
+  const detail = page.getByRole('dialog');
+  await expect(detail.getByRole('heading', {name: leadName})).toBeVisible();
+  await detail.getByRole('button', {name: 'Converter em convite'}).click();
 
   // O botão dá lugar ao estado, e o lead muda de coluna.
-  await expect(page.getByText('Convite enviado').first()).toBeVisible();
+  await expect(detail.getByText('Convite enviado').first()).toBeVisible();
   await expect(
-    page.getByRole('button', {name: 'Converter em convite'})
+    detail.getByRole('button', {name: 'Converter em convite'})
   ).toHaveCount(0);
+
+  // O modal é um atalho, não uma substituição: a página do lead continua a
+  // servir os links diretos (é para lá que apontam os follow-ups do board).
+  const {data: row} = await admin
+    .from('crm_leads')
+    .select('id')
+    .eq('email', leadEmail)
+    .single();
+  await page.goto(`/pt/crm/${row!.id}`);
+  await expect(page.getByRole('heading', {name: leadName})).toBeVisible();
+  await expect(page.getByText('Ligar para agendar.')).toBeVisible();
 
   // Não se criou convite duplicado — a deduplicação reutilizou o pendente.
   const {count} = await admin
