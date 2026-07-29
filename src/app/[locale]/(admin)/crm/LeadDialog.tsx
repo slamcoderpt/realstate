@@ -110,6 +110,7 @@ export function LeadDialog({
             onChanged={() => {
               if (leadId) void load(leadId);
             }}
+            onDeleted={onClose}
           />
         ) : (
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-ink-muted">

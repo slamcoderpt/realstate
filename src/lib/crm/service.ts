@@ -170,6 +170,27 @@ export async function updateLead(
 }
 
 /**
+ * Elimina um lead. As atividades vão atrás por `on delete cascade`.
+ *
+ * O trigger `crm_leads_audit` guarda a linha eliminada inteira no `audit_log`
+ * (payload `old`), o que permite reconstruir o que se perdeu. O `actor_id`
+ * dessa entrada fica a null: `audit_row_change` usa `auth.uid()` e a escrita
+ * passa por service role, como todas as escritas do CRM — quem apagou não
+ * fica registado, só o quê e o quando.
+ *
+ * Não toca no convite nem na conta de um lead já convertido: essas ligações são
+ * `on delete set null` DESTE lado, ou seja, apagar o lead nunca arrasta um
+ * convite emitido ou um utilizador registado.
+ */
+export async function deleteLead(
+  id: string,
+  db: SupabaseClient = createAdminClient()
+): Promise<void> {
+  const {error} = await db.from('crm_leads').delete().eq('id', id);
+  if (error) throw new Error(`eliminar lead falhou: ${error.message}`);
+}
+
+/**
  * Move um lead de estado e regista automaticamente a mudança na timeline — é
  * este registo que mantém o histórico completo ("não perder informação").
  */

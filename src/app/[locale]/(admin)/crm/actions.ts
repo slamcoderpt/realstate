@@ -4,6 +4,7 @@ import {requireStaff} from '@/lib/auth/staff';
 import {
   createLead,
   updateLead,
+  deleteLead,
   moveLeadStage,
   addActivity,
   convertLeadToInvite,
@@ -104,6 +105,20 @@ export async function updateLeadAction(
   });
   revalidatePath(`/${locale}/crm/${id}`);
   revalidatePath(`/${locale}/crm`);
+}
+
+/**
+ * Elimina o lead e o seu histórico. Irreversível na app — o rasto fica no
+ * `audit_log`, escrito pelo trigger da tabela.
+ */
+export async function deleteLeadAction(
+  locale: Locale,
+  id: string
+): Promise<void> {
+  await requireStaff();
+  await deleteLead(id);
+  revalidatePath(`/${locale}/crm`);
+  revalidatePath(`/${locale}/crm/${id}`);
 }
 
 export async function moveLeadStageAction(

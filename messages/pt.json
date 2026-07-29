@@ -567,6 +567,8 @@
     "filterByTag": "Filtrar por tag",
     "close": "Fechar",
     "loading": "A carregar…",
-    "openFullPage": "Abrir página completa"
+    "openFullPage": "Abrir página completa",
+    "deleteLead": "Eliminar lead",
+    "deleteConfirm": "Eliminar definitivamente? O histórico desta lead é apagado com ela."
   }
 }

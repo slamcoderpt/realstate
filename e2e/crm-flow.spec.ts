@@ -188,4 +188,29 @@ test('CRM: criar lead, arrastar no kanban, follow-up e converter', async ({
     .select('id', {count: 'exact', head: true})
     .eq('email', leadEmail);
   expect(count).toBe(1);
+
+  // --- Eliminar o lead (dois passos: pedir e confirmar) ---------------------
+  // Feito a partir da página, que é onde o teste já está; o modal usa o mesmo
+  // componente. O primeiro clique só revela a confirmação.
+  await page.getByRole('button', {name: 'Eliminar lead'}).click();
+  await expect(page.getByText('Eliminar definitivamente?')).toBeVisible();
+  await page.getByRole('button', {name: 'Eliminar lead'}).click();
+
+  // Volta ao pipeline e o cartão desapareceu do board. Sem filtrar por
+  // responsável: apagado o único lead, o board pode ficar vazio e aí nem há
+  // filtros para escolher.
+  await page.waitForURL('**/pt/crm');
+  await expect(page.locator('article', {hasText: leadName})).toHaveCount(0);
+
+  // A lead saiu mesmo da base, e as atividades foram com ela.
+  const {count: leadsLeft} = await admin
+    .from('crm_leads')
+    .select('id', {count: 'exact', head: true})
+    .eq('email', leadEmail);
+  expect(leadsLeft).toBe(0);
+  const {count: actsLeft} = await admin
+    .from('crm_activities')
+    .select('id', {count: 'exact', head: true})
+    .eq('lead_id', row!.id);
+  expect(actsLeft).toBe(0);
 });
