@@ -549,6 +549,18 @@
     "convertHint": "Creates and sends a registration invite for this lead (reuses a pending invite or links to an existing account).",
     "converted": "Converted",
     "convertedInvite": "Invite sent",
-    "convertedUser": "Account created"
+    "convertedUser": "Account created",
+    "metricLeads": "Leads",
+    "metricPipeline": "Pipeline value",
+    "metricConverted": "Converted",
+    "metricFollowups": "Follow-ups",
+    "followupsTitle": "Open follow-ups",
+    "markDone": "Done",
+    "filterAllOwners": "All owners",
+    "filterAllSources": "All sources",
+    "filterAllTags": "All tags",
+    "clearFilters": "Clear filters",
+    "tags": "Tags",
+    "tagsHint": "Comma-separated."
   }
 }

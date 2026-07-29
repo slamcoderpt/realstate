@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useTransition} from 'react';
+import {useMemo, useState, useTransition} from 'react';
 import {useRouter} from '@/i18n/navigation';
 import {useTranslations} from 'next-intl';
 import {UserRoundIcon} from 'lucide-react';
@@ -13,10 +13,17 @@ export type LeadCard = {
   fullName: string;
   estimatedTicket: number | null;
   ownerName: string;
+  source: string;
+  tags: string[];
   daysSinceContact: number;
 };
 
 type Column = {stage: CrmStage; label: string; leads: LeadCard[]};
+
+const SOURCES = ['referencia', 'evento', 'website', 'linkedin', 'outro'];
+
+const CONTROL =
+  'h-9 rounded-xl border border-input bg-white px-3 text-sm text-ink outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
 function eur(v: number): string {
   return new Intl.NumberFormat('pt-PT', {
@@ -36,9 +43,35 @@ export function KanbanBoard({
   const t = useTranslations('Crm');
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  // Coluna sob o cartão a ser arrastado (feedback visual do alvo).
   const [dragOver, setDragOver] = useState<CrmStage | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
+
+  // Filtros (client-side, sobre os cartões já carregados).
+  const [owner, setOwner] = useState('');
+  const [source, setSource] = useState('');
+  const [tag, setTag] = useState('');
+
+  const owners = useMemo(
+    () =>
+      [
+        ...new Set(
+          columns.flatMap((c) => c.leads.map((l) => l.ownerName).filter(Boolean))
+        )
+      ].sort(),
+    [columns]
+  );
+  const tags = useMemo(
+    () =>
+      [...new Set(columns.flatMap((c) => c.leads.flatMap((l) => l.tags)))].sort(),
+    [columns]
+  );
+
+  function keep(l: LeadCard): boolean {
+    if (owner && l.ownerName !== owner) return false;
+    if (source && l.source !== source) return false;
+    if (tag && !l.tags.includes(tag)) return false;
+    return true;
+  }
 
   function onDrop(stage: CrmStage) {
     const id = dragging;
@@ -52,73 +85,153 @@ export function KanbanBoard({
   }
 
   return (
-    <div
-      className={`flex gap-4 overflow-x-auto scroll-soft pb-3 ${pending ? 'opacity-70' : ''}`}
-    >
-      {columns.map((col) => (
-        <section
-          key={col.stage}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(col.stage);
-          }}
-          onDragLeave={() => setDragOver((s) => (s === col.stage ? null : s))}
-          onDrop={() => onDrop(col.stage)}
-          className={`flex w-72 shrink-0 flex-col rounded-[var(--radius-card)] border bg-secondary/50 ${
-            dragOver === col.stage
-              ? 'border-brand-400 bg-brand-50'
-              : 'border-border'
-          }`}
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          aria-label={t('ownerLabel')}
+          value={owner}
+          onChange={(e) => setOwner(e.target.value)}
+          className={CONTROL}
         >
-          <header className="flex items-center justify-between px-4 py-3">
-            <h2 className="text-xs font-bold tracking-[0.1em] text-ink-muted uppercase">
-              {col.label}
-            </h2>
-            <span className="rounded-full bg-card px-2 py-0.5 text-xs font-bold text-ink-muted tabular-nums">
-              {col.leads.length}
-            </span>
-          </header>
+          <option value="">{t('filterAllOwners')}</option>
+          {owners.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label={t('source')}
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          className={CONTROL}
+        >
+          <option value="">{t('filterAllSources')}</option>
+          {SOURCES.map((s) => (
+            <option key={s} value={s}>
+              {t(`source_${s}` as 'source_outro')}
+            </option>
+          ))}
+        </select>
+        {tags.length > 0 && (
+          <select
+            aria-label="tag"
+            value={tag}
+            onChange={(e) => setTag(e.target.value)}
+            className={CONTROL}
+          >
+            <option value="">{t('filterAllTags')}</option>
+            {tags.map((tg) => (
+              <option key={tg} value={tg}>
+                {tg}
+              </option>
+            ))}
+          </select>
+        )}
+        {(owner || source || tag) && (
+          <button
+            type="button"
+            onClick={() => {
+              setOwner('');
+              setSource('');
+              setTag('');
+            }}
+            className="text-sm font-semibold text-brand-600 underline-offset-4 hover:underline"
+          >
+            {t('clearFilters')}
+          </button>
+        )}
+      </div>
 
-          <div className="flex min-h-16 flex-1 flex-col gap-2 px-3 pb-3">
-            {col.leads.length === 0 ? (
-              <p className="px-1 py-6 text-center text-xs text-ink-muted">
-                {t('noLeads')}
-              </p>
-            ) : (
-              col.leads.map((lead) => (
-                <article
-                  key={lead.id}
-                  draggable
-                  onDragStart={() => setDragging(lead.id)}
-                  onDragEnd={() => setDragging(null)}
-                  onClick={() => router.push(`/crm/${lead.id}`)}
-                  className={`cursor-pointer rounded-xl border border-border bg-card p-3 shadow-[var(--shadow-card)] transition hover:border-brand-200 hover:shadow-[0_10px_24px_rgba(0,107,255,0.12)] ${
-                    dragging === lead.id ? 'opacity-40' : ''
-                  }`}
-                >
-                  <p className="text-sm font-bold text-ink">{lead.fullName}</p>
-                  {lead.estimatedTicket != null && (
-                    <p className="mt-1 text-xs font-semibold text-brand-600 tabular-nums">
-                      {eur(lead.estimatedTicket)}
-                    </p>
-                  )}
-                  <div className="mt-2 flex items-center justify-between gap-2 text-xs text-ink-muted">
-                    <span className="flex min-w-0 items-center gap-1">
-                      <UserRoundIcon aria-hidden className="size-3 shrink-0" />
-                      <span className="truncate">{lead.ownerName || '—'}</span>
-                    </span>
-                    {lead.daysSinceContact > 0 && (
-                      <span className="shrink-0 tabular-nums">
-                        {t('daysInStage', {n: lead.daysSinceContact})}
-                      </span>
-                    )}
-                  </div>
-                </article>
-              ))
-            )}
-          </div>
-        </section>
-      ))}
+      <div
+        className={`flex gap-4 overflow-x-auto scroll-soft pb-3 ${pending ? 'opacity-70' : ''}`}
+      >
+        {columns.map((col) => {
+          const visible = col.leads.filter(keep);
+          return (
+            <section
+              key={col.stage}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(col.stage);
+              }}
+              onDragLeave={() =>
+                setDragOver((s) => (s === col.stage ? null : s))
+              }
+              onDrop={() => onDrop(col.stage)}
+              className={`flex w-72 shrink-0 flex-col rounded-[var(--radius-card)] border bg-secondary/50 ${
+                dragOver === col.stage
+                  ? 'border-brand-400 bg-brand-50'
+                  : 'border-border'
+              }`}
+            >
+              <header className="flex items-center justify-between px-4 py-3">
+                <h2 className="text-xs font-bold tracking-[0.1em] text-ink-muted uppercase">
+                  {col.label}
+                </h2>
+                <span className="rounded-full bg-card px-2 py-0.5 text-xs font-bold text-ink-muted tabular-nums">
+                  {visible.length}
+                </span>
+              </header>
+
+              <div className="flex min-h-16 flex-1 flex-col gap-2 px-3 pb-3">
+                {visible.length === 0 ? (
+                  <p className="px-1 py-6 text-center text-xs text-ink-muted">
+                    {t('noLeads')}
+                  </p>
+                ) : (
+                  visible.map((lead) => (
+                    <article
+                      key={lead.id}
+                      draggable
+                      onDragStart={() => setDragging(lead.id)}
+                      onDragEnd={() => setDragging(null)}
+                      onClick={() => router.push(`/crm/${lead.id}`)}
+                      className={`cursor-pointer rounded-xl border border-border bg-card p-3 shadow-[var(--shadow-card)] transition hover:border-brand-200 hover:shadow-[0_10px_24px_rgba(0,107,255,0.12)] ${
+                        dragging === lead.id ? 'opacity-40' : ''
+                      }`}
+                    >
+                      <p className="text-sm font-bold text-ink">
+                        {lead.fullName}
+                      </p>
+                      {lead.estimatedTicket != null && (
+                        <p className="mt-1 text-xs font-semibold text-brand-600 tabular-nums">
+                          {eur(lead.estimatedTicket)}
+                        </p>
+                      )}
+                      {lead.tags.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {lead.tags.map((tg) => (
+                            <span
+                              key={tg}
+                              className="rounded-full bg-secondary px-2 py-0.5 text-[0.6875rem] font-semibold text-ink-soft"
+                            >
+                              {tg}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-2 flex items-center justify-between gap-2 text-xs text-ink-muted">
+                        <span className="flex min-w-0 items-center gap-1">
+                          <UserRoundIcon aria-hidden className="size-3 shrink-0" />
+                          <span className="truncate">
+                            {lead.ownerName || '—'}
+                          </span>
+                        </span>
+                        {lead.daysSinceContact > 0 && (
+                          <span className="shrink-0 tabular-nums">
+                            {t('daysInStage', {n: lead.daysSinceContact})}
+                          </span>
+                        )}
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

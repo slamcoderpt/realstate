@@ -304,6 +304,17 @@ export default async function LeadDetailPage({
                 )}
               </div>
               <div className="space-y-1.5">
+                <Label htmlFor="tags" className={LABEL}>
+                  {t('tags')}
+                </Label>
+                <Input
+                  id="tags"
+                  name="tags"
+                  defaultValue={lead.tags.join(', ')}
+                  placeholder={t('tagsHint')}
+                />
+              </div>
+              <div className="space-y-1.5">
                 <Label htmlFor="notes" className={LABEL}>
                   {t('notes')}
                 </Label>

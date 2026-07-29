@@ -549,6 +549,18 @@
     "convertHint": "Cria e envia um convite de registo para este lead (reutiliza um convite pendente ou liga a uma conta já existente).",
     "converted": "Convertido",
     "convertedInvite": "Convite enviado",
-    "convertedUser": "Conta criada"
+    "convertedUser": "Conta criada",
+    "metricLeads": "Leads",
+    "metricPipeline": "Valor em pipeline",
+    "metricConverted": "Convertidos",
+    "metricFollowups": "Follow-ups",
+    "followupsTitle": "Follow-ups por resolver",
+    "markDone": "Concluir",
+    "filterAllOwners": "Todos os responsáveis",
+    "filterAllSources": "Todas as origens",
+    "filterAllTags": "Todas as tags",
+    "clearFilters": "Limpar filtros",
+    "tags": "Tags",
+    "tagsHint": "Separadas por vírgula."
   }
 }

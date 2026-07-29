@@ -7,6 +7,7 @@ import {
   moveLeadStage,
   addActivity,
   convertLeadToInvite,
+  markActivityDone,
   type CrmStage,
   type CrmSource,
   type CrmInvestorProfile,
@@ -71,6 +72,11 @@ export async function updateLeadAction(
   formData: FormData
 ): Promise<void> {
   await requireStaff();
+  // Tags: campo de texto separado por vírgulas → array normalizado, sem vazios.
+  const tags = String(formData.get('tags') ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
   await updateLead(id, {
     fullName: String(formData.get('full_name') ?? '').trim(),
     email: String(formData.get('email') ?? '').trim(),
@@ -80,7 +86,8 @@ export async function updateLeadAction(
       (optional(formData.get('investor_profile')) as CrmInvestorProfile) ??
       null,
     estimatedTicket: optionalNumber(formData.get('estimated_ticket')),
-    notes: String(formData.get('notes') ?? '')
+    notes: String(formData.get('notes') ?? ''),
+    tags
   });
   revalidatePath(`/${locale}/crm/${id}`);
   revalidatePath(`/${locale}/crm`);
@@ -95,6 +102,15 @@ export async function moveLeadStageAction(
   await moveLeadStage(id, to, s.userId);
   revalidatePath(`/${locale}/crm`);
   revalidatePath(`/${locale}/crm/${id}`);
+}
+
+export async function markFollowupDoneAction(
+  locale: Locale,
+  activityId: string
+): Promise<void> {
+  await requireStaff();
+  await markActivityDone(activityId);
+  revalidatePath(`/${locale}/crm`);
 }
 
 export async function convertLeadToInviteAction(

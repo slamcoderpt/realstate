@@ -106,8 +106,11 @@ Só para **staff** (admin / project_manager). Nada exposto a investidores.
   e marca convertido; convite pendente existente → reutiliza). Auto-ligação ao
   aceitar o convite (`linkConvertedInvite` chamado de `acceptInvite`, best-effort).
   Sem migração (colunas já existiam). Testes de integração.
-- **Fatia C — Produtividade:** follow-ups agendados + painel no back-office,
-  filtros/tags, métricas simples por origem/stage.
+- **Fatia C — Produtividade:** ✅ IMPLEMENTADO (2026-07-24). Painel de
+  **follow-ups por resolver** no topo do CRM (atrasados a vermelho) + "concluir";
+  **métricas** (leads, valor em pipeline, convertidos, follow-ups); **filtros**
+  por responsável/origem/tag no kanban; **tags** editáveis na ficha + chips no
+  cartão. Sem migração (colunas `due_at`/`done`/`tags` já existiam). Testes.
 - **Fatia D — Captação (futuro):** formulário público "quero investir" /
   landing que cria leads em `novo` automaticamente.
 
