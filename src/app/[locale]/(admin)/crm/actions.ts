@@ -1,6 +1,6 @@
 'use server';
 
-import {requireStaff} from '@/lib/auth/staff';
+import {asStaff} from '@/lib/auth/staff';
 import {
   createLead,
   updateLead,
@@ -29,8 +29,10 @@ async function appUrl(): Promise<string> {
 }
 
 /**
- * Server Actions do CRM. `requireStaff()` em cada uma — uma Server Action é um
- * endpoint independente e o layout `(admin)` não a protege por si só.
+ * Server Actions do CRM. `asStaff()` em cada uma — uma Server Action é um
+ * endpoint independente e o layout `(admin)` não a protege por si só. O
+ * envelope autoriza E marca o ator, para a escrita chegar ao `audit_log` com
+ * autor (ver lib/audit/actor.ts).
  */
 
 function optional(value: FormDataEntryValue | null): string | undefined {
@@ -49,23 +51,24 @@ export async function createLeadAction(
   locale: Locale,
   formData: FormData
 ): Promise<void> {
-  const s = await requireStaff();
-  const fullName = String(formData.get('full_name') ?? '').trim();
-  const email = String(formData.get('email') ?? '').trim();
-  if (!fullName || !email) return;
-  await createLead({
-    fullName,
-    email,
-    phone: optional(formData.get('phone')),
-    source: (optional(formData.get('source')) as CrmSource) ?? undefined,
-    investorProfile:
-      (optional(formData.get('investor_profile')) as CrmInvestorProfile) ??
-      null,
-    estimatedTicket: optionalNumber(formData.get('estimated_ticket')),
-    notes: optional(formData.get('notes')),
-    createdBy: s.userId
+  return asStaff(async (s) => {
+    const fullName = String(formData.get('full_name') ?? '').trim();
+    const email = String(formData.get('email') ?? '').trim();
+    if (!fullName || !email) return;
+    await createLead({
+      fullName,
+      email,
+      phone: optional(formData.get('phone')),
+      source: (optional(formData.get('source')) as CrmSource) ?? undefined,
+      investorProfile:
+        (optional(formData.get('investor_profile')) as CrmInvestorProfile) ??
+        null,
+      estimatedTicket: optionalNumber(formData.get('estimated_ticket')),
+      notes: optional(formData.get('notes')),
+      createdBy: s.userId
+    });
+    revalidatePath(`/${locale}/crm`);
   });
-  revalidatePath(`/${locale}/crm`);
 }
 
 /**
@@ -76,8 +79,9 @@ export async function loadLeadDetailAction(
   locale: Locale,
   id: string
 ): Promise<LeadDetailView | null> {
-  await requireStaff();
-  return getLeadDetailView(id, locale);
+  return asStaff(async () => {
+    return getLeadDetailView(id, locale);
+  });
 }
 
 export async function updateLeadAction(
@@ -85,26 +89,27 @@ export async function updateLeadAction(
   id: string,
   formData: FormData
 ): Promise<void> {
-  await requireStaff();
-  // Tags: campo de texto separado por vírgulas → array normalizado, sem vazios.
-  const tags = String(formData.get('tags') ?? '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  await updateLead(id, {
-    fullName: String(formData.get('full_name') ?? '').trim(),
-    email: String(formData.get('email') ?? '').trim(),
-    phone: String(formData.get('phone') ?? '').trim(),
-    source: String(formData.get('source') ?? 'outro') as CrmSource,
-    investorProfile:
-      (optional(formData.get('investor_profile')) as CrmInvestorProfile) ??
-      null,
-    estimatedTicket: optionalNumber(formData.get('estimated_ticket')),
-    notes: String(formData.get('notes') ?? ''),
-    tags
+  return asStaff(async () => {
+    // Tags: campo de texto separado por vírgulas → array normalizado, sem vazios.
+    const tags = String(formData.get('tags') ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    await updateLead(id, {
+      fullName: String(formData.get('full_name') ?? '').trim(),
+      email: String(formData.get('email') ?? '').trim(),
+      phone: String(formData.get('phone') ?? '').trim(),
+      source: String(formData.get('source') ?? 'outro') as CrmSource,
+      investorProfile:
+        (optional(formData.get('investor_profile')) as CrmInvestorProfile) ??
+        null,
+      estimatedTicket: optionalNumber(formData.get('estimated_ticket')),
+      notes: String(formData.get('notes') ?? ''),
+      tags
+    });
+    revalidatePath(`/${locale}/crm/${id}`);
+    revalidatePath(`/${locale}/crm`);
   });
-  revalidatePath(`/${locale}/crm/${id}`);
-  revalidatePath(`/${locale}/crm`);
 }
 
 /**
@@ -115,10 +120,11 @@ export async function deleteLeadAction(
   locale: Locale,
   id: string
 ): Promise<void> {
-  await requireStaff();
-  await deleteLead(id);
-  revalidatePath(`/${locale}/crm`);
-  revalidatePath(`/${locale}/crm/${id}`);
+  return asStaff(async () => {
+    await deleteLead(id);
+    revalidatePath(`/${locale}/crm`);
+    revalidatePath(`/${locale}/crm/${id}`);
+  });
 }
 
 export async function moveLeadStageAction(
@@ -126,33 +132,36 @@ export async function moveLeadStageAction(
   id: string,
   to: CrmStage
 ): Promise<void> {
-  const s = await requireStaff();
-  await moveLeadStage(id, to, s.userId);
-  revalidatePath(`/${locale}/crm`);
-  revalidatePath(`/${locale}/crm/${id}`);
+  return asStaff(async (s) => {
+    await moveLeadStage(id, to, s.userId);
+    revalidatePath(`/${locale}/crm`);
+    revalidatePath(`/${locale}/crm/${id}`);
+  });
 }
 
 export async function markFollowupDoneAction(
   locale: Locale,
   activityId: string
 ): Promise<void> {
-  await requireStaff();
-  await markActivityDone(activityId);
-  revalidatePath(`/${locale}/crm`);
+  return asStaff(async () => {
+    await markActivityDone(activityId);
+    revalidatePath(`/${locale}/crm`);
+  });
 }
 
 export async function convertLeadToInviteAction(
   locale: Locale,
   id: string
 ): Promise<void> {
-  const s = await requireStaff();
-  await convertLeadToInvite(id, {
-    locale,
-    actorId: s.userId,
-    appUrl: await appUrl()
+  return asStaff(async (s) => {
+    await convertLeadToInvite(id, {
+      locale,
+      actorId: s.userId,
+      appUrl: await appUrl()
+    });
+    revalidatePath(`/${locale}/crm/${id}`);
+    revalidatePath(`/${locale}/crm`);
   });
-  revalidatePath(`/${locale}/crm/${id}`);
-  revalidatePath(`/${locale}/crm`);
 }
 
 export async function addActivityAction(
@@ -160,16 +169,17 @@ export async function addActivityAction(
   leadId: string,
   formData: FormData
 ): Promise<void> {
-  const s = await requireStaff();
-  const type = String(formData.get('type') ?? 'nota') as CrmActivityType;
-  const body = String(formData.get('body') ?? '').trim();
-  const dueAt = optional(formData.get('due_at'));
-  if (!body && !dueAt) return;
-  await addActivity(
-    leadId,
-    {type, body, dueAt: dueAt ? new Date(dueAt).toISOString() : null},
-    s.userId
-  );
-  revalidatePath(`/${locale}/crm/${leadId}`);
-  revalidatePath(`/${locale}/crm`);
+  return asStaff(async (s) => {
+    const type = String(formData.get('type') ?? 'nota') as CrmActivityType;
+    const body = String(formData.get('body') ?? '').trim();
+    const dueAt = optional(formData.get('due_at'));
+    if (!body && !dueAt) return;
+    await addActivity(
+      leadId,
+      {type, body, dueAt: dueAt ? new Date(dueAt).toISOString() : null},
+      s.userId
+    );
+    revalidatePath(`/${locale}/crm/${leadId}`);
+    revalidatePath(`/${locale}/crm`);
+  });
 }

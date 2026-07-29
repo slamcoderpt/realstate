@@ -1,12 +1,12 @@
 'use server';
 
-import {requireStaff} from '@/lib/auth/staff';
+import {asStaff} from '@/lib/auth/staff';
 import {publishStatement} from '@/lib/statements/service';
 import type {Locale} from '@/lib/mail/templates';
 import {revalidatePath} from 'next/cache';
 
 /**
- * Server Action de publicação de extratos. `requireStaff()` é obrigatório
+ * Server Action de publicação de extratos. `asStaff()` é obrigatório
  * mesmo com o layout `(admin)` a proteger a página: uma Server Action é um
  * endpoint independente e alcançável por si só.
  *
@@ -18,15 +18,16 @@ export async function publishStatementAction(
   projectId: string,
   formData: FormData
 ): Promise<void> {
-  const s = await requireStaff();
-  const file = formData.get('file');
-  if (!(file instanceof File) || file.size === 0) return;
-  await publishStatement({
-    projectId,
-    period: String(formData.get('period') ?? ''),
-    file,
-    publishedBy: s.userId,
-    locale
+  return asStaff(async (s) => {
+    const file = formData.get('file');
+    if (!(file instanceof File) || file.size === 0) return;
+    await publishStatement({
+      projectId,
+      period: String(formData.get('period') ?? ''),
+      file,
+      publishedBy: s.userId,
+      locale
+    });
+    revalidatePath(`/${locale}/gestao-projetos/${projectId}/extratos`);
   });
-  revalidatePath(`/${locale}/gestao-projetos/${projectId}/extratos`);
 }

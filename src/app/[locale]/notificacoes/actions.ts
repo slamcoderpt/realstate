@@ -1,6 +1,7 @@
 'use server';
 
 import {getSession} from '@/lib/auth/staff';
+import {withAuditActor} from '@/lib/audit/actor';
 import {
   listNotifications,
   markAllRead,
@@ -24,6 +25,9 @@ export async function myNotificationsAction(
 export async function markAllReadAction(): Promise<number> {
   const session = await getSession();
   if (!session) return 0;
-  await markAllRead(session.userId);
-  return countUnread(session.userId);
+
+  return withAuditActor(session.userId, async () => {
+    await markAllRead(session.userId);
+    return countUnread(session.userId);
+  });
 }

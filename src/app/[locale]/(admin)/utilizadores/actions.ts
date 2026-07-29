@@ -2,6 +2,7 @@
 
 import {revalidatePath} from 'next/cache';
 import {requireAdmin, type Session} from '@/lib/auth/staff';
+import {withAuditActor} from '@/lib/audit/actor';
 import {changeUserRole, isUserRole} from '@/lib/users/service';
 
 export type ChangeRoleState = {
@@ -34,16 +35,21 @@ export async function changeUserRoleAction(
   const role = formData.get('role');
   if (!isUserRole(role)) return {ok: false, error: 'invalid_role'};
 
-  try {
-    await changeUserRole({actorId: session.userId, targetId, role});
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    if (/próprio|proprio/i.test(message)) {
-      return {ok: false, error: 'self_demotion'};
+  // `withAuditActor` à mão e não `asAdmin`: esta ação apanha a falha de
+  // autorização para devolver um estado em vez de lançar, e essa forma tem de
+  // se manter.
+  return withAuditActor(session.userId, async () => {
+    try {
+      await changeUserRole({actorId: session.userId, targetId, role});
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (/próprio|proprio/i.test(message)) {
+        return {ok: false, error: 'self_demotion'};
+      }
+      return {ok: false, error: 'generic', message};
     }
-    return {ok: false, error: 'generic', message};
-  }
 
-  revalidatePath(`/${locale}/utilizadores`);
-  return {ok: true};
+    revalidatePath(`/${locale}/utilizadores`);
+    return {ok: true};
+  });
 }

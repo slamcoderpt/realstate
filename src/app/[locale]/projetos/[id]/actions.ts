@@ -3,6 +3,7 @@
 import {headers} from 'next/headers';
 import {revalidatePath} from 'next/cache';
 import {getSession} from '@/lib/auth/staff';
+import {withAuditActor} from '@/lib/audit/actor';
 import {clientIpFromHeaders} from '@/lib/auth/request';
 import {createAdminClient} from '@/lib/supabase/admin';
 import {manifestInterest, cancelSubscription} from '@/lib/subscriptions/service';
@@ -18,38 +19,40 @@ export async function manifestInterestAction(
   const session = await getSession();
   if (!session) return {ok: false, error: 'session'};
 
-  const amount = Number(formData.get('amount') ?? 0);
-  const consent = formData.get('consent') === 'on';
-  if (!consent) return {ok: false, error: 'consent_required'};
-  if (!Number.isFinite(amount) || amount <= 0) return {ok: false, error: 'amount'};
+  return withAuditActor(session.userId, async () => {
+    const amount = Number(formData.get('amount') ?? 0);
+    const consent = formData.get('consent') === 'on';
+    if (!consent) return {ok: false, error: 'consent_required'};
+    if (!Number.isFinite(amount) || amount <= 0) return {ok: false, error: 'amount'};
 
-  const db = createAdminClient();
-  const {data: setting} = await db
-    .from('platform_settings')
-    .select('value')
-    .eq('key', 'terms_version')
-    .single();
-  const consentVersion =
-    typeof setting?.value === 'string' ? setting.value : 'v1';
+    const db = createAdminClient();
+    const {data: setting} = await db
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'terms_version')
+      .single();
+    const consentVersion =
+      typeof setting?.value === 'string' ? setting.value : 'v1';
 
-  const ip = clientIpFromHeaders(await headers()) ?? undefined;
+    const ip = clientIpFromHeaders(await headers()) ?? undefined;
 
-  try {
-    await manifestInterest({
-      userId: session.userId,
-      projectId,
-      amount,
-      consentVersion,
-      interestIp: ip
-    });
-    revalidatePath(`/${locale}/projetos/${projectId}`);
-    return {ok: true};
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'erro';
-    if (/mínimo|minimo/i.test(msg)) return {ok: false, error: 'below_min'};
-    if (/duplicate|unique|já|ativa/i.test(msg)) return {ok: false, error: 'already'};
-    return {ok: false, error: 'generic'};
-  }
+    try {
+      await manifestInterest({
+        userId: session.userId,
+        projectId,
+        amount,
+        consentVersion,
+        interestIp: ip
+      });
+      revalidatePath(`/${locale}/projetos/${projectId}`);
+      return {ok: true};
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'erro';
+      if (/mínimo|minimo/i.test(msg)) return {ok: false, error: 'below_min'};
+      if (/duplicate|unique|já|ativa/i.test(msg)) return {ok: false, error: 'already'};
+      return {ok: false, error: 'generic'};
+    }
+  });
 }
 
 export async function cancelSubscriptionAction(
@@ -59,6 +62,9 @@ export async function cancelSubscriptionAction(
 ): Promise<void> {
   const session = await getSession();
   if (!session) return;
-  await cancelSubscription({id: subscriptionId, byUserId: session.userId, isStaff: false});
-  revalidatePath(`/${locale}/projetos/${projectId}`);
+
+  return withAuditActor(session.userId, async () => {
+    await cancelSubscription({id: subscriptionId, byUserId: session.userId, isStaff: false});
+    revalidatePath(`/${locale}/projetos/${projectId}`);
+  });
 }

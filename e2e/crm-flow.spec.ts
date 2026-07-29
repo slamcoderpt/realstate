@@ -91,6 +91,24 @@ test('CRM: criar lead, arrastar no kanban, follow-up e converter', async ({
   const card = page.locator('article', {hasText: leadName});
   await expect(card).toBeVisible();
 
+  // A criação ficou registada no audit_log COM autor. É aqui que se prova o
+  // caminho todo em condições reais: Server Action → cliente admin →
+  // `x-actor-id` → trigger. Um `actor_id` a null significaria que o ator do
+  // pedido não chegou ao SQL.
+  const {data: leadRow} = await admin
+    .from('crm_leads')
+    .select('id')
+    .eq('email', leadEmail)
+    .single();
+  const {data: auditRow} = await admin
+    .from('audit_log')
+    .select('actor_id')
+    .eq('entity_type', 'crm_leads')
+    .eq('entity_id', leadRow!.id)
+    .eq('action', 'insert')
+    .single();
+  expect(auditRow!.actor_id).toBe(staffId);
+
   // Nasce em "Novo".
   const colOf = (label: string) =>
     page.locator('section').filter({
