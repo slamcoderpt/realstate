@@ -7,10 +7,15 @@ import {
   moveLeadStage,
   addActivity,
   listLeads,
-  getLeadDetail
+  getLeadDetail,
+  convertLeadToInvite,
+  linkConvertedInvite
 } from '@/lib/crm/service';
+import {admin} from '../rls/helpers';
 
 let staffId: string;
+const noop = {transport: {sendMail: async () => ({})}};
+const APP_URL = 'http://localhost:3000';
 
 beforeAll(async () => {
   staffId = (await createTestUser(`crm-staff-${randomUUID().slice(0, 8)}@test.local`, 'admin')).id;
@@ -93,5 +98,109 @@ describe('updateLead', () => {
     const detail = await getLeadDetail(id);
     expect(detail!.lead.investor_profile).toBe('qualificado');
     expect(detail!.lead.estimated_ticket).toBe(50000);
+  });
+});
+
+describe('convertLeadToInvite', () => {
+  it('cria um convite novo e liga-o ao lead (estado convite_enviado)', async () => {
+    const {id} = await createLead({fullName: 'Convert', email: email(), createdBy: staffId});
+    const res = await convertLeadToInvite(
+      id,
+      {locale: 'pt', actorId: staffId, appUrl: APP_URL},
+      noop
+    );
+    expect(res.status).toBe('invited');
+
+    const detail = await getLeadDetail(id);
+    expect(detail!.lead.stage).toBe('convite_enviado');
+    expect(detail!.lead.converted_invite_id).toBeTruthy();
+    // O convite existe na tabela invites.
+    if (res.status === 'invited') {
+      const {data} = await admin
+        .from('invites')
+        .select('email, status')
+        .eq('id', res.inviteId)
+        .single();
+      expect(data!.status).toBe('pending');
+    }
+  });
+
+  it('reutiliza um convite pendente já existente para o mesmo email', async () => {
+    const mail = email();
+    const a = await createLead({fullName: 'A', email: mail, createdBy: staffId});
+    const first = await convertLeadToInvite(
+      a.id,
+      {locale: 'pt', actorId: staffId, appUrl: APP_URL},
+      noop
+    );
+    expect(first.status).toBe('invited');
+
+    // Um segundo lead com o mesmo email reaproveita o convite pendente.
+    const b = await createLead({fullName: 'B', email: mail, createdBy: staffId});
+    const second = await convertLeadToInvite(
+      b.id,
+      {locale: 'pt', actorId: staffId, appUrl: APP_URL},
+      noop
+    );
+    expect(second.status).toBe('reused_invite');
+    if (first.status === 'invited' && second.status === 'reused_invite') {
+      expect(second.inviteId).toBe(first.inviteId);
+    }
+  });
+
+  it('liga a um utilizador já registado (status already_user)', async () => {
+    const mail = `crm-existing-${randomUUID().slice(0, 8)}@test.local`;
+    const {data: created} = await admin.auth.admin.createUser({
+      email: mail,
+      password: 'existing-123',
+      email_confirm: true
+    });
+    const {id} = await createLead({fullName: 'Exist', email: mail, createdBy: staffId});
+    const res = await convertLeadToInvite(
+      id,
+      {locale: 'pt', actorId: staffId, appUrl: APP_URL},
+      noop
+    );
+    expect(res.status).toBe('already_user');
+    const detail = await getLeadDetail(id);
+    expect(detail!.lead.stage).toBe('convertido');
+    expect(detail!.lead.converted_user_id).toBe(created?.user?.id);
+  });
+
+  it('é idempotente: um lead já convertido não recria', async () => {
+    const mail = `crm-idem-${randomUUID().slice(0, 8)}@test.local`;
+    await admin.auth.admin.createUser({
+      email: mail,
+      password: 'idem-1234',
+      email_confirm: true
+    });
+    const {id} = await createLead({fullName: 'Idem', email: mail, createdBy: staffId});
+    await convertLeadToInvite(id, {locale: 'pt', actorId: staffId, appUrl: APP_URL}, noop);
+    const again = await convertLeadToInvite(
+      id,
+      {locale: 'pt', actorId: staffId, appUrl: APP_URL},
+      noop
+    );
+    expect(again.status).toBe('already_converted');
+  });
+});
+
+describe('linkConvertedInvite', () => {
+  it('fecha o ciclo: liga o lead à conta e marca convertido', async () => {
+    const {id} = await createLead({fullName: 'Loop', email: email(), createdBy: staffId});
+    const res = await convertLeadToInvite(
+      id,
+      {locale: 'pt', actorId: staffId, appUrl: APP_URL},
+      noop
+    );
+    expect(res.status).toBe('invited');
+    if (res.status !== 'invited') return;
+
+    const fakeUserId = staffId; // qualquer id de utilizador serve p/ o teste
+    await linkConvertedInvite(res.inviteId, fakeUserId);
+
+    const detail = await getLeadDetail(id);
+    expect(detail!.lead.stage).toBe('convertido');
+    expect(detail!.lead.converted_user_id).toBe(fakeUserId);
   });
 });

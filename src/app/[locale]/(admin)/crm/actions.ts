@@ -6,6 +6,7 @@ import {
   updateLead,
   moveLeadStage,
   addActivity,
+  convertLeadToInvite,
   type CrmStage,
   type CrmSource,
   type CrmInvestorProfile,
@@ -13,6 +14,16 @@ import {
 } from '@/lib/crm/service';
 import type {Locale} from '@/lib/mail/templates';
 import {revalidatePath} from 'next/cache';
+import {headers} from 'next/headers';
+
+/** Origem absoluta da app para os links dos emails. Env em prod; host em dev. */
+async function appUrl(): Promise<string> {
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  const host = (await headers()).get('host') ?? 'localhost:3000';
+  const proto =
+    host.startsWith('localhost') || host.startsWith('127.') ? 'http' : 'https';
+  return `${proto}://${host}`;
+}
 
 /**
  * Server Actions do CRM. `requireStaff()` em cada uma — uma Server Action é um
@@ -84,6 +95,20 @@ export async function moveLeadStageAction(
   await moveLeadStage(id, to, s.userId);
   revalidatePath(`/${locale}/crm`);
   revalidatePath(`/${locale}/crm/${id}`);
+}
+
+export async function convertLeadToInviteAction(
+  locale: Locale,
+  id: string
+): Promise<void> {
+  const s = await requireStaff();
+  await convertLeadToInvite(id, {
+    locale,
+    actorId: s.userId,
+    appUrl: await appUrl()
+  });
+  revalidatePath(`/${locale}/crm/${id}`);
+  revalidatePath(`/${locale}/crm`);
 }
 
 /** Variante para `<form>` (página de detalhe): lê o estado destino do FormData. */

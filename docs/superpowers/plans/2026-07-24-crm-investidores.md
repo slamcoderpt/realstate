@@ -100,8 +100,12 @@ Só para **staff** (admin / project_manager). Nada exposto a investidores.
   atividade/follow-up); RLS staff-only; entrada "CRM" na navegação do back-office.
   Migração `20260724100000_crm.sql`. Testes integração + RLS. _Conversão em
   convite fica para a Fatia B._
-- **Fatia B — Conversão:** botão "Converter em convite" (liga à `invites`),
-  auto-link on accept, deduplicação por email.
+- **Fatia B — Conversão:** ✅ IMPLEMENTADO (2026-07-24). Botão "Converter em
+  convite" na ficha do lead → reutiliza o mecanismo de convites existente.
+  Deduplicação em 3 níveis (já convertido → no-op; email já é utilizador → liga
+  e marca convertido; convite pendente existente → reutiliza). Auto-ligação ao
+  aceitar o convite (`linkConvertedInvite` chamado de `acceptInvite`, best-effort).
+  Sem migração (colunas já existiam). Testes de integração.
 - **Fatia C — Produtividade:** follow-ups agendados + painel no back-office,
   filtros/tags, métricas simples por origem/stage.
 - **Fatia D — Captação (futuro):** formulário público "quero investir" /

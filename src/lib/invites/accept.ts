@@ -3,6 +3,7 @@ import {createAdminClient} from '@/lib/supabase/admin';
 import {sendEmail, type SendEmailDeps} from '@/lib/mail/outbox';
 import type {Locale} from '@/lib/mail/templates';
 import {hashToken, isRedeemable} from './token';
+import {linkConvertedInvite} from '@/lib/crm/service';
 
 /**
  * Aceitação de convite → criação de conta. O controlo é o próprio token (só o
@@ -85,6 +86,15 @@ export async function acceptInvite(
     })
     .eq('id', invite.id)
     .eq('status', 'pending');
+
+  // Fecha o ciclo do CRM: se este convite veio de um lead, liga-o à conta criada
+  // e marca-o como convertido. Best-effort — nunca falhar a criação de conta por
+  // causa do CRM.
+  try {
+    await linkConvertedInvite(invite.id, created.user.id, db);
+  } catch {
+    // ignora — o lead pode ser religado à mão; a conta é o que importa.
+  }
 
   await sendEmail(
     {

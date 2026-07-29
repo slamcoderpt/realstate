@@ -18,8 +18,10 @@ import type {Locale} from '@/lib/mail/templates';
 import {
   updateLeadAction,
   addActivityAction,
-  moveLeadStageFormAction
+  moveLeadStageFormAction,
+  convertLeadToInviteAction
 } from '../actions';
+import {UserCheckIcon, SendIcon} from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -96,6 +98,29 @@ export default async function LeadDetailPage({
             {t(`stage_${lead.stage}` as 'stage_novo')}
           </Badge>
         </div>
+        {/* Conversão: se já foi convertido mostra o estado; senão, o botão que
+            cria o convite (reutiliza o mecanismo de convites existente). */}
+        {lead.converted_user_id ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-700">
+            <UserCheckIcon aria-hidden className="size-4" />
+            {t('convertedUser')}
+          </span>
+        ) : lead.converted_invite_id ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-700">
+            <SendIcon aria-hidden className="size-4" />
+            {t('convertedInvite')}
+          </span>
+        ) : (
+          <form action={convertLeadToInviteAction.bind(null, loc, id)}>
+            <Button type="submit" title={t('convertHint')}>
+              <SendIcon aria-hidden className="size-4" />
+              {t('convert')}
+            </Button>
+          </form>
+        )}
+      </header>
+
+      <div className="flex flex-wrap items-center justify-end">
         {/* Mudar de estado também a partir do detalhe (além do arrastar). */}
         <form
           action={moveLeadStageFormAction.bind(null, loc, id)}
@@ -115,7 +140,7 @@ export default async function LeadDetailPage({
             {t('save')}
           </Button>
         </form>
-      </header>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         {/* Timeline + registar atividade */}
