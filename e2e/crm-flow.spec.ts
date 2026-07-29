@@ -130,7 +130,7 @@ test('CRM: criar lead, arrastar no kanban, follow-up e converter', async ({
   await actForm.locator('select[name="type"]').selectOption('chamada');
   await actForm.locator('input[name="due_at"]').fill('2026-08-05');
   await actForm.locator('textarea[name="body"]').fill('Ligar para agendar.');
-  await actForm.getByRole('button', {name: 'Guardar'}).click();
+  await actForm.getByRole('button', {name: 'Registar atividade'}).click();
   await expect(modal.getByText('Ligar para agendar.')).toBeVisible();
 
   // Fechar devolve ao board, com o cartão no sítio onde ficou.
@@ -164,10 +164,12 @@ test('CRM: criar lead, arrastar no kanban, follow-up e converter', async ({
   await detail.getByRole('button', {name: 'Converter em convite'}).click();
 
   // O botão dá lugar ao estado, e o lead muda de coluna.
-  await expect(detail.getByText('Convite enviado').first()).toBeVisible();
   await expect(
     detail.getByRole('button', {name: 'Converter em convite'})
   ).toHaveCount(0);
+  await expect(detail.locator('select[name="stage"]')).toHaveValue(
+    'convite_enviado'
+  );
 
   // O modal é um atalho, não uma substituição: a página do lead continua a
   // servir os links diretos (é para lá que apontam os follow-ups do board).

@@ -70,32 +70,35 @@ export function LeadDialog({
         showCloseButton={false}
         className="max-h-[90vh] overflow-y-auto scroll-soft rounded-[var(--radius-card)] sm:max-w-5xl"
       >
-        <DialogHeader className="pr-40">
-          <DialogTitle className="text-2xl font-extrabold tracking-tight text-ink">
-            {view?.lead.full_name ?? t('details')}
-          </DialogTitle>
-          <DialogDescription>
-            {view?.lead.email ?? t('loading')}
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Fechar traduzido (o do componente base é sr-only em inglês) e atalho
-            para a página completa, que é o link partilhável da lead. */}
-        <div className="absolute top-5 right-5 flex items-center gap-1">
-          {leadId && (
-            <button
-              type="button"
-              onClick={() => router.push(`/crm/${leadId}`)}
-              title={t('openFullPage')}
-              className="rounded-lg p-2 text-ink-muted transition hover:bg-secondary hover:text-ink"
-            >
-              <ExternalLinkIcon aria-hidden className="size-4" />
-              <span className="sr-only">{t('openFullPage')}</span>
-            </button>
-          )}
-          <DialogClose className="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-ink-muted transition hover:bg-secondary hover:text-ink">
-            {t('close')}
-          </DialogClose>
+        {/* Título e ações da janela na MESMA linha: o «Fechar» absoluto obrigava
+            a reservar espaço à direita do título e ainda assim colidia com nomes
+            longos. O fechar é próprio (o do componente base é sr-only em inglês)
+            e o atalho leva à página completa, o link partilhável da lead. */}
+        <div className="flex items-start justify-between gap-4">
+          <DialogHeader className="min-w-0 gap-1">
+            <DialogTitle className="truncate text-xl font-extrabold tracking-tight text-ink">
+              {view?.lead.full_name ?? t('details')}
+            </DialogTitle>
+            <DialogDescription className="truncate">
+              {view?.lead.email ?? t('loading')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex shrink-0 items-center gap-1">
+            {leadId && (
+              <button
+                type="button"
+                onClick={() => router.push(`/crm/${leadId}`)}
+                title={t('openFullPage')}
+                className="rounded-lg p-2 text-ink-muted transition hover:bg-secondary hover:text-ink"
+              >
+                <ExternalLinkIcon aria-hidden className="size-4" />
+                <span className="sr-only">{t('openFullPage')}</span>
+              </button>
+            )}
+            <DialogClose className="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-ink-muted transition hover:bg-secondary hover:text-ink">
+              {t('close')}
+            </DialogClose>
+          </div>
         </div>
 
         {view ? (

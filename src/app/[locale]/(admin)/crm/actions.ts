@@ -140,17 +140,6 @@ export async function convertLeadToInviteAction(
   revalidatePath(`/${locale}/crm`);
 }
 
-/** Variante para `<form>` (página de detalhe): lê o estado destino do FormData. */
-export async function moveLeadStageFormAction(
-  locale: Locale,
-  id: string,
-  formData: FormData
-): Promise<void> {
-  const to = String(formData.get('stage') ?? '') as CrmStage;
-  if (!to) return;
-  await moveLeadStageAction(locale, id, to);
-}
-
 export async function addActivityAction(
   locale: Locale,
   leadId: string,
