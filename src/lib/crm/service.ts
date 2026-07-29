@@ -145,6 +145,7 @@ export type UpdateLeadInput = {
   investorProfile?: CrmInvestorProfile | null;
   estimatedTicket?: number | null;
   notes?: string;
+  tags?: string[];
 };
 
 export async function updateLead(
@@ -163,6 +164,7 @@ export async function updateLead(
   if (input.estimatedTicket !== undefined)
     patch.estimated_ticket = input.estimatedTicket;
   if (input.notes !== undefined) patch.notes = input.notes;
+  if (input.tags !== undefined) patch.tags = input.tags;
   const {error} = await db.from('crm_leads').update(patch).eq('id', id);
   if (error) throw new Error(`atualizar lead falhou: ${error.message}`);
 }
@@ -423,6 +425,57 @@ export async function linkConvertedInvite(
       body: 'Convite aceite — conta criada'
     });
   }
+}
+
+// --- follow-ups (Fatia C) ---
+
+export type FollowupRow = {
+  id: string;
+  leadId: string;
+  leadName: string;
+  type: CrmActivityType;
+  body: string;
+  dueAt: string;
+};
+
+/**
+ * Follow-ups por resolver: atividades com data agendada e ainda não concluídas.
+ * Ordenadas pela data (as mais atrasadas primeiro). Junta o nome do lead para o
+ * painel do back-office não ter de o ir buscar linha a linha.
+ */
+export async function listPendingFollowups(
+  db: SupabaseClient = createAdminClient()
+): Promise<FollowupRow[]> {
+  const {data, error} = await db
+    .from('crm_activities')
+    .select('id, lead_id, type, body, due_at, crm_leads(full_name)')
+    .not('due_at', 'is', null)
+    .eq('done', false)
+    .order('due_at', {ascending: true});
+  if (error) throw new Error(`listar follow-ups falhou: ${error.message}`);
+  return (data ?? []).map((r) => {
+    const row = r as Record<string, unknown>;
+    const lead = row.crm_leads as {full_name?: string} | null;
+    return {
+      id: row.id as string,
+      leadId: row.lead_id as string,
+      leadName: lead?.full_name ?? '',
+      type: row.type as CrmActivityType,
+      body: (row.body as string) ?? '',
+      dueAt: row.due_at as string
+    };
+  });
+}
+
+export async function markActivityDone(
+  id: string,
+  db: SupabaseClient = createAdminClient()
+): Promise<void> {
+  const {error} = await db
+    .from('crm_activities')
+    .update({done: true})
+    .eq('id', id);
+  if (error) throw new Error(`concluir follow-up falhou: ${error.message}`);
 }
 
 export type LeadDetail = {lead: LeadRow; activities: ActivityRow[]};

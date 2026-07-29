@@ -9,7 +9,9 @@ import {
   listLeads,
   getLeadDetail,
   convertLeadToInvite,
-  linkConvertedInvite
+  linkConvertedInvite,
+  listPendingFollowups,
+  markActivityDone
 } from '@/lib/crm/service';
 import {admin} from '../rls/helpers';
 
@@ -98,6 +100,42 @@ describe('updateLead', () => {
     const detail = await getLeadDetail(id);
     expect(detail!.lead.investor_profile).toBe('qualificado');
     expect(detail!.lead.estimated_ticket).toBe(50000);
+  });
+});
+
+describe('follow-ups', () => {
+  it('lista follow-ups pendentes e conclui-os', async () => {
+    const {id} = await createLead({fullName: 'Follow', email: email(), createdBy: staffId});
+    const {id: actId} = await addActivity(
+      id,
+      {type: 'chamada', body: 'Ligar amanhã', dueAt: '2026-08-01T09:00:00Z'},
+      staffId
+    );
+
+    const pending = await listPendingFollowups();
+    const mine = pending.find((f) => f.id === actId);
+    expect(mine).toBeTruthy();
+    expect(mine!.leadName).toBe('Follow');
+
+    await markActivityDone(actId);
+    const after = await listPendingFollowups();
+    expect(after.some((f) => f.id === actId)).toBe(false);
+  });
+
+  it('atividade sem data não aparece nos follow-ups', async () => {
+    const {id} = await createLead({fullName: 'NoDue', email: email(), createdBy: staffId});
+    const {id: actId} = await addActivity(id, {type: 'nota', body: 'Só nota'}, staffId);
+    const pending = await listPendingFollowups();
+    expect(pending.some((f) => f.id === actId)).toBe(false);
+  });
+});
+
+describe('tags', () => {
+  it('atualiza as tags do lead', async () => {
+    const {id} = await createLead({fullName: 'Tagged', email: email(), createdBy: staffId});
+    await updateLead(id, {tags: ['vip', 'lisboa']});
+    const detail = await getLeadDetail(id);
+    expect(detail!.lead.tags).toEqual(['vip', 'lisboa']);
   });
 });
 
