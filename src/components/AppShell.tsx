@@ -59,6 +59,7 @@ export default async function AppShell({
       sections: [
         {
           items: [
+            {href: '/crm', label: t('crm')},
             {href: '/convites', label: t('invites')},
             {href: '/kyc-revisao', label: t('kycQueue')},
             {href: '/gestao-projetos', label: t('projectsAdmin')}

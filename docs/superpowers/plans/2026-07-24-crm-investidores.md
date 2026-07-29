@@ -94,9 +94,12 @@ Só para **staff** (admin / project_manager). Nada exposto a investidores.
 
 ## 7. Fatiamento proposto
 
-- **Fatia A — MVP kanban:** `crm_leads` + `crm_activities` + stages (enum);
-  criar lead, arrastar entre colunas, detalhe + notas; RLS staff; entrada na
-  navegação do back-office. _Sem conversão automática ainda._
+- **Fatia A — MVP kanban:** ✅ IMPLEMENTADO (2026-07-24). `crm_leads` +
+  `crm_activities` + stages (enum); criar lead, arrastar entre colunas (com
+  registo automático da mudança), página de detalhe (edição + timeline + registar
+  atividade/follow-up); RLS staff-only; entrada "CRM" na navegação do back-office.
+  Migração `20260724100000_crm.sql`. Testes integração + RLS. _Conversão em
+  convite fica para a Fatia B._
 - **Fatia B — Conversão:** botão "Converter em convite" (liga à `invites`),
   auto-link on accept, deduplicação por email.
 - **Fatia C — Produtividade:** follow-ups agendados + painel no back-office,
