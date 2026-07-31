@@ -11,53 +11,28 @@ import type {Locale} from '@/lib/mail/templates';
  * nunca passa por RLS (service role).
  */
 
-export type CrmStage =
-  | 'novo'
-  | 'contactado'
-  | 'qualificado'
-  | 'reuniao'
-  | 'convite_enviado'
-  | 'convertido'
-  | 'perdido';
+// O vocabulário (estados/origens/perfis) vive em `constants.ts` para os
+// componentes de cliente o poderem importar; reexporta-se aqui para quem já
+// importava do serviço não ter de mudar.
+export {
+  CRM_STAGES,
+  CRM_SOURCES,
+  CRM_PROFILES,
+  CRM_ACTIVITY_TYPES
+} from './constants';
+export type {
+  CrmStage,
+  CrmSource,
+  CrmInvestorProfile,
+  CrmActivityType
+} from './constants';
 
-// Ordem das colunas do kanban (a mesma da apresentação).
-export const CRM_STAGES: CrmStage[] = [
-  'novo',
-  'contactado',
-  'qualificado',
-  'reuniao',
-  'convite_enviado',
-  'convertido',
-  'perdido'
-];
-
-export type CrmSource =
-  | 'referencia'
-  | 'evento'
-  | 'website'
-  | 'linkedin'
-  | 'outro';
-export const CRM_SOURCES: CrmSource[] = [
-  'referencia',
-  'evento',
-  'website',
-  'linkedin',
-  'outro'
-];
-
-export type CrmInvestorProfile = 'retail' | 'qualificado' | 'institucional';
-export const CRM_PROFILES: CrmInvestorProfile[] = [
-  'retail',
-  'qualificado',
-  'institucional'
-];
-
-export type CrmActivityType =
-  | 'nota'
-  | 'chamada'
-  | 'email'
-  | 'reuniao'
-  | 'mudanca_estado';
+import type {
+  CrmStage,
+  CrmSource,
+  CrmInvestorProfile,
+  CrmActivityType
+} from './constants';
 
 export type LeadRow = {
   id: string;
@@ -65,6 +40,8 @@ export type LeadRow = {
   email: string;
   phone: string;
   source: CrmSource;
+  /** Agente/intermediário que trouxe o investidor ('' = sem intermediário). */
+  agent_name: string;
   stage: CrmStage;
   owner_id: string | null;
   investor_profile: CrmInvestorProfile | null;
@@ -89,7 +66,7 @@ export type ActivityRow = {
 };
 
 const LEAD_COLUMNS =
-  'id, full_name, email, phone, source, stage, owner_id, investor_profile, estimated_ticket, notes, tags, converted_invite_id, converted_user_id, last_activity_at, created_at';
+  'id, full_name, email, phone, source, agent_name, stage, owner_id, investor_profile, estimated_ticket, notes, tags, converted_invite_id, converted_user_id, last_activity_at, created_at';
 
 function toLead(raw: Record<string, unknown>): LeadRow {
   return {
@@ -104,6 +81,7 @@ export type CreateLeadInput = {
   email: string;
   phone?: string;
   source?: CrmSource;
+  agentName?: string;
   ownerId?: string | null;
   investorProfile?: CrmInvestorProfile | null;
   estimatedTicket?: number | null;
@@ -122,6 +100,7 @@ export async function createLead(
       email: input.email.trim().toLowerCase(),
       phone: (input.phone ?? '').trim(),
       source: input.source ?? 'outro',
+      agent_name: (input.agentName ?? '').trim(),
       owner_id: input.ownerId ?? input.createdBy,
       investor_profile: input.investorProfile ?? null,
       estimated_ticket: input.estimatedTicket ?? null,
@@ -141,6 +120,7 @@ export type UpdateLeadInput = {
   email?: string;
   phone?: string;
   source?: CrmSource;
+  agentName?: string;
   ownerId?: string | null;
   investorProfile?: CrmInvestorProfile | null;
   estimatedTicket?: number | null;
@@ -158,6 +138,7 @@ export async function updateLead(
   if (input.email !== undefined) patch.email = input.email.trim().toLowerCase();
   if (input.phone !== undefined) patch.phone = input.phone.trim();
   if (input.source !== undefined) patch.source = input.source;
+  if (input.agentName !== undefined) patch.agent_name = input.agentName.trim();
   if (input.ownerId !== undefined) patch.owner_id = input.ownerId;
   if (input.investorProfile !== undefined)
     patch.investor_profile = input.investorProfile;

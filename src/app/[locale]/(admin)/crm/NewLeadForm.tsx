@@ -16,11 +16,8 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 import type {Locale} from '@/lib/mail/templates';
+import {CRM_SOURCES, CRM_PROFILES} from '@/lib/crm/constants';
 import {createLeadAction} from './actions';
-
-// Listas locais (não importar do módulo server-only do serviço).
-const SOURCES = ['referencia', 'evento', 'website', 'linkedin', 'outro'];
-const PROFILES = ['retail', 'qualificado', 'institucional'];
 
 const CONTROL =
   'h-11 w-full rounded-xl border border-input bg-white px-3.5 text-sm text-ink outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
@@ -78,12 +75,20 @@ export function NewLeadForm({locale}: {locale: Locale}) {
               {t('source')}
             </Label>
             <select id="source" name="source" defaultValue="outro" className={CONTROL}>
-              {SOURCES.map((s) => (
+              {CRM_SOURCES.map((s) => (
                 <option key={s} value={s}>
                   {t(`source_${s}` as 'source_outro')}
                 </option>
               ))}
             </select>
+          </div>
+          {/* Agente/intermediário: campo à parte da origem — quem trouxe o
+              investidor, para depois se poder pagar comissão. */}
+          <div className="space-y-1.5">
+            <Label htmlFor="agent_name" className="font-semibold text-ink">
+              {t('agent')}
+            </Label>
+            <Input id="agent_name" name="agent_name" placeholder={t('agentHint')} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="investor_profile" className="font-semibold text-ink">
@@ -96,7 +101,7 @@ export function NewLeadForm({locale}: {locale: Locale}) {
               className={CONTROL}
             >
               <option value="">{t('noProfile')}</option>
-              {PROFILES.map((p) => (
+              {CRM_PROFILES.map((p) => (
                 <option key={p} value={p}>
                   {t(`profile_${p}` as 'profile_retail')}
                 </option>

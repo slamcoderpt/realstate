@@ -56,6 +56,7 @@ test('CRM: criar lead, arrastar no kanban, follow-up e converter', async ({
   const staffEmail = `crm-e2e-${run}@test.local`;
   const leadEmail = `lead-${run}@test.local`;
   const leadName = `Lead E2E ${run}`;
+  const agentName = `Agente E2E ${run}`;
 
   // Staff (isento de KYC) com o prompt de MFA já dispensado — o foco é o CRM.
   const {data: created, error} = await admin.auth.admin.createUser({
@@ -84,12 +85,19 @@ test('CRM: criar lead, arrastar no kanban, follow-up e converter', async ({
   const form = page.locator('form').filter({has: page.locator('#full_name')});
   await form.locator('#full_name').fill(leadName);
   await form.locator('#email').fill(leadEmail);
-  await form.locator('#source').selectOption('referencia');
+  // Origem e agente/intermediário são campos distintos: o lead vem do Programa
+  // João Gonçalves E tem quem o trouxe. Só a UI exercita o enum novo ponta a
+  // ponta — um valor em falta na base rebentaria já no gravar.
+  await form.locator('#source').selectOption('programa_joao_goncalves');
+  await form.locator('#agent_name').fill(agentName);
   await form.locator('#estimated_ticket').fill('25000');
   await form.getByRole('button', {name: 'Guardar'}).click();
 
   const card = page.locator('article', {hasText: leadName});
   await expect(card).toBeVisible();
+  // O agente aparece no cartão — é o que permite ver de relance quem trouxe
+  // cada investidor sem abrir a ficha.
+  await expect(card).toContainText(agentName);
 
   // A criação ficou registada no audit_log COM autor. É aqui que se prova o
   // caminho todo em condições reais: Server Action → cliente admin →

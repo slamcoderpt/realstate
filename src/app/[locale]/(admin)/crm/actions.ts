@@ -60,6 +60,7 @@ export async function createLeadAction(
       email,
       phone: optional(formData.get('phone')),
       source: (optional(formData.get('source')) as CrmSource) ?? undefined,
+      agentName: optional(formData.get('agent_name')),
       investorProfile:
         (optional(formData.get('investor_profile')) as CrmInvestorProfile) ??
         null,
@@ -100,6 +101,7 @@ export async function updateLeadAction(
       email: String(formData.get('email') ?? '').trim(),
       phone: String(formData.get('phone') ?? '').trim(),
       source: String(formData.get('source') ?? 'outro') as CrmSource,
+      agentName: String(formData.get('agent_name') ?? ''),
       investorProfile:
         (optional(formData.get('investor_profile')) as CrmInvestorProfile) ??
         null,
