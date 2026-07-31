@@ -111,7 +111,7 @@ export function LeadsTable({
     <div className="overflow-x-auto scroll-soft rounded-lg border border-[var(--crm-gray4)] bg-white">
       <table className="w-full border-collapse">
         <thead>
-          <tr className="border-b border-[var(--crm-gray4)]">
+          <tr className="border-b border-[var(--crm-gray4)] bg-[var(--crm-gray2)]">
             <SortHead keyName="fullName" label={t('fullName')} />
             <th scope="col" className={HEAD}>
               {t('email')}

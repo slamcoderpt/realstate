@@ -16,11 +16,12 @@ import {
 import type {Locale} from '@/lib/mail/templates';
 import {
   Avatar,
+  Row,
   Tag,
   STAGE_TONE,
-  FIELD,
   FIELD_BASE,
-  LABEL,
+  INLINE,
+  INLINE_AREA,
   PANEL,
   SECTION_TITLE,
   eur
@@ -116,9 +117,11 @@ export function LeadDetail({
 
       {/* Barra de ações: o estado da lead e o passo seguinte, numa só linha. O
           estado grava ao mudar — o botão «Guardar» só para isto era ruído. */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--crm-gray4)] bg-[var(--crm-gray2)] px-3 py-2">
-        <div className="flex items-center gap-2">
-          <span className={LABEL}>{t('moveTo')}</span>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--crm-gray4)] pb-2.5">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[12px] text-[var(--crm-gray9)]">
+            {t('moveTo')}
+          </span>
           <select
             name="stage"
             aria-label={t('moveTo')}
@@ -129,7 +132,7 @@ export function LeadDetail({
                 moveLeadStageAction(locale, lead.id, e.target.value as CrmStage)
               )
             }
-            className="h-8 rounded border border-[var(--crm-gray6)] bg-white px-2 text-[13px] font-medium text-[var(--crm-gray12)] outline-none focus-visible:border-[var(--crm-accent)] disabled:opacity-60"
+            className="h-7 rounded border border-transparent bg-transparent px-1.5 text-[13px] font-medium text-[var(--crm-gray12)] outline-none transition-colors hover:bg-[var(--crm-gray3)] focus:border-[var(--crm-gray6)] focus:bg-white disabled:opacity-60"
           >
             {CRM_STAGES.map((s) => (
               <option key={s} value={s}>
@@ -190,7 +193,7 @@ export function LeadDetail({
               name="body"
               rows={2}
               placeholder={t('activityBody')}
-              className={`${FIELD} h-auto py-1.5`}
+              className={INLINE_AREA}
             />
             <div className="flex flex-wrap items-center gap-2">
               <select
@@ -266,66 +269,56 @@ export function LeadDetail({
           </section>
         </div>
 
-        {/* Ficha da lead. */}
+        {/* Ficha da lead. Campos em linha (ver `Row`/`INLINE` em ui.tsx): o
+            valor lê-se como texto e só ganha caixa quando se lhe toca. */}
         <form
           action={(fd: FormData) =>
             run('details', () => updateLeadAction(locale, lead.id, fd))
           }
-          className={`${PANEL} space-y-2.5 p-3 ${isPage ? 'lg:sticky lg:top-24' : ''}`}
+          className={`${PANEL} p-3 ${isPage ? 'lg:sticky lg:top-24' : ''}`}
         >
-          <div className="flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <h2 className={SECTION_TITLE}>{t('details')}</h2>
             <Tag tone={STAGE_TONE[lead.stage]}>
               {t(`stage_${lead.stage}` as 'stage_novo')}
             </Tag>
           </div>
 
-          <div className="space-y-1">
-            <label htmlFor="full_name" className={LABEL}>
-              {t('fullName')}
-            </label>
-            <input
-              id="full_name"
-              name="full_name"
-              defaultValue={lead.full_name}
-              required
-              className={FIELD}
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="email" className={LABEL}>
-              {t('email')}
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              defaultValue={lead.email}
-              required
-              className={FIELD}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <label htmlFor="phone" className={LABEL}>
-                {t('phone')}
-              </label>
+          <div className="space-y-0.5">
+            <Row htmlFor="full_name" label={t('fullName')}>
+              <input
+                id="full_name"
+                name="full_name"
+                defaultValue={lead.full_name}
+                required
+                className={`${INLINE} font-medium`}
+              />
+            </Row>
+            <Row htmlFor="email" label={t('email')}>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                defaultValue={lead.email}
+                required
+                className={INLINE}
+              />
+            </Row>
+            <Row htmlFor="phone" label={t('phone')}>
               <input
                 id="phone"
                 name="phone"
                 defaultValue={lead.phone}
-                className={FIELD}
+                placeholder="—"
+                className={INLINE}
               />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="source" className={LABEL}>
-                {t('source')}
-              </label>
+            </Row>
+            <Row htmlFor="source" label={t('source')}>
               <select
                 id="source"
                 name="source"
                 defaultValue={lead.source}
-                className={FIELD}
+                className={INLINE}
               >
                 {CRM_SOURCES.map((s) => (
                   <option key={s} value={s}>
@@ -333,32 +326,24 @@ export function LeadDetail({
                   </option>
                 ))}
               </select>
-            </div>
-          </div>
-          {/* Quem trouxe o investidor — à parte da origem, porque é isto que
-              responde a «a quem se paga comissão». */}
-          <div className="space-y-1">
-            <label htmlFor="agent_name" className={LABEL}>
-              {t('agent')}
-            </label>
-            <input
-              id="agent_name"
-              name="agent_name"
-              defaultValue={lead.agent_name}
-              placeholder={t('agentHint')}
-              className={FIELD}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <label htmlFor="investor_profile" className={LABEL}>
-                {t('investorProfile')}
-              </label>
+            </Row>
+            {/* Quem trouxe o investidor — à parte da origem, porque é isto que
+                responde a «a quem se paga comissão». */}
+            <Row htmlFor="agent_name" label={t('agentShort')}>
+              <input
+                id="agent_name"
+                name="agent_name"
+                defaultValue={lead.agent_name}
+                placeholder="—"
+                className={INLINE}
+              />
+            </Row>
+            <Row htmlFor="investor_profile" label={t('investorProfile')}>
               <select
                 id="investor_profile"
                 name="investor_profile"
                 defaultValue={lead.investor_profile ?? ''}
-                className={FIELD}
+                className={INLINE}
               >
                 <option value="">{t('noProfile')}</option>
                 {CRM_PROFILES.map((p) => (
@@ -367,41 +352,42 @@ export function LeadDetail({
                   </option>
                 ))}
               </select>
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="estimated_ticket" className={LABEL}>
-                {t('estimatedTicket')}
-              </label>
+            </Row>
+            {/* O valor formatado vive no rótulo da linha seguinte, não numa
+                linha à parte: repetir «250 000 €» por baixo do campo era ruído,
+                mas sem ele não se lê um número de seis dígitos de relance. */}
+            <Row htmlFor="estimated_ticket" label={t('estimatedTicket')}>
+              <div className="flex items-center gap-2">
+                <input
+                  id="estimated_ticket"
+                  name="estimated_ticket"
+                  type="number"
+                  min={0}
+                  step="1000"
+                  defaultValue={lead.estimated_ticket ?? ''}
+                  placeholder="—"
+                  className={`${INLINE} tabular-nums`}
+                />
+                {lead.estimated_ticket != null && (
+                  <span className="shrink-0 text-[12px] text-[var(--crm-gray9)] tabular-nums">
+                    {eur(lead.estimated_ticket)}
+                  </span>
+                )}
+              </div>
+            </Row>
+            <Row htmlFor="tags" label={t('tags')}>
               <input
-                id="estimated_ticket"
-                name="estimated_ticket"
-                type="number"
-                min={0}
-                step="1000"
-                defaultValue={lead.estimated_ticket ?? ''}
-                className={FIELD}
+                id="tags"
+                name="tags"
+                defaultValue={lead.tags.join(', ')}
+                placeholder={t('tagsHint')}
+                className={INLINE}
               />
-            </div>
+            </Row>
           </div>
-          {lead.estimated_ticket != null && (
-            <p className="-mt-1 text-[12px] text-[var(--crm-gray9)] tabular-nums">
-              {eur(lead.estimated_ticket)}
-            </p>
-          )}
-          <div className="space-y-1">
-            <label htmlFor="tags" className={LABEL}>
-              {t('tags')}
-            </label>
-            <input
-              id="tags"
-              name="tags"
-              defaultValue={lead.tags.join(', ')}
-              placeholder={t('tagsHint')}
-              className={FIELD}
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="notes" className={LABEL}>
+
+          <div className="mt-2 border-t border-[var(--crm-gray4)] pt-2">
+            <label htmlFor="notes" className="text-[12px] text-[var(--crm-gray9)]">
               {t('notes')}
             </label>
             <textarea
@@ -409,13 +395,15 @@ export function LeadDetail({
               name="notes"
               rows={3}
               defaultValue={lead.notes}
-              className={`${FIELD} h-auto py-1.5`}
+              placeholder="—"
+              className={`${INLINE_AREA} mt-0.5`}
             />
           </div>
+
           <button
             type="submit"
             disabled={pending}
-            className={`${BTN_NEUTRAL} w-full justify-center`}
+            className={`${BTN_NEUTRAL} mt-2 w-full justify-center`}
           >
             {busy === 'details' && (
               <Spinner className="size-3.5 text-[var(--crm-gray9)]" />

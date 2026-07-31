@@ -508,6 +508,7 @@
     "phone": "Telefone",
     "source": "Origem",
     "agent": "Agente/Intermediário",
+    "agentShort": "Agente",
     "agentHint": "Quem trouxe o investidor (para comissão).",
     "ownerLabel": "Responsável",
     "investorProfile": "Perfil de investidor",

@@ -12,9 +12,6 @@
 
 import type {CrmStage} from '@/lib/crm/constants';
 
-/** Altura de linha/controlo. 32px é a medida do Twenty — cabe muito por ecrã. */
-export const ROW_H = 'h-8';
-
 /**
  * Campo de formulário e caixa de seleção.
  *
@@ -27,6 +24,51 @@ export const FIELD_BASE =
   'h-8 rounded border border-[var(--crm-gray6)] bg-white px-2 text-[13px] text-[var(--crm-gray12)] outline-none transition-colors placeholder:text-[var(--crm-gray8)] focus-visible:border-[var(--crm-accent)] disabled:opacity-60';
 export const FIELD = `${FIELD_BASE} w-full`;
 
+/**
+ * Campo em linha — o padrão da ficha de registo do Twenty.
+ *
+ * O valor lê-se como TEXTO: sem moldura, sem fundo. Só ao passar o rato ganha
+ * um cinzento leve (a dizer «isto edita-se») e ao focar é que vira caixa. Uma
+ * ficha com dez campos emoldurados é uma parede de retângulos onde o que
+ * interessa — os valores — fica a competir com as bordas.
+ *
+ * A borda transparente está lá desde o início de propósito: se só aparecesse
+ * ao focar, o campo crescia 2px e a ficha inteira estremecia.
+ */
+export const INLINE =
+  'h-7 w-full rounded border border-transparent bg-transparent px-1.5 text-[13px] text-[var(--crm-gray12)] outline-none transition-colors placeholder:text-[var(--crm-gray8)] hover:bg-[var(--crm-gray3)] focus:border-[var(--crm-gray6)] focus:bg-white';
+
+/** Variante para texto multilinha (notas): mesma gramática, altura própria. */
+export const INLINE_AREA =
+  'w-full resize-y rounded border border-transparent bg-transparent px-1.5 py-1 text-[13px] leading-relaxed text-[var(--crm-gray12)] outline-none transition-colors placeholder:text-[var(--crm-gray8)] hover:bg-[var(--crm-gray3)] focus:border-[var(--crm-gray6)] focus:bg-white';
+
+/**
+ * Linha da ficha: rótulo à esquerda, valor à direita. Compacta (28px) e
+ * alinhada numa grelha fixa, para os valores formarem uma coluna limpa em vez
+ * de começarem cada um a sua altura.
+ */
+export function Row({
+  htmlFor,
+  label,
+  children
+}: {
+  htmlFor: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-2">
+      <label
+        htmlFor={htmlFor}
+        className="truncate text-[12px] text-[var(--crm-gray9)]"
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
 /** Marcador de célula/valor ausente. Cinzento claro: é a ausência de dado, não
  *  um dado. */
 export function Empty() {
@@ -35,7 +77,7 @@ export function Empty() {
 
 /** Controlo da barra de ferramentas (filtros, seletores). */
 export const TOOL =
-  'h-8 rounded border border-transparent bg-transparent px-2 text-[13px] text-[var(--crm-gray11)] outline-none transition-colors hover:bg-[var(--crm-gray4)] focus-visible:border-[var(--crm-gray6)]';
+  'h-8 max-w-[11rem] truncate rounded border border-transparent bg-transparent px-2 text-[13px] text-[var(--crm-gray11)] outline-none transition-colors hover:bg-[var(--crm-gray4)] focus-visible:border-[var(--crm-gray6)]';
 
 /** Rótulo de campo: pequeno, cinzento, sem maiúsculas forçadas. */
 export const LABEL = 'text-[12px] font-medium text-[var(--crm-gray9)]';

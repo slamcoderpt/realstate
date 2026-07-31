@@ -508,6 +508,7 @@
     "phone": "Phone",
     "source": "Source",
     "agent": "Agent/Intermediary",
+    "agentShort": "Agent",
     "agentHint": "Who brought the investor (for commission).",
     "ownerLabel": "Owner",
     "investorProfile": "Investor profile",

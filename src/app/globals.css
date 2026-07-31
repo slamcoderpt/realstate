@@ -315,6 +315,38 @@
   background: var(--crm-gray3);
 }
 
+/* Caixas de seleção sem a moldura do browser. O `appearance: none` tira o
+   estilo nativo (que em cada sistema é diferente e nenhum combina com isto) e
+   a seta passa a ser desenhada por nós, na mesma cor dos ícones. */
+.crm-surface select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.375rem center;
+  background-size: 0.875rem;
+  padding-right: 1.5rem;
+}
+
+/* Os botõezinhos de incremento dos campos numéricos são ruído: o ticket
+   escreve-se, não se sobe de mil em mil ao clique. */
+.crm-surface input[type='number'] {
+  -moz-appearance: textfield;
+}
+.crm-surface input[type='number']::-webkit-outer-spin-button,
+.crm-surface input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Ícone do seletor de data na cor dos outros ícones (o default é preto forte). */
+.crm-surface input[type='date']::-webkit-calendar-picker-indicator {
+  opacity: 0.45;
+  cursor: pointer;
+}
+.crm-surface input[type='date']::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.8;
+}
+
 /* A barra de deslocamento também deixa de ser azul aqui dentro. */
 .crm-surface .scroll-soft {
   scrollbar-color: var(--crm-gray6) transparent;
