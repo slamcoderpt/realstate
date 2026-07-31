@@ -65,6 +65,7 @@ export default async function CrmPage({
     estimatedTicket: l.estimated_ticket,
     ownerName: l.owner_id ? (ownerName.get(l.owner_id) ?? '') : '',
     source: l.source,
+    agentName: l.agent_name,
     tags: l.tags,
     daysSinceContact: Math.floor(
       (now - new Date(l.last_activity_at).getTime()) / DAY_MS

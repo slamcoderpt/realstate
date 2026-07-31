@@ -2,9 +2,9 @@
 
 import {useEffect, useMemo, useState} from 'react';
 import {useTranslations} from 'next-intl';
-import {UserRoundIcon} from 'lucide-react';
+import {HandshakeIcon, UserRoundIcon} from 'lucide-react';
 import type {Locale} from '@/lib/mail/templates';
-import type {CrmStage} from '@/lib/crm/service';
+import {CRM_SOURCES, type CrmStage} from '@/lib/crm/constants';
 import {moveLeadStageAction} from './actions';
 import {LeadDialog} from './LeadDialog';
 
@@ -14,13 +14,13 @@ export type LeadCard = {
   estimatedTicket: number | null;
   ownerName: string;
   source: string;
+  /** Agente/intermediário que trouxe o lead ('' = veio direto). */
+  agentName: string;
   tags: string[];
   daysSinceContact: number;
 };
 
 type Column = {stage: CrmStage; label: string; leads: LeadCard[]};
-
-const SOURCES = ['referencia', 'evento', 'website', 'linkedin', 'outro'];
 
 const CONTROL =
   'h-9 rounded-xl border border-input bg-white px-3 text-sm text-ink outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
@@ -53,6 +53,7 @@ export function KanbanBoard({
   // Filtros (client-side, sobre os cartões já carregados).
   const [owner, setOwner] = useState('');
   const [source, setSource] = useState('');
+  const [agent, setAgent] = useState('');
   const [tag, setTag] = useState('');
 
   const owners = useMemo(
@@ -60,6 +61,17 @@ export function KanbanBoard({
       [
         ...new Set(
           columns.flatMap((c) => c.leads.map((l) => l.ownerName).filter(Boolean))
+        )
+      ].sort(),
+    [columns]
+  );
+  // Agentes existentes nos cartões — filtrar por agente é o que dá a lista de
+  // leads a considerar para comissão.
+  const agents = useMemo(
+    () =>
+      [
+        ...new Set(
+          columns.flatMap((c) => c.leads.map((l) => l.agentName).filter(Boolean))
         )
       ].sort(),
     [columns]
@@ -102,6 +114,7 @@ export function KanbanBoard({
   function keep(l: LeadCard): boolean {
     if (owner && l.ownerName !== owner) return false;
     if (source && l.source !== source) return false;
+    if (agent && l.agentName !== agent) return false;
     if (tag && !l.tags.includes(tag)) return false;
     return true;
   }
@@ -154,12 +167,27 @@ export function KanbanBoard({
           className={CONTROL}
         >
           <option value="">{t('filterAllSources')}</option>
-          {SOURCES.map((s) => (
+          {CRM_SOURCES.map((s) => (
             <option key={s} value={s}>
               {t(`source_${s}` as 'source_outro')}
             </option>
           ))}
         </select>
+        {agents.length > 0 && (
+          <select
+            aria-label={t('filterByAgent')}
+            value={agent}
+            onChange={(e) => setAgent(e.target.value)}
+            className={CONTROL}
+          >
+            <option value="">{t('filterAllAgents')}</option>
+            {agents.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+        )}
         {tags.length > 0 && (
           <select
             aria-label={t('filterByTag')}
@@ -175,12 +203,13 @@ export function KanbanBoard({
             ))}
           </select>
         )}
-        {(owner || source || tag) && (
+        {(owner || source || agent || tag) && (
           <button
             type="button"
             onClick={() => {
               setOwner('');
               setSource('');
+              setAgent('');
               setTag('');
             }}
             className="text-sm font-semibold text-brand-600 underline-offset-4 hover:underline"
@@ -257,6 +286,15 @@ export function KanbanBoard({
                       {lead.estimatedTicket != null && (
                         <p className="mt-1 text-xs font-semibold text-brand-600 tabular-nums">
                           {eur(lead.estimatedTicket)}
+                        </p>
+                      )}
+                      {lead.agentName && (
+                        <p
+                          title={`${t('agent')}: ${lead.agentName}`}
+                          className="mt-1 flex items-center gap-1 text-xs text-ink-muted"
+                        >
+                          <HandshakeIcon aria-hidden className="size-3 shrink-0" />
+                          <span className="truncate">{lead.agentName}</span>
                         </p>
                       )}
                       {lead.tags.length > 0 && (

@@ -132,6 +132,59 @@ describe('follow-ups', () => {
   });
 });
 
+describe('origem e agente/intermediário', () => {
+  it('aceita a origem «Programa João Gonçalves»', async () => {
+    const {id} = await createLead({
+      fullName: 'Programa',
+      email: email(),
+      source: 'programa_joao_goncalves',
+      createdBy: staffId
+    });
+    const detail = await getLeadDetail(id);
+    expect(detail!.lead.source).toBe('programa_joao_goncalves');
+  });
+
+  it('guarda o agente na criação e é independente da origem', async () => {
+    const {id} = await createLead({
+      fullName: 'Com agente',
+      email: email(),
+      source: 'evento',
+      agentName: '  Maria Intermediária  ',
+      createdBy: staffId
+    });
+    const detail = await getLeadDetail(id);
+    // Espaços à volta são limpos — o campo é depois usado para agrupar leads
+    // por agente (comissões), e " Maria" e "Maria" não podem ser dois agentes.
+    expect(detail!.lead.agent_name).toBe('Maria Intermediária');
+    expect(detail!.lead.source).toBe('evento');
+  });
+
+  it('sem agente fica vazio (e não nulo)', async () => {
+    const {id} = await createLead({fullName: 'Direto', email: email(), createdBy: staffId});
+    expect((await getLeadDetail(id))!.lead.agent_name).toBe('');
+  });
+
+  it('atualiza e limpa o agente', async () => {
+    const {id} = await createLead({fullName: 'Edita', email: email(), createdBy: staffId});
+    await updateLead(id, {agentName: 'João Agente'});
+    expect((await getLeadDetail(id))!.lead.agent_name).toBe('João Agente');
+    await updateLead(id, {agentName: ''});
+    expect((await getLeadDetail(id))!.lead.agent_name).toBe('');
+  });
+
+  it('o agente vem no `listLeads` (o kanban filtra por ele)', async () => {
+    const agent = `Agente ${randomUUID().slice(0, 6)}`;
+    const {id} = await createLead({
+      fullName: 'Listado',
+      email: email(),
+      agentName: agent,
+      createdBy: staffId
+    });
+    const rows = await listLeads();
+    expect(rows.find((l) => l.id === id)!.agent_name).toBe(agent);
+  });
+});
+
 describe('tags', () => {
   it('atualiza as tags do lead', async () => {
     const {id} = await createLead({fullName: 'Tagged', email: email(), createdBy: staffId});

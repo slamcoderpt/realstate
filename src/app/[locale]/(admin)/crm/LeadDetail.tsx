@@ -8,7 +8,13 @@ import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Spinner} from '@/components/ui/spinner';
 import type {LeadDetailView} from '@/lib/crm/detail-dto';
-import type {CrmStage} from '@/lib/crm/service';
+import {
+  CRM_STAGES,
+  CRM_SOURCES,
+  CRM_PROFILES,
+  CRM_ACTIVITY_TYPES,
+  type CrmStage
+} from '@/lib/crm/constants';
 import type {Locale} from '@/lib/mail/templates';
 import {
   addActivityAction,
@@ -31,20 +37,6 @@ import {
  * painéis são caixas simples e não `Card`: dentro de uma janela já emoldurada,
  * cartões com sombra dentro de cartões só acrescentavam ruído.
  */
-
-// Listas locais: o módulo do serviço é `server-only`.
-const STAGES: CrmStage[] = [
-  'novo',
-  'contactado',
-  'qualificado',
-  'reuniao',
-  'convite_enviado',
-  'convertido',
-  'perdido'
-];
-const SOURCES = ['referencia', 'evento', 'website', 'linkedin', 'outro'];
-const PROFILES = ['retail', 'qualificado', 'institucional'];
-const ACTIVITY_TYPES = ['nota', 'chamada', 'email', 'reuniao'];
 
 const FIELD =
   'h-10 w-full rounded-xl border border-input bg-white px-3 text-sm text-ink outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
@@ -141,7 +133,7 @@ export function LeadDetail({
             }
             className="h-9 rounded-lg border border-input bg-white px-2.5 text-sm font-semibold text-ink outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
           >
-            {STAGES.map((s) => (
+            {CRM_STAGES.map((s) => (
               <option key={s} value={s}>
                 {t(`stage_${s}` as 'stage_novo')}
               </option>
@@ -204,7 +196,7 @@ export function LeadDetail({
                 defaultValue="nota"
                 className={`${FIELD} h-9 w-36`}
               >
-                {ACTIVITY_TYPES.map((a) => (
+                {CRM_ACTIVITY_TYPES.map((a) => (
                   <option key={a} value={a}>
                     {t(`type_${a}` as 'type_nota')}
                   </option>
@@ -326,13 +318,27 @@ export function LeadDetail({
                 defaultValue={lead.source}
                 className={FIELD}
               >
-                {SOURCES.map((s) => (
+                {CRM_SOURCES.map((s) => (
                   <option key={s} value={s}>
                     {t(`source_${s}` as 'source_outro')}
                   </option>
                 ))}
               </select>
             </div>
+          </div>
+          {/* Quem trouxe o investidor — à parte da origem, porque é isto que
+              responde a «a quem se paga comissão». */}
+          <div className="space-y-1">
+            <label htmlFor="agent_name" className={LABEL}>
+              {t('agent')}
+            </label>
+            <input
+              id="agent_name"
+              name="agent_name"
+              defaultValue={lead.agent_name}
+              placeholder={t('agentHint')}
+              className={FIELD}
+            />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
@@ -346,7 +352,7 @@ export function LeadDetail({
                 className={FIELD}
               >
                 <option value="">{t('noProfile')}</option>
-                {PROFILES.map((p) => (
+                {CRM_PROFILES.map((p) => (
                   <option key={p} value={p}>
                     {t(`profile_${p}` as 'profile_retail')}
                   </option>
