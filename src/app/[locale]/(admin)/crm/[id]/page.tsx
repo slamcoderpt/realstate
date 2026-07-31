@@ -25,13 +25,13 @@ export default async function LeadDetailPage({
   if (!view) notFound();
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 p-6">
+    <main className="mx-auto max-w-5xl space-y-4 px-5 py-5">
       <div className="flex flex-wrap items-center gap-4">
         <a
           href={`/${locale}/crm`}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 underline-offset-4 hover:text-brand-700 hover:underline"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--crm-gray11)] underline-offset-2 hover:text-[var(--crm-gray12)] hover:underline"
         >
-          <ArrowLeftIcon aria-hidden className="size-4" />
+          <ArrowLeftIcon aria-hidden className="size-3.5" />
           {t('back')}
         </a>
       </div>

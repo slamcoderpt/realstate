@@ -223,6 +223,106 @@
   border: 30px solid rgba(255, 255, 255, 0.16);
 }
 
+/* ============================================================
+   Superfície do CRM — linguagem visual densa (referência: Twenty CRM)
+   ============================================================
+   O CRM é uma ferramenta de trabalho: quem lá está passa o dia a varrer listas
+   e a comparar linhas. O sistema Altronix (azul, cantos de 22px, sombras
+   tingidas) foi desenhado para as superfícies do INVESTIDOR, onde a marca tem
+   de falar; aqui só atrapalha — cada sombra e cada canto macio rouba densidade
+   e faz a lista render menos informação por ecrã.
+
+   Os valores abaixo são os do design system do Twenty (open source), lidos do
+   repositório e não estimados do screenshot: escala de cinzentos
+   `GrayScaleLight` (p3 neutro → o mesmo valor em sRGB), raios `BorderCommon`
+   (2/4/8px), tipografia `FontCommon` (Inter, base 13px) e etiquetas `TagLight`
+   (fundo Radix 3, texto Radix 11).
+
+   ISOLAMENTO: isto é uma CLASSE, não `:root`. Redefinir os tokens aqui dentro
+   faz as utilidades do Tailwind (`text-ink`, `bg-card`, …) e os componentes
+   shadcn mudarem de tom só nesta subárvore — o resto da app fica intacto.
+   Atenção: diálogos do Radix saem por portal para o `body`, FORA desta
+   subárvore; por isso o `DialogContent` do CRM também leva `crm-surface`. */
+.crm-surface {
+  --crm-gray1: #ffffff;
+  --crm-gray2: #fcfcfc;
+  --crm-gray3: #f9f9f9;
+  --crm-gray4: #f1f1f1;
+  --crm-gray5: #ebebeb;
+  --crm-gray6: #d6d6d6;
+  --crm-gray7: #cccccc;
+  --crm-gray8: #b3b3b3;
+  --crm-gray9: #999999;
+  --crm-gray10: #838383;
+  --crm-gray11: #666666;
+  --crm-gray12: #333333;
+
+  /* O azul deixa de ser o tom da superfície e passa a acento pontual: só o
+     que é ação primária, ligação ou estado ativo. */
+  --crm-accent: #0d74ce;
+  --crm-accent-soft: #e6f4fe;
+
+  /* Tokens semânticos (shadcn) reapontados para a rampa neutra. */
+  --background: var(--crm-gray2);
+  --foreground: var(--crm-gray12);
+  --card: var(--crm-gray1);
+  --card-foreground: var(--crm-gray12);
+  --popover: var(--crm-gray1);
+  --popover-foreground: var(--crm-gray12);
+  --primary: var(--crm-gray12);
+  --primary-foreground: var(--crm-gray1);
+  --secondary: var(--crm-gray4);
+  --secondary-foreground: var(--crm-gray12);
+  --muted: var(--crm-gray4);
+  --muted-foreground: var(--crm-gray9);
+  --accent: var(--crm-gray4);
+  --accent-foreground: var(--crm-gray12);
+  --border: var(--crm-gray4);
+  --input: var(--crm-gray6);
+  --ring: var(--crm-gray8);
+  --destructive: #ce2c31;
+
+  /* Utilidades da marca reapontadas: `text-ink`/`text-ink-muted` estão
+     espalhados pelos componentes do CRM e passam a ler cinzento aqui dentro,
+     sem ser preciso caçar cada ocorrência. */
+  --color-ink: var(--crm-gray12);
+  --color-ink-soft: var(--crm-gray11);
+  --color-ink-muted: var(--crm-gray9);
+  --color-brand-50: var(--crm-accent-soft);
+  --color-brand-100: #d3e9fb;
+  --color-brand-200: #b9ddf8;
+  --color-brand-300: #8ec8f2;
+  --color-brand-400: #3b9eea;
+  --color-brand-500: var(--crm-accent);
+  --color-brand-600: #0b64b0;
+  --color-brand-700: #0a5697;
+
+  /* Cantos pequenos e sombras quase invisíveis: a hierarquia faz-se com
+     bordas de 1px, não com elevação. */
+  --radius: 4px;
+  --radius-card: 8px;
+  --shadow-card: none;
+
+  background: var(--crm-gray2);
+  color: var(--crm-gray12);
+  /* Base 13px — é daqui que vem a densidade do Twenty. */
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Linha da tabela: o realce é uma mudança de fundo, sem bordas a saltar. */
+.crm-row:hover {
+  background: var(--crm-gray3);
+}
+
+/* A barra de deslocamento também deixa de ser azul aqui dentro. */
+.crm-surface .scroll-soft {
+  scrollbar-color: var(--crm-gray6) transparent;
+}
+.crm-surface .scroll-soft::-webkit-scrollbar-thumb {
+  background: var(--crm-gray6);
+}
+
 /* Barra de deslocamento fina para painéis densos (tabelas do back-office). */
 .scroll-soft {
   scrollbar-width: thin;

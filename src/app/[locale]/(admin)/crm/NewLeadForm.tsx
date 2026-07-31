@@ -3,9 +3,6 @@
 import {useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {PlusIcon} from 'lucide-react';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
-import {Label} from '@/components/ui/label';
 import {
   Dialog,
   DialogClose,
@@ -17,12 +14,10 @@ import {
 } from '@/components/ui/dialog';
 import type {Locale} from '@/lib/mail/templates';
 import {CRM_SOURCES, CRM_PROFILES} from '@/lib/crm/constants';
+import {FIELD, LABEL} from './ui';
 import {createLeadAction} from './actions';
 
-const CONTROL =
-  'h-11 w-full rounded-xl border border-input bg-white px-3.5 text-sm text-ink outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
-
-/** Criação de lead em janela modal — o board fica visível por trás. */
+/** Criação de lead em janela modal — o pipeline fica visível por trás. */
 export function NewLeadForm({locale}: {locale: Locale}) {
   const t = useTranslations('Crm');
   const [open, setOpen] = useState(false);
@@ -30,75 +25,80 @@ export function NewLeadForm({locale}: {locale: Locale}) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <PlusIcon aria-hidden className="size-4" />
+        <button
+          type="button"
+          className="inline-flex h-8 items-center gap-1.5 rounded bg-[var(--crm-accent)] px-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#0b64b0]"
+        >
+          <PlusIcon aria-hidden className="size-3.5" />
           {t('newLead')}
-        </Button>
+        </button>
       </DialogTrigger>
+      {/* `crm-surface` também aqui: o diálogo sai por portal para o `body` e,
+          sem a classe, herdava o tema da marca em vez do tema do CRM. */}
       <DialogContent
         showCloseButton={false}
-        className="max-h-[90vh] overflow-y-auto scroll-soft rounded-[var(--radius-card)] sm:max-w-2xl"
+        className="crm-surface max-h-[90vh] overflow-y-auto scroll-soft rounded-lg border-[var(--crm-gray5)] p-4 sm:max-w-xl"
       >
-        <DialogHeader>
-          <DialogTitle className="text-xl font-extrabold tracking-tight text-ink">
+        <DialogHeader className="gap-0.5">
+          <DialogTitle className="text-[15px] font-semibold text-[var(--crm-gray12)]">
             {t('newLead')}
           </DialogTitle>
-          <DialogDescription>{t('subtitle')}</DialogDescription>
+          <DialogDescription className="text-[12px] text-[var(--crm-gray9)]">
+            {t('subtitle')}
+          </DialogDescription>
         </DialogHeader>
         <form
           action={async (fd) => {
             await createLeadAction(locale, fd);
             setOpen(false);
           }}
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2"
         >
-          <div className="space-y-1.5">
-            <Label htmlFor="full_name" className="font-semibold text-ink">
-              {t('fullName')}
-            </Label>
-            <Input id="full_name" name="full_name" required />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="email" className="font-semibold text-ink">
-              {t('email')}
-            </Label>
-            <Input id="email" name="email" type="email" required />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="phone" className="font-semibold text-ink">
-              {t('phone')}
-            </Label>
-            <Input id="phone" name="phone" />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="source" className="font-semibold text-ink">
-              {t('source')}
-            </Label>
-            <select id="source" name="source" defaultValue="outro" className={CONTROL}>
+          <Field id="full_name" label={t('fullName')}>
+            <input id="full_name" name="full_name" required className={FIELD} />
+          </Field>
+          <Field id="email" label={t('email')}>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              className={FIELD}
+            />
+          </Field>
+          <Field id="phone" label={t('phone')}>
+            <input id="phone" name="phone" className={FIELD} />
+          </Field>
+          <Field id="source" label={t('source')}>
+            <select
+              id="source"
+              name="source"
+              defaultValue="outro"
+              className={FIELD}
+            >
               {CRM_SOURCES.map((s) => (
                 <option key={s} value={s}>
                   {t(`source_${s}` as 'source_outro')}
                 </option>
               ))}
             </select>
-          </div>
+          </Field>
           {/* Agente/intermediário: campo à parte da origem — quem trouxe o
               investidor, para depois se poder pagar comissão. */}
-          <div className="space-y-1.5">
-            <Label htmlFor="agent_name" className="font-semibold text-ink">
-              {t('agent')}
-            </Label>
-            <Input id="agent_name" name="agent_name" placeholder={t('agentHint')} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="investor_profile" className="font-semibold text-ink">
-              {t('investorProfile')}
-            </Label>
+          <Field id="agent_name" label={t('agent')}>
+            <input
+              id="agent_name"
+              name="agent_name"
+              placeholder={t('agentHint')}
+              className={FIELD}
+            />
+          </Field>
+          <Field id="investor_profile" label={t('investorProfile')}>
             <select
               id="investor_profile"
               name="investor_profile"
               defaultValue=""
-              className={CONTROL}
+              className={FIELD}
             >
               <option value="">{t('noProfile')}</option>
               {CRM_PROFILES.map((p) => (
@@ -107,35 +107,59 @@ export function NewLeadForm({locale}: {locale: Locale}) {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="estimated_ticket" className="font-semibold text-ink">
-              {t('estimatedTicket')}
-            </Label>
-            <Input
+          </Field>
+          <Field id="estimated_ticket" label={t('estimatedTicket')}>
+            <input
               id="estimated_ticket"
               name="estimated_ticket"
               type="number"
               min={0}
               step="1000"
+              className={FIELD}
             />
+          </Field>
+          <div className="sm:col-span-2">
+            <Field id="notes" label={t('notes')}>
+              <textarea
+                id="notes"
+                name="notes"
+                rows={3}
+                className={`${FIELD} h-auto py-1.5`}
+              />
+            </Field>
           </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="notes" className="font-semibold text-ink">
-              {t('notes')}
-            </Label>
-            <textarea id="notes" name="notes" rows={3} className={`${CONTROL} h-auto py-2.5`} />
-          </div>
-          <div className="flex gap-3 sm:col-span-2">
-            <Button type="submit">{t('save')}</Button>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                {t('cancel')}
-              </Button>
+          <div className="flex gap-2 sm:col-span-2">
+            <button
+              type="submit"
+              className="inline-flex h-8 items-center rounded bg-[var(--crm-accent)] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#0b64b0]"
+            >
+              {t('save')}
+            </button>
+            <DialogClose className="inline-flex h-8 items-center rounded border border-[var(--crm-gray6)] bg-white px-3 text-[13px] font-medium text-[var(--crm-gray11)] transition-colors hover:bg-[var(--crm-gray4)]">
+              {t('cancel')}
             </DialogClose>
           </div>
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function Field({
+  id,
+  label,
+  children
+}: {
+  id: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1">
+      <label htmlFor={id} className={LABEL}>
+        {label}
+      </label>
+      {children}
+    </div>
   );
 }

@@ -4,8 +4,6 @@ import {useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {useRouter} from '@/i18n/navigation';
 import {SendIcon, Trash2Icon, UserCheckIcon} from 'lucide-react';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
 import {Spinner} from '@/components/ui/spinner';
 import type {LeadDetailView} from '@/lib/crm/detail-dto';
 import {
@@ -16,6 +14,17 @@ import {
   type CrmStage
 } from '@/lib/crm/constants';
 import type {Locale} from '@/lib/mail/templates';
+import {
+  Avatar,
+  Tag,
+  STAGE_TONE,
+  FIELD,
+  FIELD_BASE,
+  LABEL,
+  PANEL,
+  SECTION_TITLE,
+  eur
+} from './ui';
 import {
   addActivityAction,
   convertLeadToInviteAction,
@@ -33,27 +42,15 @@ import {
  * os dados depois de cada ação — na página basta o `revalidatePath` das ações.
  *
  * Layout: uma barra de ações no topo (estado + conversão) e duas colunas —
- * trabalho à esquerda (registar atividade e histórico), ficha à direita. Os
- * painéis são caixas simples e não `Card`: dentro de uma janela já emoldurada,
- * cartões com sombra dentro de cartões só acrescentavam ruído.
+ * trabalho à esquerda (registar atividade e histórico), ficha à direita.
  */
 
-const FIELD =
-  'h-10 w-full rounded-xl border border-input bg-white px-3 text-sm text-ink outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
-const LABEL = 'text-xs font-semibold text-ink-muted';
-const PANEL = 'rounded-xl border border-border bg-card p-4';
-const SECTION_TITLE =
-  'text-[0.6875rem] font-bold tracking-[0.1em] text-ink-muted uppercase';
+const BTN_PRIMARY =
+  'inline-flex h-8 items-center gap-1.5 rounded bg-[var(--crm-accent)] px-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#0b64b0] disabled:opacity-50';
+const BTN_NEUTRAL =
+  'inline-flex h-8 items-center gap-1.5 rounded border border-[var(--crm-gray6)] bg-white px-2.5 text-[13px] font-medium text-[var(--crm-gray11)] transition-colors hover:bg-[var(--crm-gray4)] hover:text-[var(--crm-gray12)] disabled:opacity-50';
 
 type Busy = 'stage' | 'convert' | 'activity' | 'details' | 'delete' | null;
-
-function eur(v: number): string {
-  return new Intl.NumberFormat('pt-PT', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0
-  }).format(v);
-}
 
 export function LeadDetail({
   locale,
@@ -109,16 +106,17 @@ export function LeadDetail({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {isPage && (
-        <h1 className="text-2xl font-extrabold tracking-tight text-ink">
+        <h1 className="flex items-center gap-2 text-[20px] font-semibold tracking-tight text-[var(--crm-gray12)]">
+          <Avatar name={lead.full_name} size={24} />
           {lead.full_name}
         </h1>
       )}
 
       {/* Barra de ações: o estado da lead e o passo seguinte, numa só linha. O
           estado grava ao mudar — o botão «Guardar» só para isto era ruído. */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-secondary/60 px-3.5 py-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--crm-gray4)] bg-[var(--crm-gray2)] px-3 py-2">
         <div className="flex items-center gap-2">
           <span className={LABEL}>{t('moveTo')}</span>
           <select
@@ -131,7 +129,7 @@ export function LeadDetail({
                 moveLeadStageAction(locale, lead.id, e.target.value as CrmStage)
               )
             }
-            className="h-9 rounded-lg border border-input bg-white px-2.5 text-sm font-semibold text-ink outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
+            className="h-8 rounded border border-[var(--crm-gray6)] bg-white px-2 text-[13px] font-medium text-[var(--crm-gray12)] outline-none focus-visible:border-[var(--crm-accent)] disabled:opacity-60"
           >
             {CRM_STAGES.map((s) => (
               <option key={s} value={s}>
@@ -139,18 +137,20 @@ export function LeadDetail({
               </option>
             ))}
           </select>
-          {busy === 'stage' && <Spinner className="size-3.5 text-brand-500" />}
+          {busy === 'stage' && (
+            <Spinner className="size-3.5 text-[var(--crm-gray9)]" />
+          )}
         </div>
 
         {/* Conversão: se já foi convertida mostra o estado; senão, o botão que
             cria o convite (reutiliza o mecanismo de convites existente). */}
         {lead.converted_user_id ? (
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700">
+          <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#218358]">
             <UserCheckIcon aria-hidden className="size-4" />
             {t('convertedUser')}
           </span>
         ) : lead.converted_invite_id ? (
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700">
+          <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#ab6400]">
             <SendIcon aria-hidden className="size-4" />
             {t('convertedInvite')}
           </span>
@@ -160,41 +160,44 @@ export function LeadDetail({
               run('convert', () => convertLeadToInviteAction(locale, lead.id))
             }
           >
-            <Button
+            <button
               type="submit"
-              size="sm"
               title={t('convertHint')}
-              loading={busy === 'convert'}
               disabled={pending}
+              className={BTN_PRIMARY}
             >
-              <SendIcon aria-hidden className="size-4" />
+              {busy === 'convert' ? (
+                <Spinner className="size-3.5 text-white" />
+              ) : (
+                <SendIcon aria-hidden className="size-3.5" />
+              )}
               {t('convert')}
-            </Button>
+            </button>
           </form>
         )}
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start">
         {/* Trabalhar a lead: escrever e ver o que já se fez. */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <form
             action={(fd: FormData) =>
               run('activity', () => addActivityAction(locale, lead.id, fd))
             }
-            className={`${PANEL} space-y-2.5`}
+            className={`${PANEL} space-y-2 p-2.5`}
           >
             <textarea
               name="body"
               rows={2}
               placeholder={t('activityBody')}
-              className={`${FIELD} h-auto py-2.5`}
+              className={`${FIELD} h-auto py-1.5`}
             />
             <div className="flex flex-wrap items-center gap-2">
               <select
                 name="type"
                 aria-label={t('activityType')}
                 defaultValue="nota"
-                className={`${FIELD} h-9 w-36`}
+                className={`${FIELD_BASE} w-32`}
               >
                 {CRM_ACTIVITY_TYPES.map((a) => (
                   <option key={a} value={a}>
@@ -202,56 +205,57 @@ export function LeadDetail({
                   </option>
                 ))}
               </select>
-              <Input
+              <input
                 name="due_at"
                 type="date"
                 aria-label={t('dueAt')}
                 title={t('dueAt')}
-                className="h-9 w-40 rounded-xl px-3 text-sm"
+                className={`${FIELD_BASE} w-36`}
               />
-              <Button
+              <button
                 type="submit"
-                size="sm"
-                className="ml-auto"
-                loading={busy === 'activity'}
                 disabled={pending}
+                className={`${BTN_NEUTRAL} ml-auto`}
               >
+                {busy === 'activity' && (
+                  <Spinner className="size-3.5 text-[var(--crm-gray9)]" />
+                )}
                 {t('addActivity')}
-              </Button>
+              </button>
             </div>
           </form>
 
-          <section className="space-y-2">
+          <section className="space-y-1.5">
             <h2 className={SECTION_TITLE}>{t('timeline')}</h2>
             {activities.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-ink-muted">
+              <p className="rounded-lg border border-dashed border-[var(--crm-gray6)] px-4 py-8 text-center text-[13px] text-[var(--crm-gray9)]">
                 {t('noActivities')}
               </p>
             ) : (
-              <ul className="space-y-1.5">
+              <ul className="space-y-1">
                 {activities.map((a) => (
                   <li
                     key={a.id}
-                    className="rounded-xl border border-border bg-card px-3.5 py-3 text-sm"
+                    className="rounded-md border border-[var(--crm-gray4)] bg-white px-2.5 py-2 text-[13px]"
                   >
-                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs">
-                      <span className="font-bold text-ink">
-                        {t(`type_${a.type}` as 'type_nota')}
-                      </span>
-                      <span className="text-ink-muted tabular-nums">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px]">
+                      <Tag>{t(`type_${a.type}` as 'type_nota')}</Tag>
+                      <span className="text-[var(--crm-gray9)] tabular-nums">
                         {a.createdAtLabel}
                       </span>
                       {a.authorName && (
-                        <span className="text-ink-muted">· {a.authorName}</span>
+                        <span className="text-[var(--crm-gray9)]">
+                          · {a.authorName}
+                        </span>
                       )}
                       {a.dueAtLabel && (
-                        <span className="font-semibold text-brand-600">
-                          · {t('dueAt')}: {a.dueAtLabel}
-                        </span>
+                        <Tag tone="amber">
+                          {t('dueAt')}: {a.dueAtLabel}
+                        </Tag>
                       )}
                     </div>
                     {a.body && (
-                      <p className="mt-1 whitespace-pre-line text-ink-soft">
+                      <p className="mt-1 whitespace-pre-line text-[var(--crm-gray11)]">
                         {a.body}
                       </p>
                     )}
@@ -267,9 +271,14 @@ export function LeadDetail({
           action={(fd: FormData) =>
             run('details', () => updateLeadAction(locale, lead.id, fd))
           }
-          className={`${PANEL} space-y-3 ${isPage ? 'lg:sticky lg:top-24' : ''}`}
+          className={`${PANEL} space-y-2.5 p-3 ${isPage ? 'lg:sticky lg:top-24' : ''}`}
         >
-          <h2 className={SECTION_TITLE}>{t('details')}</h2>
+          <div className="flex items-center justify-between">
+            <h2 className={SECTION_TITLE}>{t('details')}</h2>
+            <Tag tone={STAGE_TONE[lead.stage]}>
+              {t(`stage_${lead.stage}` as 'stage_novo')}
+            </Tag>
+          </div>
 
           <div className="space-y-1">
             <label htmlFor="full_name" className={LABEL}>
@@ -375,7 +384,7 @@ export function LeadDetail({
             </div>
           </div>
           {lead.estimated_ticket != null && (
-            <p className="-mt-1 text-xs text-ink-muted tabular-nums">
+            <p className="-mt-1 text-[12px] text-[var(--crm-gray9)] tabular-nums">
               {eur(lead.estimated_ticket)}
             </p>
           )}
@@ -400,56 +409,60 @@ export function LeadDetail({
               name="notes"
               rows={3}
               defaultValue={lead.notes}
-              className={`${FIELD} h-auto py-2.5`}
+              className={`${FIELD} h-auto py-1.5`}
             />
           </div>
-          <Button
+          <button
             type="submit"
-            size="sm"
-            className="w-full"
-            loading={busy === 'details'}
             disabled={pending}
+            className={`${BTN_NEUTRAL} w-full justify-center`}
           >
+            {busy === 'details' && (
+              <Spinner className="size-3.5 text-[var(--crm-gray9)]" />
+            )}
             {t('save')}
-          </Button>
+          </button>
         </form>
       </div>
 
       {/* Eliminar. Fora dos formulários acima (não se aninham) e no fim, atrás
           de uma confirmação — é a única ação daqui que não se desfaz. */}
-      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border pt-4">
+      <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[var(--crm-gray4)] pt-3">
         {confirmDelete ? (
           <>
-            <p className="mr-auto text-sm text-ink-soft">{t('deleteConfirm')}</p>
-            <Button
+            <p className="mr-auto text-[13px] text-[var(--crm-gray11)]">
+              {t('deleteConfirm')}
+            </p>
+            <button
               type="button"
-              variant="outline"
-              size="sm"
               disabled={pending}
               onClick={() => setConfirmDelete(false)}
+              className={BTN_NEUTRAL}
             >
               {t('cancel')}
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              variant="destructive"
-              size="sm"
-              loading={busy === 'delete'}
               disabled={pending}
               onClick={onDelete}
+              className="inline-flex h-8 items-center gap-1.5 rounded bg-[#ce2c31] px-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#b3272b] disabled:opacity-50"
             >
-              <Trash2Icon aria-hidden className="size-4" />
+              {busy === 'delete' ? (
+                <Spinner className="size-3.5 text-white" />
+              ) : (
+                <Trash2Icon aria-hidden className="size-3.5" />
+              )}
               {t('deleteLead')}
-            </Button>
+            </button>
           </>
         ) : (
           <button
             type="button"
             disabled={pending}
             onClick={() => setConfirmDelete(true)}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition hover:text-destructive disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--crm-gray9)] transition-colors hover:text-[#ce2c31] disabled:opacity-50"
           >
-            <Trash2Icon aria-hidden className="size-4" />
+            <Trash2Icon aria-hidden className="size-3.5" />
             {t('deleteLead')}
           </button>
         )}

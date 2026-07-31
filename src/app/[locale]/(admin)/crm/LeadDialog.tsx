@@ -15,6 +15,7 @@ import {
 import {Spinner} from '@/components/ui/spinner';
 import type {LeadDetailView} from '@/lib/crm/detail-dto';
 import type {Locale} from '@/lib/mail/templates';
+import {Avatar} from './ui';
 import {loadLeadDetailAction} from './actions';
 import {LeadDetail} from './LeadDetail';
 
@@ -66,20 +67,25 @@ export function LeadDialog({
         if (!open) onClose();
       }}
     >
+      {/* `crm-surface` também aqui: o diálogo sai por portal para o `body` e,
+          sem a classe, herdava o tema da marca em vez do tema do CRM. */}
       <DialogContent
         showCloseButton={false}
-        className="max-h-[90vh] overflow-y-auto scroll-soft rounded-[var(--radius-card)] sm:max-w-5xl"
+        className="crm-surface max-h-[90vh] overflow-y-auto scroll-soft rounded-lg border-[var(--crm-gray5)] p-4 sm:max-w-5xl"
       >
         {/* Título e ações da janela na MESMA linha: o «Fechar» absoluto obrigava
             a reservar espaço à direita do título e ainda assim colidia com nomes
             longos. O fechar é próprio (o do componente base é sr-only em inglês)
             e o atalho leva à página completa, o link partilhável da lead. */}
         <div className="flex items-start justify-between gap-4">
-          <DialogHeader className="min-w-0 gap-1">
-            <DialogTitle className="truncate text-xl font-extrabold tracking-tight text-ink">
-              {view?.lead.full_name ?? t('details')}
+          <DialogHeader className="min-w-0 gap-0.5">
+            <DialogTitle className="flex min-w-0 items-center gap-2 text-[15px] font-semibold text-[var(--crm-gray12)]">
+              {view && <Avatar name={view.lead.full_name} size={22} />}
+              <span className="truncate">
+                {view?.lead.full_name ?? t('details')}
+              </span>
             </DialogTitle>
-            <DialogDescription className="truncate">
+            <DialogDescription className="truncate text-[12px] text-[var(--crm-gray9)]">
               {view?.lead.email ?? t('loading')}
             </DialogDescription>
           </DialogHeader>
@@ -89,13 +95,13 @@ export function LeadDialog({
                 type="button"
                 onClick={() => router.push(`/crm/${leadId}`)}
                 title={t('openFullPage')}
-                className="rounded-lg p-2 text-ink-muted transition hover:bg-secondary hover:text-ink"
+                className="rounded p-1.5 text-[var(--crm-gray9)] transition-colors hover:bg-[var(--crm-gray4)] hover:text-[var(--crm-gray12)]"
               >
                 <ExternalLinkIcon aria-hidden className="size-4" />
                 <span className="sr-only">{t('openFullPage')}</span>
               </button>
             )}
-            <DialogClose className="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-ink-muted transition hover:bg-secondary hover:text-ink">
+            <DialogClose className="rounded px-2 py-1 text-[13px] font-medium text-[var(--crm-gray9)] transition-colors hover:bg-[var(--crm-gray4)] hover:text-[var(--crm-gray12)]">
               {t('close')}
             </DialogClose>
           </div>
@@ -113,8 +119,8 @@ export function LeadDialog({
             onDeleted={onClose}
           />
         ) : (
-          <div className="flex items-center justify-center gap-2 py-16 text-sm text-ink-muted">
-            <Spinner className="text-brand-500" />
+          <div className="flex items-center justify-center gap-2 py-16 text-[13px] text-[var(--crm-gray9)]">
+            <Spinner className="text-[var(--crm-gray9)]" />
             {t('loading')}
           </div>
         )}
