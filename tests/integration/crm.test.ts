@@ -132,6 +132,88 @@ describe('follow-ups', () => {
   });
 });
 
+describe('lead sem email', () => {
+  it('cria um lead só com o nome e guarda o email vazio', async () => {
+    const {id} = await createLead({fullName: 'Sem Email', createdBy: staffId});
+    const detail = await getLeadDetail(id);
+    expect(detail!.lead.email).toBe('');
+    expect(detail!.lead.full_name).toBe('Sem Email');
+  });
+
+  it('converter um lead sem email não cria convite nenhum', async () => {
+    const {id} = await createLead({fullName: 'Sem Email 2', createdBy: staffId});
+    const {count: before} = await admin
+      .from('invites')
+      .select('id', {count: 'exact', head: true});
+
+    const res = await convertLeadToInvite(
+      id,
+      {locale: 'pt', actorId: staffId, appUrl: APP_URL},
+      noop
+    );
+    expect(res.status).toBe('no_email');
+
+    // Nem convite novo, nem lead mexido: sem email não há nada a fazer e o
+    // estado tem de ficar exatamente como estava.
+    const {count: after} = await admin
+      .from('invites')
+      .select('id', {count: 'exact', head: true});
+    expect(after).toBe(before);
+    const detail = await getLeadDetail(id);
+    expect(detail!.lead.stage).toBe('novo');
+    expect(detail!.lead.converted_invite_id).toBeNull();
+  });
+
+  it('não reutiliza o convite de OUTRO lead sem email', async () => {
+    // O caso que a guarda evita: dois leads sem email têm o mesmo valor ('') e,
+    // sem ela, a procura por convite pendente do segundo casava com o do
+    // primeiro — dois prospects diferentes ligados ao mesmo convite.
+    const mail = email();
+    const comEmail = await createLead({
+      fullName: 'Com Email',
+      email: mail,
+      createdBy: staffId
+    });
+    const first = await convertLeadToInvite(
+      comEmail.id,
+      {locale: 'pt', actorId: staffId, appUrl: APP_URL},
+      noop
+    );
+    expect(first.status).toBe('invited');
+
+    const semEmail = await createLead({fullName: 'Sem Email 3', createdBy: staffId});
+    const second = await convertLeadToInvite(
+      semEmail.id,
+      {locale: 'pt', actorId: staffId, appUrl: APP_URL},
+      noop
+    );
+    expect(second.status).toBe('no_email');
+    expect((await getLeadDetail(semEmail.id))!.lead.converted_invite_id).toBeNull();
+  });
+
+  it('preenchido o email mais tarde, a conversão passa a funcionar', async () => {
+    const {id} = await createLead({fullName: 'Depois', createdBy: staffId});
+    expect(
+      (
+        await convertLeadToInvite(
+          id,
+          {locale: 'pt', actorId: staffId, appUrl: APP_URL},
+          noop
+        )
+      ).status
+    ).toBe('no_email');
+
+    await updateLead(id, {email: email()});
+    const res = await convertLeadToInvite(
+      id,
+      {locale: 'pt', actorId: staffId, appUrl: APP_URL},
+      noop
+    );
+    expect(res.status).toBe('invited');
+    expect((await getLeadDetail(id))!.lead.stage).toBe('convite_enviado');
+  });
+});
+
 describe('origem e agente/intermediário', () => {
   it('aceita a origem «Programa João Gonçalves»', async () => {
     const {id} = await createLead({

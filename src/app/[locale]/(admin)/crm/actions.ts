@@ -52,12 +52,14 @@ export async function createLeadAction(
   formData: FormData
 ): Promise<void> {
   return asStaff(async (s) => {
+    // Só o NOME é obrigatório: há leads que chegam sem email (contacto de
+    // feira, indicação por telefone) e obrigar a inventar um era pior do que
+    // não ter — ficava lixo na base e o convite seguia para o sítio errado.
     const fullName = String(formData.get('full_name') ?? '').trim();
-    const email = String(formData.get('email') ?? '').trim();
-    if (!fullName || !email) return;
+    if (!fullName) return;
     await createLead({
       fullName,
-      email,
+      email: optional(formData.get('email')),
       phone: optional(formData.get('phone')),
       source: (optional(formData.get('source')) as CrmSource) ?? undefined,
       agentName: optional(formData.get('agent_name')),

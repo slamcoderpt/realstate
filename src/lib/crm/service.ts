@@ -78,7 +78,12 @@ function toLead(raw: Record<string, unknown>): LeadRow {
 
 export type CreateLeadInput = {
   fullName: string;
-  email: string;
+  /**
+   * Opcional: há leads que chegam sem email (um contacto numa feira, uma
+   * indicação por telefone). Guarda-se '' — a mesma convenção do telefone e das
+   * notas — para não haver um terceiro estado entre "não tem" e "não sei".
+   */
+  email?: string;
   phone?: string;
   source?: CrmSource;
   agentName?: string;
@@ -97,7 +102,7 @@ export async function createLead(
     .from('crm_leads')
     .insert({
       full_name: input.fullName.trim(),
-      email: input.email.trim().toLowerCase(),
+      email: (input.email ?? '').trim().toLowerCase(),
       phone: (input.phone ?? '').trim(),
       source: input.source ?? 'outro',
       agent_name: (input.agentName ?? '').trim(),
@@ -280,6 +285,7 @@ async function findUserByEmail(
 }
 
 export type ConvertLeadResult =
+  | {status: 'no_email'}
   | {status: 'invited'; inviteId: string; emailSent: boolean}
   | {status: 'reused_invite'; inviteId: string}
   | {status: 'already_user'; userId: string}
@@ -305,9 +311,15 @@ export async function convertLeadToInvite(
     .eq('id', leadId)
     .single();
   if (!lead) throw new Error('lead não encontrado');
-  const email = String(lead.email).trim().toLowerCase();
+  const email = String(lead.email ?? '').trim().toLowerCase();
 
   if (lead.converted_user_id) return {status: 'already_converted'};
+
+  // Sem email não há convite: o convite É um email com um link. Sair aqui, e
+  // não mais à frente, evita o pior dos casos — procurar utilizador por email
+  // vazio, reutilizar um convite de outra lead sem email, ou criar um convite
+  // que nunca chega a ninguém.
+  if (!email) return {status: 'no_email'};
 
   const now = new Date().toISOString();
 

@@ -154,6 +154,17 @@ export function LeadDetail({
             <SendIcon aria-hidden className="size-4" />
             {t('convertedInvite')}
           </span>
+        ) : !lead.email ? (
+          /* Sem email não há convite — o convite É um email com um link. O
+             botão fica visível mas travado, com a razão à vista: escondê-lo
+             deixava quem procura a ação a pensar que ela desapareceu. */
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <span className="text-sm text-ink-muted">{t('convertNeedsEmail')}</span>
+            <Button size="sm" disabled title={t('convertNeedsEmail')}>
+              <SendIcon aria-hidden className="size-4" />
+              {t('convert')}
+            </Button>
+          </div>
         ) : (
           <form
             action={() =>
@@ -285,14 +296,13 @@ export function LeadDetail({
           </div>
           <div className="space-y-1">
             <label htmlFor="email" className={LABEL}>
-              {t('email')}
+              {t('emailOptional')}
             </label>
             <input
               id="email"
               name="email"
               type="email"
               defaultValue={lead.email}
-              required
               className={FIELD}
             />
           </div>

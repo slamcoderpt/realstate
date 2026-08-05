@@ -60,9 +60,9 @@ export function NewLeadForm({locale}: {locale: Locale}) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="email" className="font-semibold text-ink">
-              {t('email')}
+              {t('emailOptional')}
             </Label>
-            <Input id="email" name="email" type="email" required />
+            <Input id="email" name="email" type="email" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="phone" className="font-semibold text-ink">
