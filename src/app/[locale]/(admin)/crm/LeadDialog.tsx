@@ -80,7 +80,7 @@ export function LeadDialog({
               {view?.lead.full_name ?? t('details')}
             </DialogTitle>
             <DialogDescription className="truncate">
-              {view?.lead.email ?? t('loading')}
+              {view ? view.lead.email || t('noEmail') : t('loading')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex shrink-0 items-center gap-1">
