@@ -240,10 +240,13 @@ export function KanbanBoard({
                 setDragOver((s) => (s === col.stage ? null : s))
               }
               onDrop={(e) => onDrop(e, col.stage)}
-              className={`flex w-72 shrink-0 flex-col rounded-[var(--radius-card)] border bg-secondary/50 ${
+              // Largar aprofunda ainda mais a coluna (e não a clareia): o
+              // movimento de cor acompanha o gesto — o cartão vai "para
+              // dentro" de algo, não para cima de uma folha branca.
+              className={`flex w-72 shrink-0 flex-col rounded-[var(--radius-card)] border transition-colors ${
                 dragOver === col.stage
-                  ? 'border-brand-400 bg-brand-50'
-                  : 'border-border'
+                  ? 'border-brand-400 bg-[var(--kanban-column-drop)]'
+                  : 'border-border bg-[var(--kanban-column)]'
               }`}
             >
               <header className="flex items-center justify-between px-4 py-3">

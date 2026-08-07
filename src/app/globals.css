@@ -106,6 +106,14 @@
   --ring: #2aa8ff;
 
   --surface-muted: #f1f6ff;
+
+  /* Coluna do kanban. Tem token próprio porque precisa de um DEGRAU visível
+     face ao fundo da página (#f4f8ff): com o `secondary` a 50% que estava
+     antes, coluna e página ficavam à mesma cor e o board lia-se como uma
+     mancha só. A hierarquia é: página clara → coluna um tom abaixo → cartão
+     branco. O cartão é o que salta, que é o que se agarra e arrasta. */
+  --kanban-column: #e7effb;
+  --kanban-column-drop: #d9e8ff;
   --app-gradient: linear-gradient(180deg, #0055e8 0%, #006bff 46%, #2aa8ff 100%);
 
   /* Sombras tingidas de azul em vez de cinzento: é o detalhe que faz a
