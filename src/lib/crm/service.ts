@@ -481,6 +481,28 @@ export async function listPendingFollowups(
   });
 }
 
+/**
+ * Follow-up pendente MAIS PRÓXIMO de cada lead: id do lead → data.
+ *
+ * O board mostra um alerta por cartão, não uma lista, por isso só interessa a
+ * data mais antiga de cada lead — quem tem três follow-ups atrasados continua a
+ * ter um cartão, e o que importa é há quanto tempo está o pior.
+ *
+ * Não assume ordem na entrada: compara e fica com a menor. `listPendingFollowups`
+ * já devolve ordenado, mas depender disso tornava esta função frágil a uma
+ * mudança de `order by` do outro lado.
+ */
+export function earliestFollowupByLead(
+  rows: FollowupRow[]
+): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const r of rows) {
+    const seen = out.get(r.leadId);
+    if (seen === undefined || r.dueAt < seen) out.set(r.leadId, r.dueAt);
+  }
+  return out;
+}
+
 export async function markActivityDone(
   id: string,
   db: SupabaseClient = createAdminClient()

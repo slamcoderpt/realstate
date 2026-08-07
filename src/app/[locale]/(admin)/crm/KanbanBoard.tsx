@@ -2,7 +2,7 @@
 
 import {useEffect, useMemo, useState} from 'react';
 import {useTranslations} from 'next-intl';
-import {HandshakeIcon, UserRoundIcon} from 'lucide-react';
+import {AlertTriangleIcon, HandshakeIcon, UserRoundIcon} from 'lucide-react';
 import type {Locale} from '@/lib/mail/templates';
 import {CRM_SOURCES, type CrmStage} from '@/lib/crm/constants';
 import {moveLeadStageAction} from './actions';
@@ -17,6 +17,12 @@ export type LeadCard = {
   /** Agente/intermediário que trouxe o lead ('' = veio direto). */
   agentName: string;
   tags: string[];
+  /**
+   * Data (já formatada) do follow-up por resolver mais antigo, quando está
+   * ATRASADO. `null` quando não há follow-up pendente ou ainda está a horas —
+   * o cartão só mostra a marca quando ela pede ação.
+   */
+  overdueFollowup: string | null;
   daysSinceContact: number;
 };
 
@@ -308,6 +314,17 @@ export function KanbanBoard({
                             </span>
                           ))}
                         </div>
+                      )}
+                      {/* Follow-up atrasado: a única marca vermelha do cartão,
+                          e só aparece quando há mesmo um a pedir ação. Se o
+                          board ficasse cheio de vermelhos, nenhum se via. */}
+                      {lead.overdueFollowup && (
+                        <p className="mt-2 flex items-center gap-1 rounded-lg bg-destructive/10 px-2 py-1 text-xs font-bold text-destructive">
+                          <AlertTriangleIcon aria-hidden className="size-3 shrink-0" />
+                          <span className="tabular-nums">
+                            {t('followupOverdue', {date: lead.overdueFollowup})}
+                          </span>
+                        </p>
                       )}
                       <div className="mt-2 flex items-center justify-between gap-2 text-xs text-ink-muted">
                         <span className="flex min-w-0 items-center gap-1">

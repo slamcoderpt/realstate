@@ -526,6 +526,7 @@
     "activityType": "Type",
     "activityBody": "Description",
     "dueAt": "Follow-up (date)",
+    "followupOverdue": "Overdue follow-up · {date}",
     "lastActivity": "Last activity",
     "noActivities": "No activities logged.",
     "moveTo": "Move to",

@@ -154,7 +154,11 @@ test('CRM: criar lead, arrastar no kanban, follow-up e converter', async ({
     .locator('form')
     .filter({has: page.locator('textarea[name="body"]')});
   await actForm.locator('select[name="type"]').selectOption('chamada');
-  await actForm.locator('input[name="due_at"]').fill('2026-08-05');
+  // Data de ONTEM, calculada e não fixa: o que se quer provar é «um follow-up
+  // com data passada aparece como atrasado», e uma data escrita à mão deixava o
+  // teste à mercê do relógio da máquina.
+  const ontem = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+  await actForm.locator('input[name="due_at"]').fill(ontem);
   await actForm.locator('textarea[name="body"]').fill('Ligar para agendar.');
   await actForm.getByRole('button', {name: 'Registar atividade'}).click();
   await expect(modal.getByText('Ligar para agendar.')).toBeVisible();
@@ -163,12 +167,16 @@ test('CRM: criar lead, arrastar no kanban, follow-up e converter', async ({
   await modal.getByRole('button', {name: 'Fechar'}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
-  // O board já não tem painel de follow-ups (foi removido para o kanban ficar
-  // no topo do ecrã), por isso o que se verifica é que o follow-up ficou na
-  // TIMELINE da lead — que passou a ser o único sítio onde vive.
+  // O board não tem painel de follow-ups (saiu do topo da página); o sinal de
+  // que há um POR RESOLVER vive agora no próprio cartão. A data usada acima já
+  // passou, por isso o cartão tem de aparecer com o alerta de atrasado.
   await page.goto('/pt/crm');
   await expect(page.getByText('Follow-ups por resolver')).toHaveCount(0);
-  await page.locator('article', {hasText: leadName}).first().click();
+  const overdueCard = page.locator('article', {hasText: leadName}).first();
+  await expect(overdueCard).toContainText('Follow-up atrasado');
+
+  // E o follow-up continua na timeline da lead, com o texto que se escreveu.
+  await overdueCard.click();
   const back = page.getByRole('dialog');
   await expect(back.getByText('Ligar para agendar.')).toBeVisible();
   await back.getByRole('button', {name: 'Fechar'}).click();

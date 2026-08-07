@@ -1,6 +1,12 @@
 import {getTranslations} from 'next-intl/server';
 import {createAdminClient} from '@/lib/supabase/admin';
-import {listLeads, CRM_STAGES, type LeadRow} from '@/lib/crm/service';
+import {
+  listLeads,
+  listPendingFollowups,
+  earliestFollowupByLead,
+  CRM_STAGES,
+  type LeadRow
+} from '@/lib/crm/service';
 import type {Locale} from '@/lib/mail/templates';
 import {KanbanBoard, type LeadCard} from './KanbanBoard';
 import {NewLeadForm} from './NewLeadForm';
@@ -17,6 +23,10 @@ const DAY_MS = 1000 * 60 * 60 * 24;
  * empurravam o board para baixo do ecrã, que é onde se trabalha. O agendamento
  * de follow-ups continua a existir na ficha da lead — o que desapareceu foi a
  * lista deles no board, e com ela a forma de os marcar como resolvidos.
+ *
+ * O que ficou por resolver com essa remoção — não haver sinal nenhum de um
+ * follow-up atrasado — volta aqui na forma certa: uma marca NO CARTÃO, junto do
+ * lead a que diz respeito, em vez de uma lista à parte no topo da página.
  */
 export default async function CrmPage({
   params
@@ -27,7 +37,11 @@ export default async function CrmPage({
   const loc: Locale = locale === 'en' ? 'en' : 'pt';
   const t = await getTranslations('Crm');
 
-  const leads = await listLeads();
+  const [leads, followups] = await Promise.all([
+    listLeads(),
+    listPendingFollowups()
+  ]);
+  const nextFollowup = earliestFollowupByLead(followups);
 
   // Nomes dos responsáveis (um fetch).
   const ownerIds = [
@@ -45,6 +59,26 @@ export default async function CrmPage({
   }
 
   const now = Date.now();
+
+  // "Atrasado" é antes do INÍCIO de hoje: um follow-up marcado para hoje ainda
+  // está a horas, e pintá-lo de vermelho de manhã seria mentira.
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const todayMs = startOfToday.getTime();
+  // Data formatada no servidor (como no resto do CRM): formatar no cliente daria
+  // fusos diferentes entre o HTML servido e a hidratação.
+  const fmtDate = new Intl.DateTimeFormat(loc === 'en' ? 'en-GB' : 'pt-PT', {
+    day: '2-digit',
+    month: '2-digit'
+  });
+
+  const overdueLabel = (leadId: string): string | null => {
+    const due = nextFollowup.get(leadId);
+    if (!due) return null;
+    const at = new Date(due);
+    return at.getTime() < todayMs ? fmtDate.format(at) : null;
+  };
+
   const toCard = (l: LeadRow): LeadCard => ({
     id: l.id,
     fullName: l.full_name,
@@ -53,6 +87,7 @@ export default async function CrmPage({
     source: l.source,
     agentName: l.agent_name,
     tags: l.tags,
+    overdueFollowup: overdueLabel(l.id),
     daysSinceContact: Math.floor(
       (now - new Date(l.last_activity_at).getTime()) / DAY_MS
     )
