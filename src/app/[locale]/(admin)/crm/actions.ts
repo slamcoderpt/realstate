@@ -8,6 +8,7 @@ import {
   moveLeadStage,
   addActivity,
   convertLeadToInvite,
+  markActivityDone,
   type CrmStage,
   type CrmSource,
   type CrmInvestorProfile,
@@ -153,6 +154,23 @@ export async function convertLeadToInviteAction(
       appUrl: await appUrl()
     });
     revalidatePath(`/${locale}/crm/${id}`);
+    revalidatePath(`/${locale}/crm`);
+  });
+}
+
+/**
+ * Marca um follow-up como resolvido. Recebe o lead além da atividade porque
+ * revalida os DOIS sítios que mudam: a ficha (a linha da timeline) e o board
+ * (o alerta vermelho do cartão desaparece).
+ */
+export async function markFollowupDoneAction(
+  locale: Locale,
+  leadId: string,
+  activityId: string
+): Promise<void> {
+  return asStaff(async () => {
+    await markActivityDone(activityId);
+    revalidatePath(`/${locale}/crm/${leadId}`);
     revalidatePath(`/${locale}/crm`);
   });
 }

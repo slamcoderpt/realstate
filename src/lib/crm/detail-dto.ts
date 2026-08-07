@@ -20,6 +20,8 @@ export type LeadActivityView = {
   authorName: string;
   createdAtLabel: string;
   dueAtLabel: string | null;
+  /** Só faz sentido com `dueAtLabel`: é o estado do follow-up agendado. */
+  done: boolean;
 };
 
 export type LeadDetailView = {
@@ -63,7 +65,8 @@ export async function getLeadDetailView(
       body: a.body,
       authorName: a.author_id ? (authorName.get(a.author_id) ?? '') : '',
       createdAtLabel: fmt.format(new Date(a.created_at)),
-      dueAtLabel: a.due_at ? fmt.format(new Date(a.due_at)) : null
+      dueAtLabel: a.due_at ? fmt.format(new Date(a.due_at)) : null,
+      done: a.done
     }))
   };
 }
