@@ -30,7 +30,7 @@ export default async function CatalogPage({
   const showProgress = flag?.value === true;
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-8">
+    <main className="mx-auto max-w-[100rem] px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="mb-8 text-3xl font-extrabold tracking-tight text-ink">
         {t('title')}
       </h1>
