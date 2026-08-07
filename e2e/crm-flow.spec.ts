@@ -179,8 +179,18 @@ test('CRM: criar lead, arrastar no kanban, follow-up e converter', async ({
   await overdueCard.click();
   const back = page.getByRole('dialog');
   await expect(back.getByText('Ligar para agendar.')).toBeVisible();
+
+  // Concluir o follow-up na timeline APAGA o alerta do cartão. É o ciclo todo:
+  // sem isto, o vermelho no board era um alarme que não se desligava.
+  await back.getByRole('button', {name: 'Concluir'}).click();
+  await expect(back.getByText('concluído')).toBeVisible();
   await back.getByRole('button', {name: 'Fechar'}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  await page.goto('/pt/crm');
+  await expect(
+    page.locator('article', {hasText: leadName}).first()
+  ).not.toContainText('Follow-up atrasado');
 
   // --- Converter em convite (via deduplicação; ver nota no topo) ------------
   const token = randomBytes(32).toString('base64url');

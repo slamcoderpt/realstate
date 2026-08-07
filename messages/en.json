@@ -527,6 +527,8 @@
     "activityBody": "Description",
     "dueAt": "Follow-up (date)",
     "followupOverdue": "Overdue follow-up · {date}",
+    "markDone": "Mark done",
+    "followupDone": "done",
     "lastActivity": "Last activity",
     "noActivities": "No activities logged.",
     "moveTo": "Move to",

@@ -3,7 +3,7 @@
 import {useState} from 'react';
 import {useTranslations} from 'next-intl';
 import {useRouter} from '@/i18n/navigation';
-import {SendIcon, Trash2Icon, UserCheckIcon} from 'lucide-react';
+import {CheckIcon, SendIcon, Trash2Icon, UserCheckIcon} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Spinner} from '@/components/ui/spinner';
@@ -19,6 +19,7 @@ import type {Locale} from '@/lib/mail/templates';
 import {
   addActivityAction,
   convertLeadToInviteAction,
+  markFollowupDoneAction,
   deleteLeadAction,
   moveLeadStageAction,
   updateLeadAction
@@ -45,7 +46,14 @@ const PANEL = 'rounded-xl border border-border bg-card p-4';
 const SECTION_TITLE =
   'text-[0.6875rem] font-bold tracking-[0.1em] text-ink-muted uppercase';
 
-type Busy = 'stage' | 'convert' | 'activity' | 'details' | 'delete' | null;
+type Busy =
+  | 'stage'
+  | 'convert'
+  | 'activity'
+  | 'details'
+  | 'delete'
+  | 'followup'
+  | null;
 
 function eur(v: number): string {
   return new Intl.NumberFormat('pt-PT', {
@@ -77,6 +85,9 @@ export function LeadDetail({
   // Eliminar pede confirmação: o botão dá lugar à pergunta, ali mesmo. Um
   // diálogo dentro do diálogo do detalhe seria pior de usar do que isto.
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Qual follow-up está a ser concluído: o `busy` diz que HÁ uma ação a
+  // decorrer, isto diz em que linha da timeline pôr o indicador.
+  const [doneId, setDoneId] = useState<string | null>(null);
   const pending = busy !== null;
   const {lead, activities} = view;
   const isPage = variant === 'page';
@@ -255,11 +266,41 @@ export function LeadDetail({
                       {a.authorName && (
                         <span className="text-ink-muted">· {a.authorName}</span>
                       )}
-                      {a.dueAtLabel && (
-                        <span className="font-semibold text-brand-600">
-                          · {t('dueAt')}: {a.dueAtLabel}
-                        </span>
-                      )}
+                      {/* Follow-up agendado: enquanto está por resolver dá
+                          para o fechar aqui — é o que apaga o alerta vermelho
+                          do cartão no board. Depois de concluído fica só o
+                          registo, esbatido, porque o histórico não se apaga. */}
+                      {a.dueAtLabel &&
+                        (a.done ? (
+                          <span className="inline-flex items-center gap-1 font-semibold text-ink-muted">
+                            <CheckIcon aria-hidden className="size-3" />
+                            {t('dueAt')}: {a.dueAtLabel} · {t('followupDone')}
+                          </span>
+                        ) : (
+                          <>
+                            <span className="font-semibold text-brand-600">
+                              · {t('dueAt')}: {a.dueAtLabel}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={pending}
+                              onClick={() => {
+                                setDoneId(a.id);
+                                void run('followup', () =>
+                                  markFollowupDoneAction(locale, lead.id, a.id)
+                                ).finally(() => setDoneId(null));
+                              }}
+                              className="inline-flex items-center gap-1 rounded-lg border border-border px-2 py-0.5 font-semibold text-ink-muted transition hover:border-brand-200 hover:text-brand-600 disabled:opacity-50"
+                            >
+                              {busy === 'followup' && doneId === a.id ? (
+                                <Spinner className="size-3" />
+                              ) : (
+                                <CheckIcon aria-hidden className="size-3" />
+                              )}
+                              {t('markDone')}
+                            </button>
+                          </>
+                        ))}
                     </div>
                     {a.body && (
                       <p className="mt-1 whitespace-pre-line text-ink-soft">
