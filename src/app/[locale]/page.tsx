@@ -1,5 +1,5 @@
-import {getTranslations, setRequestLocale} from 'next-intl/server';
-import Link from 'next/link';
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import Link from "next/link";
 import {
   CalendarClockIcon,
   CoinsIcon,
@@ -9,24 +9,24 @@ import {
   ReceiptTextIcon,
   TrendingUpIcon,
   WalletIcon,
-  type LucideIcon
-} from 'lucide-react';
-import {redirect} from '@/i18n/navigation';
-import {getSession} from '@/lib/auth/staff';
-import {getInvestorDashboard} from '@/lib/dashboard/service';
-import {Badge} from '@/components/ui/badge';
-import {Button} from '@/components/ui/button';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {PortfolioChart} from '@/components/charts/PortfolioChart';
-import type {Locale} from '@/lib/mail/templates';
+  type LucideIcon,
+} from "lucide-react";
+import { redirect } from "@/i18n/navigation";
+import { getSession } from "@/lib/auth/staff";
+import { getInvestorDashboard } from "@/lib/dashboard/service";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PortfolioChart } from "@/components/charts/PortfolioChart";
+import type { Locale } from "@/lib/mail/templates";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 function eur(v: number): string {
-  return new Intl.NumberFormat('pt-PT', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0
+  return new Intl.NumberFormat("pt-PT", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
   }).format(v);
 }
 
@@ -39,7 +39,7 @@ function eur(v: number): string {
 function StatTile({
   label,
   value,
-  icon: Icon
+  icon: Icon,
 }: {
   label: string;
   value: string;
@@ -68,7 +68,7 @@ function StatTile({
 }
 
 /** Cabeçalho de secção com um filete de marca — decorativo, sem copy nova. */
-function SectionTitle({children}: {children: React.ReactNode}) {
+function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="flex items-center gap-2.5 text-lg font-bold tracking-tight text-ink">
       <span aria-hidden className="h-4 w-1 rounded-full bg-brand-500" />
@@ -79,7 +79,7 @@ function SectionTitle({children}: {children: React.ReactNode}) {
 
 function PanelHeading({
   icon: Icon,
-  children
+  children,
 }: {
   icon: LucideIcon;
   children: React.ReactNode;
@@ -97,26 +97,26 @@ function PanelHeading({
   );
 }
 
-function EmptyLine({children}: {children: React.ReactNode}) {
+function EmptyLine({ children }: { children: React.ReactNode }) {
   return <p className="py-2 text-center text-ink-muted">{children}</p>;
 }
 
 export default async function DashboardPage({
-  params
+  params,
 }: {
-  params: Promise<{locale: string}>;
+  params: Promise<{ locale: string }>;
 }) {
-  const {locale} = await params;
-  const loc: Locale = locale === 'en' ? 'en' : 'pt';
+  const { locale } = await params;
+  const loc: Locale = locale === "en" ? "en" : "pt";
   setRequestLocale(loc);
 
   const session = await getSession();
   // O middleware já trava o acesso sem sessão; a página não presume isso.
-  if (!session) redirect({href: '/login', locale: loc});
+  if (!session) redirect({ href: "/login", locale: loc });
 
-  const t = await getTranslations('Dashboard');
-  const ts = await getTranslations('Subscription');
-  const tp = await getTranslations('ProjectStatus');
+  const t = await getTranslations("Dashboard");
+  const ts = await getTranslations("Subscription");
+  const tp = await getTranslations("ProjectStatus");
 
   // Staff também pode ser investidor: a página é a mesma para toda a gente e o
   // que mostra é sempre a posição de quem está autenticado, nunca agregados.
@@ -125,7 +125,7 @@ export default async function DashboardPage({
   const dash = await getInvestorDashboard(session!.userId);
 
   const confirmed = dash.positions.filter(
-    (p) => p.status === 'fundos_confirmados'
+    (p) => p.status === "fundos_confirmados",
   );
   // Média da TIR ponderada pelo montante. Sem posições confirmadas o
   // denominador é 0 — mostra-se um travessão em vez de dividir por zero.
@@ -135,142 +135,158 @@ export default async function DashboardPage({
           confirmed.reduce((s, p) => s + p.amount * p.estimatedIrr, 0) /
           dash.investedTotal
         ).toFixed(1)}%`
-      : '—';
+      : "—";
 
   const th =
-    'px-5 py-3 text-xs font-bold tracking-[0.12em] text-ink-muted uppercase';
+    "px-5 py-3 text-xs font-bold tracking-[0.12em] text-ink-muted uppercase";
 
   return (
-    <main className="mx-auto max-w-5xl space-y-10 px-6 py-8">
+    <main className="mx-auto max-w-[100rem] space-y-10 px-4 py-8 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-extrabold tracking-tight text-ink">
-        {t('title')}
+        {t("title")}
       </h1>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
-          label={t('invested')}
+          label={t("invested")}
           value={eur(dash.investedTotal)}
           icon={WalletIcon}
         />
         <StatTile
-          label={t('projectsCount')}
+          label={t("projectsCount")}
           value={String(dash.positions.length)}
           icon={LayersIcon}
         />
         <StatTile
-          label={t('expectedReturn')}
+          label={t("expectedReturn")}
           value={expectedReturn}
           icon={TrendingUpIcon}
         />
         <StatTile
-          label={t('estimatedReturn')}
+          label={t("estimatedReturn")}
           value={
-            dash.estimatedReturnTotal > 0
-              ? eur(dash.estimatedReturnTotal)
-              : '—'
+            dash.estimatedReturnTotal > 0 ? eur(dash.estimatedReturnTotal) : "—"
           }
           icon={CoinsIcon}
         />
       </section>
 
-      {/* Distribuição da carteira: capital investido (fundos confirmados) por
-          projeto. Só aparece com pelo menos uma posição confirmada — sem capital
-          confirmado não há carteira a repartir. */}
-      {confirmed.length > 0 && (
-        <section className="space-y-4">
-          <SectionTitle>{t('portfolioTitle')}</SectionTitle>
-          <Card className="py-5">
-            <CardContent>
-              <PortfolioChart
-                data={confirmed.map((p) => ({
-                  name: p.projectName,
-                  amount: p.amount
-                }))}
-              />
-            </CardContent>
-          </Card>
-        </section>
-      )}
+      {/* Carteira e posições LADO A LADO num ecrã largo. Empilhadas, a tabela
+          de posições esticava-se por 1600px com cinco colunas — nome à esquerda,
+          números à direita e um vazio no meio. Ao lado do gráfico, cada uma fica
+          com a largura que lhe serve e poupa-se uma rolagem.
 
-      <section className="space-y-4">
-        <SectionTitle>{t('myPositions')}</SectionTitle>
-        {dash.positions.length === 0 ? (
-          <Card className="py-10">
-            <CardContent className="flex flex-col items-center gap-4 text-center">
-              <span
-                aria-hidden
-                className="grid size-12 place-items-center rounded-2xl bg-brand-50 text-brand-400"
-              >
-                <FolderOpenIcon className="size-6" />
-              </span>
-              <p className="max-w-sm text-sm text-ink-muted">
-                {t('noPositions')}
-              </p>
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/${locale}/projetos`}>{t('browseProjects')}</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="gap-0 overflow-hidden py-0">
-            <div className="overflow-x-auto scroll-soft">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-secondary text-left">
-                    <th className={th}>{t('project')}</th>
-                    <th className={`${th} text-right`}>{t('amount')}</th>
-                    <th className={th}>{t('status')}</th>
-                    <th className={`${th} text-right`}>{t('irr')}</th>
-                    <th className={`${th} text-right`}>{t('estimatedReturn')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {dash.positions.map((p) => (
-                    <tr key={p.projectId} className="hover:bg-brand-50/60">
-                      <td className="px-5 py-4">
-                        <Link
-                          href={`/${locale}/projetos/${p.projectId}`}
-                          className="font-semibold text-ink underline-offset-4 hover:text-brand-600 hover:underline"
-                        >
-                          {p.projectName}
-                        </Link>
-                        <span className="ml-2 text-xs text-ink-muted">
-                          {tp(p.projectStatus as 'preparacao')}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">
-                        {eur(p.amount)}
-                      </td>
-                      <td className="px-5 py-4">
-                        <Badge variant="secondary">
-                          {ts(`status_${p.status}` as 'status_interesse')}
-                        </Badge>
-                      </td>
-                      <td className="px-5 py-4 text-right font-semibold text-ink-soft tabular-nums">
-                        {p.estimatedIrr}%
-                      </td>
-                      <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">
-                        {p.estimatedReturn > 0 ? eur(p.estimatedReturn) : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+          A ordem no DOM mantém a carteira primeiro (é o resumo, e é assim que
+          aparece no telemóvel); em `xl` o `order` troca-as, para a tabela — que
+          é o detalhe — ficar na coluna larga da esquerda. */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] xl:items-start">
+        {/* Distribuição da carteira: capital investido (fundos confirmados) por
+            projeto. Só aparece com pelo menos uma posição confirmada — sem
+            capital confirmado não há carteira a repartir. */}
+        {confirmed.length > 0 && (
+          <section className="space-y-4 xl:order-2">
+            <SectionTitle>{t("portfolioTitle")}</SectionTitle>
+            <Card className="py-5">
+              <CardContent>
+                <PortfolioChart
+                  data={confirmed.map((p) => ({
+                    name: p.projectName,
+                    amount: p.amount,
+                  }))}
+                />
+              </CardContent>
+            </Card>
+          </section>
         )}
-      </section>
+
+        {/* Sem carteira ao lado, as posições ocupam a linha toda — senão ficava
+            uma tabela encolhida a 60% com o resto do ecrã em branco. */}
+        <section
+          className={`space-y-4 xl:order-1 ${confirmed.length === 0 ? "xl:col-span-2" : ""}`}
+        >
+          <SectionTitle>{t("myPositions")}</SectionTitle>
+          {dash.positions.length === 0 ? (
+            <Card className="py-10">
+              <CardContent className="flex flex-col items-center gap-4 text-center">
+                <span
+                  aria-hidden
+                  className="grid size-12 place-items-center rounded-2xl bg-brand-50 text-brand-400"
+                >
+                  <FolderOpenIcon className="size-6" />
+                </span>
+                <p className="max-w-sm text-sm text-ink-muted">
+                  {t("noPositions")}
+                </p>
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/${locale}/projetos`}>
+                    {t("browseProjects")}
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="gap-0 overflow-hidden py-0">
+              <div className="overflow-x-auto scroll-soft">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-secondary text-left">
+                      <th className={th}>{t("project")}</th>
+                      <th className={`${th} text-right`}>{t("amount")}</th>
+                      <th className={th}>{t("status")}</th>
+                      <th className={`${th} text-right`}>{t("irr")}</th>
+                      <th className={`${th} text-right`}>
+                        {t("estimatedReturn")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {dash.positions.map((p) => (
+                      <tr key={p.projectId} className="hover:bg-brand-50/60">
+                        <td className="px-5 py-4">
+                          <Link
+                            href={`/${locale}/projetos/${p.projectId}`}
+                            className="font-semibold text-ink underline-offset-4 hover:text-brand-600 hover:underline"
+                          >
+                            {p.projectName}
+                          </Link>
+                          <span className="ml-2 text-xs text-ink-muted">
+                            {tp(p.projectStatus as "preparacao")}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">
+                          {eur(p.amount)}
+                        </td>
+                        <td className="px-5 py-4">
+                          <Badge variant="secondary">
+                            {ts(`status_${p.status}` as "status_interesse")}
+                          </Badge>
+                        </td>
+                        <td className="px-5 py-4 text-right font-semibold text-ink-soft tabular-nums">
+                          {p.estimatedIrr}%
+                        </td>
+                        <td className="px-5 py-4 text-right font-bold text-ink tabular-nums">
+                          {p.estimatedReturn > 0 ? eur(p.estimatedReturn) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+        </section>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <PanelHeading icon={CalendarClockIcon}>
-              {t('upcomingMilestones')}
+              {t("upcomingMilestones")}
             </PanelHeading>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             {dash.upcomingMilestones.length === 0 ? (
-              <EmptyLine>{t('noMilestones')}</EmptyLine>
+              <EmptyLine>{t("noMilestones")}</EmptyLine>
             ) : (
               <ul className="space-y-3">
                 {dash.upcomingMilestones.map((m) => (
@@ -278,7 +294,7 @@ export default async function DashboardPage({
                     <p className="font-semibold text-ink">{m.title}</p>
                     <p className="text-xs text-ink-muted">
                       {m.projectName}
-                      {m.plannedDate ? ` · ${m.plannedDate}` : ''}
+                      {m.plannedDate ? ` · ${m.plannedDate}` : ""}
                     </p>
                   </li>
                 ))}
@@ -289,11 +305,11 @@ export default async function DashboardPage({
 
         <Card>
           <CardHeader>
-            <PanelHeading icon={HardHatIcon}>{t('latestUpdates')}</PanelHeading>
+            <PanelHeading icon={HardHatIcon}>{t("latestUpdates")}</PanelHeading>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             {dash.latestUpdates.length === 0 ? (
-              <EmptyLine>{t('noUpdates')}</EmptyLine>
+              <EmptyLine>{t("noUpdates")}</EmptyLine>
             ) : (
               <ul className="space-y-3">
                 {dash.latestUpdates.map((u) => (
@@ -317,12 +333,12 @@ export default async function DashboardPage({
         <Card>
           <CardHeader>
             <PanelHeading icon={ReceiptTextIcon}>
-              {t('recentDocuments')}
+              {t("recentDocuments")}
             </PanelHeading>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             {dash.recentStatements.length === 0 ? (
-              <EmptyLine>{t('noDocuments')}</EmptyLine>
+              <EmptyLine>{t("noDocuments")}</EmptyLine>
             ) : (
               <ul className="space-y-3">
                 {dash.recentStatements.map((s) => (
@@ -345,7 +361,7 @@ export default async function DashboardPage({
       </div>
 
       <p className="border-t border-border pt-6 text-xs leading-relaxed text-ink-muted">
-        {t('riskNotice')}
+        {t("riskNotice")}
       </p>
     </main>
   );

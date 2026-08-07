@@ -150,7 +150,7 @@ export default async function ProjectDetailPage({
     'px-5 py-3 text-xs font-bold tracking-[0.12em] text-ink-muted uppercase';
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-8">
+    <main className="mx-auto max-w-[100rem] px-4 py-8 sm:px-6 lg:px-8">
       {/* Staff chega aqui pelo botão "Ver como investidor" do back-office, e vê
           a ficha de qualquer projeto — inclusive fora de `subscricao`. Dizê-lo
           explicitamente evita a leitura errada de que a plataforma está a
@@ -209,6 +209,9 @@ export default async function ProjectDetailPage({
               FECHADOS com resultado preenchido, mostra-se o CONCRETIZADO e a
               estimativa passa a leitura acessória. */}
           <section className="space-y-3">
+            {/* Quatro colunas e não cinco: são OITO indicadores, e 4+4 fecha
+                duas linhas certas enquanto 5+3 deixava a segunda a meio. Com a
+                página mais larga, os mosaicos ficam maiores em vez de mais. */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             <StatTile label={t('amount')} value={eur(project.total_amount)} />
             {isClosed && project.realized_irr !== null ? (
