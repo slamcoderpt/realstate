@@ -140,6 +140,9 @@ export function CatalogueGrid({
         })}
       </div>
 
+      {/* As colunas acompanham a largura disponível em vez de pararem nas três:
+          num ecrã grande, três cartões deixavam metade do ecrã vazio e obrigavam
+          a rolar por uma lista que cabia toda. */}
       {visible.length === 0 ? (
         <Card className="py-12">
           <CardContent className="text-center text-sm text-ink-muted">
@@ -147,7 +150,7 @@ export function CatalogueGrid({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {visible.map((p) => {
             const pct =
               p.total_amount > 0

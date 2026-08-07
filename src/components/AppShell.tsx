@@ -110,7 +110,10 @@ export default async function AppShell({
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b border-white/15 bg-brand-600/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 px-6">
+        {/* Mesma medida das páginas largas (o CRM e o catálogo já usam 100rem):
+            é o que mantém o logótipo alinhado com a margem do conteúdo. As
+            páginas estreitas continuam centradas, como sempre estiveram. */}
+        <div className="mx-auto flex max-w-[100rem] flex-wrap items-center gap-x-3 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 py-3">
             <Brand onDark href="/" />
           </div>
