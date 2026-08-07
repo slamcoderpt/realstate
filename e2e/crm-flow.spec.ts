@@ -40,8 +40,8 @@ async function dragCardTo(
   card: import('@playwright/test').Locator,
   column: import('@playwright/test').Locator
 ) {
-  // `hover()` (e não coordenadas fixas) porque também trata do scroll: com o
-  // painel de follow-ups a crescer, o kanban desce e as colunas saem do ecrã.
+  // `hover()` (e não coordenadas fixas) porque também trata do scroll: as
+  // colunas rolam na horizontal e a de destino pode estar fora do ecrã.
   await card.hover();
   await page.mouse.down();
   await column.hover();
@@ -163,10 +163,16 @@ test('CRM: criar lead, arrastar no kanban, follow-up e converter', async ({
   await modal.getByRole('button', {name: 'Fechar'}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
-  // Aparece no painel de follow-ups do board.
+  // O board já não tem painel de follow-ups (foi removido para o kanban ficar
+  // no topo do ecrã), por isso o que se verifica é que o follow-up ficou na
+  // TIMELINE da lead — que passou a ser o único sítio onde vive.
   await page.goto('/pt/crm');
-  const followups = page.locator('section', {hasText: 'Follow-ups por resolver'});
-  await expect(followups.getByText(leadName)).toBeVisible();
+  await expect(page.getByText('Follow-ups por resolver')).toHaveCount(0);
+  await page.locator('article', {hasText: leadName}).first().click();
+  const back = page.getByRole('dialog');
+  await expect(back.getByText('Ligar para agendar.')).toBeVisible();
+  await back.getByRole('button', {name: 'Fechar'}).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 
   // --- Converter em convite (via deduplicação; ver nota no topo) ------------
   const token = randomBytes(32).toString('base64url');

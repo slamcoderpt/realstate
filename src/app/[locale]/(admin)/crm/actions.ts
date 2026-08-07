@@ -8,7 +8,6 @@ import {
   moveLeadStage,
   addActivity,
   convertLeadToInvite,
-  markActivityDone,
   type CrmStage,
   type CrmSource,
   type CrmInvestorProfile,
@@ -140,16 +139,6 @@ export async function moveLeadStageAction(
     await moveLeadStage(id, to, s.userId);
     revalidatePath(`/${locale}/crm`);
     revalidatePath(`/${locale}/crm/${id}`);
-  });
-}
-
-export async function markFollowupDoneAction(
-  locale: Locale,
-  activityId: string
-): Promise<void> {
-  return asStaff(async () => {
-    await markActivityDone(activityId);
-    revalidatePath(`/${locale}/crm`);
   });
 }
 
